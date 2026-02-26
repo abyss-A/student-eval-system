@@ -1,0 +1,18 @@
+
+> student-eval-frontend@0.0.1 dev
+> vite --host 0.0.0.0 --port 5173 --host 0.0.0.0 --port 5173
+
+
+  [32m[1mVITE[22m v6.4.1[39m  [2mready in [0m[1m532[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.190.164:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.26.1:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.154.1:[1m5173[22m/[39m
+[2m02:19:51[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/router/index.js[22m
+[2m02:21:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.vue[22m
+[2m02:21:23[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/LoginView.vue[22m
+[2m02:23:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/TeacherView.vue[22m
+[2m02:23:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/AdminView.vue[22m
+[2m02:25:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/views/LoginView.vue, /src/views/AdminView.vue, /src/views/TeacherView.vue, /src/views/StudentView.vue, /src/views/RankingView.vue[22m
+[2m02:25:15[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles/global.css[22m

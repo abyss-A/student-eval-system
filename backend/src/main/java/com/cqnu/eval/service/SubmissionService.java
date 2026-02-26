@@ -1,12 +1,22 @@
 package com.cqnu.eval.service;
 
 import com.cqnu.eval.common.BizException;
-import com.cqnu.eval.mapper.*;
+import com.cqnu.eval.mapper.ActivityItemMapper;
+import com.cqnu.eval.mapper.CourseItemMapper;
+import com.cqnu.eval.mapper.ScoringConfigMapper;
+import com.cqnu.eval.mapper.SemesterMapper;
+import com.cqnu.eval.mapper.SubmissionMapper;
+import com.cqnu.eval.mapper.UserMapper;
 import com.cqnu.eval.model.dto.ActivityItemInput;
 import com.cqnu.eval.model.dto.BatchActivityRequest;
 import com.cqnu.eval.model.dto.BatchCourseRequest;
 import com.cqnu.eval.model.dto.CourseItemInput;
-import com.cqnu.eval.model.entity.*;
+import com.cqnu.eval.model.entity.ActivityItemEntity;
+import com.cqnu.eval.model.entity.CourseItemEntity;
+import com.cqnu.eval.model.entity.ScoringConfigEntity;
+import com.cqnu.eval.model.entity.SemesterEntity;
+import com.cqnu.eval.model.entity.SubmissionEntity;
+import com.cqnu.eval.model.entity.UserEntity;
 import com.cqnu.eval.security.CurrentUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class SubmissionService {
@@ -44,12 +58,14 @@ public class SubmissionService {
     public SubmissionEntity createOrGetMySubmission(Long studentId) {
         SemesterEntity active = semesterMapper.findActive();
         if (active == null) {
-            throw new BizException(40401, "当前没有激活学期");
+            throw new BizException(40401, "No active semester");
         }
+
         SubmissionEntity existing = submissionMapper.findBySemesterAndStudent(active.getId(), studentId);
         if (existing != null) {
             return existing;
         }
+
         SubmissionEntity entity = new SubmissionEntity();
         entity.setSemesterId(active.getId());
         entity.setStudentId(studentId);
@@ -67,12 +83,13 @@ public class SubmissionService {
     public Map<String, Object> getSubmissionDetail(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "无权访问该测评单");
+            throw new BizException(40301, "Forbidden");
         }
+
         UserEntity student = userMapper.findById(submission.getStudentId());
         SemesterEntity semester = semesterMapper.findActive();
 
@@ -88,6 +105,7 @@ public class SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public void saveCourses(Long submissionId, Long studentId, BatchCourseRequest request) {
         checkSubmissionEditableByStudent(submissionId, studentId);
+
         courseItemMapper.deleteBySubmissionId(submissionId);
         for (CourseItemInput item : request.getItems()) {
             CourseItemEntity entity = new CourseItemEntity();
@@ -107,6 +125,7 @@ public class SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public void saveActivities(Long submissionId, Long studentId, BatchActivityRequest request) {
         checkSubmissionEditableByStudent(submissionId, studentId);
+
         activityItemMapper.deleteBySubmissionId(submissionId);
         for (ActivityItemInput item : request.getItems()) {
             ActivityItemEntity entity = new ActivityItemEntity();
@@ -126,6 +145,7 @@ public class SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public SubmissionEntity submit(Long submissionId, Long studentId) {
         checkSubmissionEditableByStudent(submissionId, studentId);
+
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         ScoreResult score = calculateScore(submissionId);
         entity.setStatus("SUBMITTED");
@@ -144,8 +164,9 @@ public class SubmissionService {
     public SubmissionEntity finalizeSubmission(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
+
         ScoreResult score = calculateScore(submissionId);
         entity.setStatus("FINALIZED");
         entity.setMoralRaw(score.getMoralRaw());
@@ -163,8 +184,9 @@ public class SubmissionService {
     public SubmissionEntity recalculate(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
+
         ScoreResult score = calculateScore(submissionId);
         entity.setMoralRaw(score.getMoralRaw());
         entity.setIntelRaw(score.getIntelRaw());
@@ -179,12 +201,13 @@ public class SubmissionService {
     public Map<String, Object> getScore(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "无权限");
+            throw new BizException(40301, "Forbidden");
         }
+
         ScoreResult result = calculateScore(submissionId);
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("submissionId", submissionId);
@@ -196,7 +219,7 @@ public class SubmissionService {
         map.put("laborRaw", result.getLaborRaw());
         map.put("totalScore", result.getTotalScore());
         map.put("courseAvg", result.getCourseAvg());
-        map.put("formula", "德*15%+智*60%+体*10%+美*7.5%+劳*7.5%");
+        map.put("formula", "MORAL*15% + INTEL*60% + SPORT*10% + ART*7.5% + LABOR*7.5%");
         return map;
     }
 
@@ -208,12 +231,12 @@ public class SubmissionService {
         for (Map<String, Object> row : all) {
             String className = String.valueOf(row.get("class_name"));
             String majorName = String.valueOf(row.get("major_name"));
-            int c = classCounter.getOrDefault(className, 0) + 1;
-            int m = majorCounter.getOrDefault(majorName, 0) + 1;
-            classCounter.put(className, c);
-            majorCounter.put(majorName, m);
-            row.put("rankClass", c);
-            row.put("rankMajor", m);
+            int classRank = classCounter.getOrDefault(className, 0) + 1;
+            int majorRank = majorCounter.getOrDefault(majorName, 0) + 1;
+            classCounter.put(className, classRank);
+            majorCounter.put(majorName, majorRank);
+            row.put("rankClass", classRank);
+            row.put("rankMajor", majorRank);
         }
         return all;
     }
@@ -221,20 +244,20 @@ public class SubmissionService {
     private void checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (submissionMapper.checkOwner(submissionId, studentId) == 0) {
-            throw new BizException(40301, "无权限");
+            throw new BizException(40301, "Forbidden");
         }
         if ("FINALIZED".equals(entity.getStatus()) || "PUBLISHED".equals(entity.getStatus())) {
-            throw new BizException(40003, "当前状态不可编辑");
+            throw new BizException(40003, "Current status is not editable");
         }
     }
 
     public ScoreResult calculateScore(Long submissionId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
 
         ScoringConfigEntity cfg = scoringConfigMapper.findBySemesterId(submission.getSemesterId());
@@ -248,16 +271,18 @@ public class SubmissionService {
         BigDecimal creditSum = BigDecimal.ZERO;
         BigDecimal weightedSum = BigDecimal.ZERO;
         BigDecimal sportCourseCreditSum = BigDecimal.ZERO;
-        BigDecimal sportCourseWeighted = BigDecimal.ZERO;
+        BigDecimal sportCourseWeightedSum = BigDecimal.ZERO;
 
-        for (CourseItemEntity c : courses) {
-            BigDecimal score = safe(c.getReviewerScore() == null ? c.getScore() : c.getReviewerScore());
-            BigDecimal credit = safe(c.getCredit());
+        for (CourseItemEntity course : courses) {
+            BigDecimal score = safe(course.getReviewerScore() == null ? course.getScore() : course.getReviewerScore());
+            BigDecimal credit = safe(course.getCredit());
+
             creditSum = creditSum.add(credit);
             weightedSum = weightedSum.add(score.multiply(credit));
-            if (c.getCourseName() != null && c.getCourseName().contains("体育")) {
+
+            if (isSportCourse(course)) {
                 sportCourseCreditSum = sportCourseCreditSum.add(credit);
-                sportCourseWeighted = sportCourseWeighted.add(score.multiply(credit));
+                sportCourseWeightedSum = sportCourseWeightedSum.add(score.multiply(credit));
             }
         }
 
@@ -267,7 +292,7 @@ public class SubmissionService {
 
         BigDecimal sportCourseAvg = sportCourseCreditSum.compareTo(BigDecimal.ZERO) == 0
                 ? new BigDecimal("60")
-                : sportCourseWeighted.divide(sportCourseCreditSum, 4, RoundingMode.HALF_UP);
+                : sportCourseWeightedSum.divide(sportCourseCreditSum, 4, RoundingMode.HALF_UP);
 
         BigDecimal moral = BigDecimal.ZERO;
         BigDecimal intelInnovation = BigDecimal.ZERO;
@@ -275,9 +300,12 @@ public class SubmissionService {
         BigDecimal art = BigDecimal.ZERO;
         BigDecimal labor = BigDecimal.ZERO;
 
-        for (ActivityItemEntity a : activities) {
-            BigDecimal score = safe(a.getFinalScore() == null ? a.getSelfScore() : a.getFinalScore());
-            String module = (a.getModuleType() == null ? "" : a.getModuleType().trim().toUpperCase(Locale.ROOT));
+        for (ActivityItemEntity activity : activities) {
+            BigDecimal score = safe(activity.getFinalScore() == null ? activity.getSelfScore() : activity.getFinalScore());
+            String module = activity.getModuleType() == null
+                    ? ""
+                    : activity.getModuleType().trim().toUpperCase(Locale.ROOT);
+
             switch (module) {
                 case "MORAL":
                     moral = moral.add(score);
@@ -305,8 +333,10 @@ public class SubmissionService {
         BigDecimal artRaw = min(art, BigDecimal.valueOf(cfg.getCapArt()));
         BigDecimal laborRaw = min(labor, BigDecimal.valueOf(cfg.getCapLabor()));
 
-        BigDecimal intelRaw = courseAvg.multiply(new BigDecimal("0.85")).add(intelCap.multiply(new BigDecimal("0.15")));
-        BigDecimal sportRaw = sportCourseAvg.multiply(new BigDecimal("0.85")).add(sportCap.multiply(new BigDecimal("0.15")));
+        BigDecimal intelRaw = courseAvg.multiply(new BigDecimal("0.85"))
+                .add(intelCap.multiply(new BigDecimal("0.15")));
+        BigDecimal sportRaw = sportCourseAvg.multiply(new BigDecimal("0.85"))
+                .add(sportCap.multiply(new BigDecimal("0.15")));
 
         BigDecimal total = moralRaw.multiply(BigDecimal.valueOf(cfg.getwMoral()))
                 .add(intelRaw.multiply(BigDecimal.valueOf(cfg.getwIntel())))
@@ -327,8 +357,20 @@ public class SubmissionService {
         return result;
     }
 
-    private BigDecimal safe(BigDecimal v) {
-        return v == null ? BigDecimal.ZERO : v;
+    private boolean isSportCourse(CourseItemEntity course) {
+        String name = course.getCourseName() == null ? "" : course.getCourseName().toUpperCase(Locale.ROOT);
+        String type = course.getCourseType() == null ? "" : course.getCourseType().toUpperCase(Locale.ROOT);
+        if (type.contains("SPORT") || type.contains("PE") || type.contains("PHYSICAL")) {
+            return true;
+        }
+        if (name.contains("SPORT") || name.contains("PE") || name.contains("PHYSICAL")) {
+            return true;
+        }
+        return course.getCourseName() != null && course.getCourseName().contains("体育");
+    }
+
+    private BigDecimal safe(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     private BigDecimal min(BigDecimal a, BigDecimal b) {
