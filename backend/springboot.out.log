@@ -1,0 +1,55 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.cqnu:student-eval-backend >--------------------
+[INFO] Building student-eval-backend 0.0.1-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot-maven-plugin:2.7.18:run (default-cli) > test-compile @ student-eval-backend >>>
+[INFO] 
+[INFO] --- maven-resources-plugin:3.2.0:resources (default-resources) @ student-eval-backend ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 1 resource
+[INFO] Copying 2 resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:compile (default-compile) @ student-eval-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:3.2.0:testResources (default-testResources) @ student-eval-backend ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] skip non existing resourceDirectory D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.10.1:testCompile (default-testCompile) @ student-eval-backend ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot-maven-plugin:2.7.18:run (default-cli) < test-compile @ student-eval-backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:2.7.18:run (default-cli) @ student-eval-backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.18)
+
+2026-02-27 01:36:45.583  INFO 68244 --- [           main] com.cqnu.eval.EvalApplication            : Starting EvalApplication using Java 17.0.12 on LAPTOP-C7E8P64R with PID 68244 (D:\桌面\毕设程序\大学生综合测评管理系统\backend\target\classes started by 尘 in D:\桌面\毕设程序\大学生综合测评管理系统\backend)
+2026-02-27 01:36:45.586  INFO 68244 --- [           main] com.cqnu.eval.EvalApplication            : No active profile set, falling back to 1 default profile: "default"
+2026-02-27 01:36:46.734  INFO 68244 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2026-02-27 01:36:46.744  INFO 68244 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-27 01:36:46.744  INFO 68244 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-02-27 01:36:46.856  INFO 68244 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-02-27 01:36:46.857  INFO 68244 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1221 ms
+2026-02-27 01:36:47.104  WARN 68244 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 73be6858-b01d-44b3-827e-b916fd3504ec
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-02-27 01:36:47.181  INFO 68244 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@79eeff87, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@6b4fc2d1, org.springframework.security.web.context.SecurityContextPersistenceFilter@6c8f60f3, org.springframework.security.web.header.HeaderWriterFilter@4dc7cd1c, org.springframework.web.filter.CorsFilter@8bd076a, org.springframework.security.web.authentication.logout.LogoutFilter@220c9a63, com.cqnu.eval.security.JwtAuthFilter@75d982d3, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@71b6172c, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@58aa10f4, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1de4285e, org.springframework.security.web.session.SessionManagementFilter@6ccac6f4, org.springframework.security.web.access.ExceptionTranslationFilter@64f9f455, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@f25f48a]
+2026-02-27 01:36:47.403  INFO 68244 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2026-02-27 01:36:47.415  INFO 68244 --- [           main] com.cqnu.eval.EvalApplication            : Started EvalApplication in 2.225 seconds (JVM running for 2.573)
