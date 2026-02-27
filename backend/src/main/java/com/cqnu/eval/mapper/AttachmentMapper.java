@@ -22,4 +22,13 @@ public interface AttachmentMapper {
 
     @Select("select * from attachment where uploader_id = #{uploaderId} order by id desc")
     List<AttachmentEntity> listByUploader(@Param("uploaderId") Long uploaderId);
+
+    @Select("select count(1) from course_item c join submission s on c.submission_id=s.id " +
+            "where c.evidence_file_id = #{id} and s.status <> 'DRAFT'")
+    int countReferencedByCourse(@Param("id") Long id);
+
+    @Select("select count(1) from activity_item a join submission s on a.submission_id=s.id " +
+            "where a.evidence_file_ids is not null and a.evidence_file_ids <> '' and " +
+            "find_in_set(#{id}, a.evidence_file_ids) and s.status <> 'DRAFT'")
+    int countReferencedByActivity(@Param("id") Long id);
 }

@@ -14,8 +14,10 @@ if (!(Test-Path $mysql)) {
 $initSql = Resolve-Path "./src/main/resources/db/init.sql"
 $seedSql = Resolve-Path "./src/main/resources/db/seed.sql"
 
-cmd /c "\"$mysql\" -h $HostName -P $Port -u $UserName -p$Password < \"$initSql\""
+$cmd1 = "`"$mysql`" -h $HostName -P $Port -u $UserName -p$Password < `"$initSql`""
+cmd /c $cmd1
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-cmd /c "\"$mysql\" -h $HostName -P $Port -u $UserName -p$Password < \"$seedSql\""
+$cmd2 = "`"$mysql`" -h $HostName -P $Port -u $UserName -p$Password < `"$seedSql`""
+cmd /c $cmd2
 exit $LASTEXITCODE

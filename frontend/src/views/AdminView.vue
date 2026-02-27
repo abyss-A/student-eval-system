@@ -34,7 +34,7 @@
           <td>{{ task.id }}</td>
           <td>{{ task.real_name }}</td>
           <td>{{ task.class_name }}</td>
-          <td><span class="badge">{{ task.status }}</span></td>
+          <td><span class="badge">{{ statusLabel(task.status) }}</span></td>
           <td>{{ task.total_score ?? '-' }}</td>
           <td>
             <button class="btn" @click="finalize(task.id)" :disabled="isFinalizing">终审该测评单</button>
@@ -47,7 +47,7 @@
     </table>
 
     <p v-if="lastResult" class="muted" style="margin-top: 12px;">
-      最近一次终审：测评单 #{{ lastResult.id }}，状态 {{ lastResult.status }}，总分 {{ lastResult.totalScore }}
+      最近一次终审：测评单 #{{ lastResult.id }}，状态 {{ statusLabel(lastResult.status) }}，总分 {{ lastResult.totalScore }}
     </p>
   </section>
 </template>
@@ -61,6 +61,15 @@ const loadingTasks = ref(false)
 const isFinalizing = ref(false)
 const manualSubmissionId = ref(1)
 const lastResult = ref(null)
+
+const statusLabel = (raw) => {
+  const code = (raw || '').trim().toUpperCase()
+  if (code === 'DRAFT') return '草稿'
+  if (code === 'SUBMITTED') return '已提交'
+  if (code === 'FINALIZED') return '已终审'
+  if (code === 'PUBLISHED') return '已公示'
+  return raw || '-'
+}
 
 const loadTasks = async () => {
   loadingTasks.value = true

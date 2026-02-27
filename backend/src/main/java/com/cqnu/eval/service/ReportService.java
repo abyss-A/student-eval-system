@@ -48,10 +48,10 @@ public class ReportService {
     public Map<String, Object> availability(Long submissionId, CurrentUser user) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
         if (submissionMapper.checkOwner(submissionId, user.getId()) == 0) {
-            throw new BizException(40301, "Forbidden");
+            throw new BizException(40301, "无权限访问该测评单");
         }
 
         boolean canExport = !"DRAFT".equalsIgnoreCase(submission.getStatus());
@@ -66,13 +66,13 @@ public class ReportService {
     public ExportFile export(Long submissionId, String format, CurrentUser user) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
         if (submissionMapper.checkOwner(submissionId, user.getId()) == 0) {
-            throw new BizException(40301, "Forbidden");
+            throw new BizException(40301, "无权限访问该测评单");
         }
         if ("DRAFT".equalsIgnoreCase(submission.getStatus())) {
-            throw new BizException(40003, "Only submitted records can be exported");
+            throw new BizException(40003, "仅已提交的测评单可以导出");
         }
 
         Map<String, Object> detail = submissionService.getSubmissionDetail(submissionId, user);
@@ -93,7 +93,7 @@ public class ReportService {
                         buildPdf(detail, score, submission)
                 );
             default:
-                throw new BizException(40001, "Unsupported format: " + format);
+                throw new BizException(40001, "不支持的导出格式: " + format);
         }
     }
 
@@ -111,23 +111,23 @@ public class ReportService {
             titleRun.setBold(true);
             titleRun.setFontFamily("SimSun");
             titleRun.setFontSize(16);
-            titleRun.setText("Comprehensive Evaluation Report");
+            titleRun.setText("学生综合测评报告");
 
             XWPFParagraph subtitle = doc.createParagraph();
             subtitle.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun subtitleRun = subtitle.createRun();
             subtitleRun.setFontFamily("SimSun");
             subtitleRun.setFontSize(10);
-            subtitleRun.setText("Version: " + submission.getStatus());
+            subtitleRun.setText("状态: " + statusLabel(submission.getStatus()));
 
             XWPFTable basic = doc.createTable(2, 4);
-            setCell(basic, 0, 0, "Name", fontSize, true);
+            setCell(basic, 0, 0, "姓名", fontSize, true);
             setCell(basic, 0, 1, student == null ? "" : str(student.getRealName()), fontSize, false);
-            setCell(basic, 0, 2, "Student No", fontSize, true);
+            setCell(basic, 0, 2, "学号", fontSize, true);
             setCell(basic, 0, 3, student == null ? "" : str(student.getStudentNo()), fontSize, false);
-            setCell(basic, 1, 0, "Class", fontSize, true);
+            setCell(basic, 1, 0, "班级", fontSize, true);
             setCell(basic, 1, 1, student == null ? "" : str(student.getClassName()), fontSize, false);
-            setCell(basic, 1, 2, "Major", fontSize, true);
+            setCell(basic, 1, 2, "专业", fontSize, true);
             setCell(basic, 1, 3, student == null ? "" : str(student.getMajorName()), fontSize, false);
 
             XWPFParagraph courseTitle = doc.createParagraph();
@@ -135,17 +135,17 @@ public class ReportService {
             courseTitleRun.setBold(true);
             courseTitleRun.setFontFamily("SimSun");
             courseTitleRun.setFontSize(fontSize + 1);
-            courseTitleRun.setText("Course Scores");
+            courseTitleRun.setText("课程成绩");
 
             XWPFTable courseTable = doc.createTable(courses.size() + 1, 4);
-            setCell(courseTable, 0, 0, "Course Name", fontSize, true);
-            setCell(courseTable, 0, 1, "Type", fontSize, true);
-            setCell(courseTable, 0, 2, "Score", fontSize, true);
-            setCell(courseTable, 0, 3, "Credit", fontSize, true);
+            setCell(courseTable, 0, 0, "课程名称", fontSize, true);
+            setCell(courseTable, 0, 1, "课程类型", fontSize, true);
+            setCell(courseTable, 0, 2, "成绩", fontSize, true);
+            setCell(courseTable, 0, 3, "学分", fontSize, true);
             for (int i = 0; i < courses.size(); i++) {
                 CourseItemEntity c = courses.get(i);
                 setCell(courseTable, i + 1, 0, str(c.getCourseName()), fontSize, false);
-                setCell(courseTable, i + 1, 1, str(c.getCourseType()), fontSize, false);
+                setCell(courseTable, i + 1, 1, courseTypeLabel(c.getCourseType()), fontSize, false);
                 setCell(courseTable, i + 1, 2, bd(c.getReviewerScore() == null ? c.getScore() : c.getReviewerScore()), fontSize, false);
                 setCell(courseTable, i + 1, 3, bd(c.getCredit()), fontSize, false);
             }
@@ -155,18 +155,18 @@ public class ReportService {
             moduleTitleRun.setBold(true);
             moduleTitleRun.setFontFamily("SimSun");
             moduleTitleRun.setFontSize(fontSize + 1);
-            moduleTitleRun.setText("Activity Modules");
+            moduleTitleRun.setText("活动模块");
 
             XWPFTable moduleTable = doc.createTable(5, 2);
-            setCell(moduleTable, 0, 0, "Moral", fontSize, true);
+            setCell(moduleTable, 0, 0, "德育", fontSize, true);
             setCell(moduleTable, 0, 1, joinModule(activities, "MORAL"), fontSize, false);
-            setCell(moduleTable, 1, 0, "Intel Innovation", fontSize, true);
+            setCell(moduleTable, 1, 0, "智育（专业创新）", fontSize, true);
             setCell(moduleTable, 1, 1, joinModule(activities, "INTEL_PRO_INNOV"), fontSize, false);
-            setCell(moduleTable, 2, 0, "Sport", fontSize, true);
+            setCell(moduleTable, 2, 0, "体育（活动）", fontSize, true);
             setCell(moduleTable, 2, 1, joinModule(activities, "SPORT_ACTIVITY"), fontSize, false);
-            setCell(moduleTable, 3, 0, "Art", fontSize, true);
+            setCell(moduleTable, 3, 0, "美育", fontSize, true);
             setCell(moduleTable, 3, 1, joinModule(activities, "ART"), fontSize, false);
-            setCell(moduleTable, 4, 0, "Labor", fontSize, true);
+            setCell(moduleTable, 4, 0, "劳动", fontSize, true);
             setCell(moduleTable, 4, 1, joinModule(activities, "LABOR"), fontSize, false);
 
             XWPFParagraph scoreTitle = doc.createParagraph();
@@ -174,32 +174,32 @@ public class ReportService {
             scoreTitleRun.setBold(true);
             scoreTitleRun.setFontFamily("SimSun");
             scoreTitleRun.setFontSize(fontSize + 1);
-            scoreTitleRun.setText("Score Summary");
+            scoreTitleRun.setText("分数汇总");
 
             XWPFTable scoreTable = doc.createTable(3, 4);
-            setCell(scoreTable, 0, 0, "Moral", fontSize, true);
+            setCell(scoreTable, 0, 0, "德育", fontSize, true);
             setCell(scoreTable, 0, 1, bd(readDecimal(score, "moralRaw")), fontSize, false);
-            setCell(scoreTable, 0, 2, "Intel", fontSize, true);
+            setCell(scoreTable, 0, 2, "智育", fontSize, true);
             setCell(scoreTable, 0, 3, bd(readDecimal(score, "intelRaw")), fontSize, false);
-            setCell(scoreTable, 1, 0, "Sport", fontSize, true);
+            setCell(scoreTable, 1, 0, "体育", fontSize, true);
             setCell(scoreTable, 1, 1, bd(readDecimal(score, "sportRaw")), fontSize, false);
-            setCell(scoreTable, 1, 2, "Art", fontSize, true);
+            setCell(scoreTable, 1, 2, "美育", fontSize, true);
             setCell(scoreTable, 1, 3, bd(readDecimal(score, "artRaw")), fontSize, false);
-            setCell(scoreTable, 2, 0, "Labor", fontSize, true);
+            setCell(scoreTable, 2, 0, "劳动", fontSize, true);
             setCell(scoreTable, 2, 1, bd(readDecimal(score, "laborRaw")), fontSize, false);
-            setCell(scoreTable, 2, 2, "Total", fontSize, true);
+            setCell(scoreTable, 2, 2, "总分", fontSize, true);
             setCell(scoreTable, 2, 3, bd(readDecimal(score, "totalScore")), fontSize, false);
 
             XWPFParagraph note = doc.createParagraph();
             XWPFRun noteRun = note.createRun();
             noteRun.setFontFamily("SimSun");
             noteRun.setFontSize(Math.max(7, fontSize - 1));
-            noteRun.setText("Note: Evidence files are not included in this export. Formula: " + str(score.get("formula")));
+            noteRun.setText("说明：本次导出不包含证明材料。计算公式：" + str(score.get("formula")));
 
             doc.write(out);
             return out.toByteArray();
         } catch (Exception e) {
-            throw new BizException(50001, "DOCX export failed: " + e.getMessage());
+            throw new BizException(50001, "DOCX 导出失败: " + e.getMessage());
         }
     }
 
@@ -216,56 +216,56 @@ public class ReportService {
             Font normal = createPdfFont(10, Font.NORMAL);
             Font bold = createPdfFont(10, Font.BOLD);
 
-            Paragraph title = new Paragraph("Comprehensive Evaluation Report", titleFont);
+            Paragraph title = new Paragraph("学生综合测评报告", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
 
-            Paragraph version = new Paragraph("Version: " + submission.getStatus(), normal);
+            Paragraph version = new Paragraph("状态: " + statusLabel(submission.getStatus()), normal);
             version.setAlignment(Element.ALIGN_CENTER);
             version.setSpacingAfter(10f);
             document.add(version);
 
             PdfPTable basic = new PdfPTable(4);
             basic.setWidthPercentage(100);
-            addCell(basic, "Name", bold);
+            addCell(basic, "姓名", bold);
             addCell(basic, student == null ? "" : str(student.getRealName()), normal);
-            addCell(basic, "Student No", bold);
+            addCell(basic, "学号", bold);
             addCell(basic, student == null ? "" : str(student.getStudentNo()), normal);
-            addCell(basic, "Class", bold);
+            addCell(basic, "班级", bold);
             addCell(basic, student == null ? "" : str(student.getClassName()), normal);
-            addCell(basic, "Major", bold);
+            addCell(basic, "专业", bold);
             addCell(basic, student == null ? "" : str(student.getMajorName()), normal);
             basic.setSpacingAfter(8f);
             document.add(basic);
 
             PdfPTable scoreTable = new PdfPTable(4);
             scoreTable.setWidthPercentage(100);
-            addCell(scoreTable, "Moral", bold);
+            addCell(scoreTable, "德育", bold);
             addCell(scoreTable, bd(readDecimal(score, "moralRaw")), normal);
-            addCell(scoreTable, "Intel", bold);
+            addCell(scoreTable, "智育", bold);
             addCell(scoreTable, bd(readDecimal(score, "intelRaw")), normal);
-            addCell(scoreTable, "Sport", bold);
+            addCell(scoreTable, "体育", bold);
             addCell(scoreTable, bd(readDecimal(score, "sportRaw")), normal);
-            addCell(scoreTable, "Art", bold);
+            addCell(scoreTable, "美育", bold);
             addCell(scoreTable, bd(readDecimal(score, "artRaw")), normal);
-            addCell(scoreTable, "Labor", bold);
+            addCell(scoreTable, "劳动", bold);
             addCell(scoreTable, bd(readDecimal(score, "laborRaw")), normal);
-            addCell(scoreTable, "Total", bold);
+            addCell(scoreTable, "总分", bold);
             addCell(scoreTable, bd(readDecimal(score, "totalScore")), normal);
             scoreTable.setSpacingAfter(8f);
             document.add(scoreTable);
 
-            document.add(new Paragraph("Moral: " + joinModule(activities, "MORAL"), normal));
-            document.add(new Paragraph("Intel Innovation: " + joinModule(activities, "INTEL_PRO_INNOV"), normal));
-            document.add(new Paragraph("Sport: " + joinModule(activities, "SPORT_ACTIVITY"), normal));
-            document.add(new Paragraph("Art: " + joinModule(activities, "ART"), normal));
-            document.add(new Paragraph("Labor: " + joinModule(activities, "LABOR"), normal));
-            document.add(new Paragraph("Note: Evidence files are not included in this export.", normal));
+            document.add(new Paragraph("德育：" + joinModule(activities, "MORAL"), normal));
+            document.add(new Paragraph("智育（专业创新）：" + joinModule(activities, "INTEL_PRO_INNOV"), normal));
+            document.add(new Paragraph("体育（活动）：" + joinModule(activities, "SPORT_ACTIVITY"), normal));
+            document.add(new Paragraph("美育：" + joinModule(activities, "ART"), normal));
+            document.add(new Paragraph("劳动：" + joinModule(activities, "LABOR"), normal));
+            document.add(new Paragraph("说明：本次导出不包含证明材料。", normal));
 
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
-            throw new BizException(50001, "PDF export failed: " + e.getMessage());
+            throw new BizException(50001, "PDF 导出失败: " + e.getMessage());
         }
     }
 
@@ -361,7 +361,45 @@ public class ReportService {
         if (obj instanceof UserEntity) {
             return (UserEntity) obj;
         }
-        throw new BizException(50001, "Unexpected student object type: " + obj.getClass().getName());
+        throw new BizException(50001, "学生信息类型异常: " + obj.getClass().getName());
+    }
+
+    private String statusLabel(String raw) {
+        String code = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        if (code.isEmpty()) {
+            return "-";
+        }
+        switch (code) {
+            case "DRAFT":
+                return "草稿";
+            case "SUBMITTED":
+                return "已提交";
+            case "FINALIZED":
+                return "已终审";
+            case "PUBLISHED":
+                return "已公示";
+            default:
+                return raw;
+        }
+    }
+
+    private String courseTypeLabel(String raw) {
+        String code = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        if (code.isEmpty()) {
+            return "-";
+        }
+        switch (code) {
+            case "REQUIRED":
+                return "必修";
+            case "ELECTIVE":
+                return "选修";
+            case "RETAKE":
+                return "重修";
+            case "RELEARN":
+                return "再修";
+            default:
+                return raw;
+        }
     }
 
     @SuppressWarnings("unchecked")

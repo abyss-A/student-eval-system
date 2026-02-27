@@ -2,6 +2,7 @@ package com.cqnu.eval.service;
 
 import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.mapper.ActivityItemMapper;
+import com.cqnu.eval.mapper.AttachmentMapper;
 import com.cqnu.eval.mapper.CourseItemMapper;
 import com.cqnu.eval.mapper.ScoringConfigMapper;
 import com.cqnu.eval.mapper.SemesterMapper;
@@ -12,6 +13,7 @@ import com.cqnu.eval.model.dto.BatchActivityRequest;
 import com.cqnu.eval.model.dto.BatchCourseRequest;
 import com.cqnu.eval.model.dto.CourseItemInput;
 import com.cqnu.eval.model.entity.ActivityItemEntity;
+import com.cqnu.eval.model.entity.AttachmentEntity;
 import com.cqnu.eval.model.entity.CourseItemEntity;
 import com.cqnu.eval.model.entity.ScoringConfigEntity;
 import com.cqnu.eval.model.entity.SemesterEntity;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,26 +42,29 @@ public class SubmissionService {
     private final ActivityItemMapper activityItemMapper;
     private final UserMapper userMapper;
     private final ScoringConfigMapper scoringConfigMapper;
+    private final AttachmentMapper attachmentMapper;
 
     public SubmissionService(SemesterMapper semesterMapper,
                              SubmissionMapper submissionMapper,
                              CourseItemMapper courseItemMapper,
                              ActivityItemMapper activityItemMapper,
                              UserMapper userMapper,
-                             ScoringConfigMapper scoringConfigMapper) {
+                             ScoringConfigMapper scoringConfigMapper,
+                             AttachmentMapper attachmentMapper) {
         this.semesterMapper = semesterMapper;
         this.submissionMapper = submissionMapper;
         this.courseItemMapper = courseItemMapper;
         this.activityItemMapper = activityItemMapper;
         this.userMapper = userMapper;
         this.scoringConfigMapper = scoringConfigMapper;
+        this.attachmentMapper = attachmentMapper;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public SubmissionEntity createOrGetMySubmission(Long studentId) {
         SemesterEntity active = semesterMapper.findActive();
         if (active == null) {
-            throw new BizException(40401, "No active semester");
+            throw new BizException(40401, "当前没有启用的学期，请联系管理员");
         }
 
         SubmissionEntity existing = submissionMapper.findBySemesterAndStudent(active.getId(), studentId);
@@ -83,11 +89,11 @@ public class SubmissionService {
     public Map<String, Object> getSubmissionDetail(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "Forbidden");
+            throw new BizException(40301, "无权限访问该测评单");
         }
 
         UserEntity student = userMapper.findById(submission.getStudentId());
@@ -135,11 +141,82 @@ public class SubmissionService {
             entity.setDescription(item.getDescription());
             entity.setSelfScore(item.getSelfScore());
             entity.setFinalScore(item.getSelfScore());
-            entity.setEvidenceFileIds(item.getEvidenceFileIds());
+            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
             entity.setReviewStatus("PENDING");
             entity.setReviewerComment(null);
             activityItemMapper.insert(entity);
         }
+    }
+
+    private String sanitizeEvidenceFileIds(String raw, Long studentId) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        String[] parts = raw.split(",");
+        List<Long> ids = new ArrayList<>();
+        for (String p : parts) {
+            if (p == null) {
+                continue;
+            }
+            String trimmed = p.trim();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            long id;
+            try {
+                id = Long.parseLong(trimmed);
+            } catch (NumberFormatException e) {
+                throw new BizException(40001, "附件ID格式不正确: " + trimmed);
+            }
+            if (id <= 0) {
+                throw new BizException(40001, "附件ID必须为正数");
+            }
+            if (!ids.contains(id)) {
+                ids.add(id);
+            }
+        }
+
+        if (ids.size() > 6) {
+            throw new BizException(40001, "每个活动最多上传6张证明图片");
+        }
+
+        // Only allow referencing images uploaded by the current student.
+        for (Long id : ids) {
+            AttachmentEntity meta = attachmentMapper.findById(id);
+            if (meta == null) {
+                throw new BizException(40401, "附件不存在: " + id);
+            }
+            if (meta.getUploaderId() == null || !meta.getUploaderId().equals(studentId)) {
+                throw new BizException(40301, "只能引用自己上传的证明图片");
+            }
+            // Evidence material: only allow JPG/PNG images to be referenced.
+            String mime = meta.getMimeType();
+            if (mime != null) {
+                mime = mime.trim().toLowerCase(Locale.ROOT);
+                int semi = mime.indexOf(';');
+                if (semi > 0) {
+                    mime = mime.substring(0, semi).trim();
+                }
+            }
+            boolean allowedByMime = "image/jpeg".equals(mime) || "image/png".equals(mime);
+
+            String fileName = meta.getFileName();
+            String nameLower = fileName == null ? "" : fileName.toLowerCase(Locale.ROOT);
+            boolean allowedByExt = nameLower.endsWith(".jpg") || nameLower.endsWith(".jpeg") || nameLower.endsWith(".png");
+
+            if (!allowedByMime && !allowedByExt) {
+                throw new BizException(40001, "证明材料仅支持JPG/PNG图片");
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Long id : ids) {
+            if (sb.length() > 0) {
+                sb.append(",");
+            }
+            sb.append(id);
+        }
+        return sb.toString();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -164,7 +241,7 @@ public class SubmissionService {
     public SubmissionEntity finalizeSubmission(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
 
         ScoreResult score = calculateScore(submissionId);
@@ -184,7 +261,7 @@ public class SubmissionService {
     public SubmissionEntity recalculate(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
 
         ScoreResult score = calculateScore(submissionId);
@@ -201,11 +278,11 @@ public class SubmissionService {
     public Map<String, Object> getScore(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "Forbidden");
+            throw new BizException(40301, "无权限操作该测评单");
         }
 
         ScoreResult result = calculateScore(submissionId);
@@ -244,20 +321,20 @@ public class SubmissionService {
     private void checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
         if (submissionMapper.checkOwner(submissionId, studentId) == 0) {
-            throw new BizException(40301, "Forbidden");
+            throw new BizException(40301, "无权限操作该测评单");
         }
         if ("FINALIZED".equals(entity.getStatus()) || "PUBLISHED".equals(entity.getStatus())) {
-            throw new BizException(40003, "Current status is not editable");
+            throw new BizException(40003, "当前状态不可编辑");
         }
     }
 
     public ScoreResult calculateScore(Long submissionId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "Submission not found");
+            throw new BizException(40401, "测评单不存在");
         }
 
         ScoringConfigEntity cfg = scoringConfigMapper.findBySemesterId(submission.getSemesterId());

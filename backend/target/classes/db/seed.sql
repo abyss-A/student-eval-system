@@ -1,112 +1,79 @@
 USE student_eval;
-DELETE FROM review_log;
-DELETE FROM activity_item;
-DELETE FROM course_item;
-DELETE FROM attachment;
-DELETE FROM submission;
-DELETE FROM scoring_config;
-DELETE FROM semester;
-DELETE FROM sys_user;
-INSERT INTO semester(id,name,year_num,term_num,is_active) VALUES (1,'2026_Spring',2026,1,1);
-INSERT INTO scoring_config(semester_id,appeal_days,precedence_mode,score_model,w_moral,w_intel,w_sport,w_art,w_labor,cap_moral,cap_intel,cap_sport,cap_art,cap_labor) VALUES (1,10,'COLLEGE_FIRST','STRICT_FORMULA',0.15,0.60,0.10,0.075,0.075,100,100,100,100,100);
-INSERT INTO sys_user(username,password_hash,role,real_name,enabled) VALUES ('admin','123456','ADMIN','Admin',1);
-INSERT INTO sys_user(username,password_hash,role,real_name,enabled) VALUES ('counselor1','123456','COUNSELOR','Counselor_Zhang',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0001','123456','STUDENT','2022000001','Student_001','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0002','123456','STUDENT','2022000002','Student_002','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0003','123456','STUDENT','2022000003','Student_003','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0004','123456','STUDENT','2022000004','Student_004','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0005','123456','STUDENT','2022000005','Student_005','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0006','123456','STUDENT','2022000006','Student_006','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0007','123456','STUDENT','2022000007','Student_007','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0008','123456','STUDENT','2022000008','Student_008','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0009','123456','STUDENT','2022000009','Student_009','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0010','123456','STUDENT','2022000010','Student_010','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0011','123456','STUDENT','2022000011','Student_011','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0012','123456','STUDENT','2022000012','Student_012','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0013','123456','STUDENT','2022000013','Student_013','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0014','123456','STUDENT','2022000014','Student_014','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0015','123456','STUDENT','2022000015','Student_015','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0016','123456','STUDENT','2022000016','Student_016','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0017','123456','STUDENT','2022000017','Student_017','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0018','123456','STUDENT','2022000018','Student_018','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0019','123456','STUDENT','2022000019','Student_019','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0020','123456','STUDENT','2022000020','Student_020','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0021','123456','STUDENT','2022000021','Student_021','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0022','123456','STUDENT','2022000022','Student_022','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0023','123456','STUDENT','2022000023','Student_023','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0024','123456','STUDENT','2022000024','Student_024','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0025','123456','STUDENT','2022000025','Student_025','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0026','123456','STUDENT','2022000026','Student_026','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0027','123456','STUDENT','2022000027','Student_027','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0028','123456','STUDENT','2022000028','Student_028','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0029','123456','STUDENT','2022000029','Student_029','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0030','123456','STUDENT','2022000030','Student_030','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0031','123456','STUDENT','2022000031','Student_031','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0032','123456','STUDENT','2022000032','Student_032','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0033','123456','STUDENT','2022000033','Student_033','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0034','123456','STUDENT','2022000034','Student_034','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0035','123456','STUDENT','2022000035','Student_035','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0036','123456','STUDENT','2022000036','Student_036','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0037','123456','STUDENT','2022000037','Student_037','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0038','123456','STUDENT','2022000038','Student_038','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0039','123456','STUDENT','2022000039','Student_039','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0040','123456','STUDENT','2022000040','Student_040','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0041','123456','STUDENT','2022000041','Student_041','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0042','123456','STUDENT','2022000042','Student_042','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0043','123456','STUDENT','2022000043','Student_043','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0044','123456','STUDENT','2022000044','Student_044','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0045','123456','STUDENT','2022000045','Student_045','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0046','123456','STUDENT','2022000046','Student_046','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0047','123456','STUDENT','2022000047','Student_047','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0048','123456','STUDENT','2022000048','Student_048','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0049','123456','STUDENT','2022000049','Student_049','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0050','123456','STUDENT','2022000050','Student_050','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0051','123456','STUDENT','2022000051','Student_051','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0052','123456','STUDENT','2022000052','Student_052','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0053','123456','STUDENT','2022000053','Student_053','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0054','123456','STUDENT','2022000054','Student_054','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0055','123456','STUDENT','2022000055','Student_055','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0056','123456','STUDENT','2022000056','Student_056','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0057','123456','STUDENT','2022000057','Student_057','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0058','123456','STUDENT','2022000058','Student_058','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0059','123456','STUDENT','2022000059','Student_059','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0060','123456','STUDENT','2022000060','Student_060','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0061','123456','STUDENT','2022000061','Student_061','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0062','123456','STUDENT','2022000062','Student_062','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0063','123456','STUDENT','2022000063','Student_063','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0064','123456','STUDENT','2022000064','Student_064','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0065','123456','STUDENT','2022000065','Student_065','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0066','123456','STUDENT','2022000066','Student_066','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0067','123456','STUDENT','2022000067','Student_067','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0068','123456','STUDENT','2022000068','Student_068','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0069','123456','STUDENT','2022000069','Student_069','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0070','123456','STUDENT','2022000070','Student_070','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0071','123456','STUDENT','2022000071','Student_071','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0072','123456','STUDENT','2022000072','Student_072','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0073','123456','STUDENT','2022000073','Student_073','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0074','123456','STUDENT','2022000074','Student_074','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0075','123456','STUDENT','2022000075','Student_075','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0076','123456','STUDENT','2022000076','Student_076','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0077','123456','STUDENT','2022000077','Student_077','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0078','123456','STUDENT','2022000078','Student_078','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0079','123456','STUDENT','2022000079','Student_079','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0080','123456','STUDENT','2022000080','Student_080','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0081','123456','STUDENT','2022000081','Student_081','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0082','123456','STUDENT','2022000082','Student_082','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0083','123456','STUDENT','2022000083','Student_083','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0084','123456','STUDENT','2022000084','Student_084','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0085','123456','STUDENT','2022000085','Student_085','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0086','123456','STUDENT','2022000086','Student_086','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0087','123456','STUDENT','2022000087','Student_087','Class_C','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0088','123456','STUDENT','2022000088','Student_088','Class_A','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0089','123456','STUDENT','2022000089','Student_089','Class_B','Math_Data',1);
-INSERT INTO sys_user(username,password_hash,role,student_no,real_name,class_name,major_name,enabled) VALUES ('stu0090','123456','STUDENT','2022000090','Student_090','Class_C','Math_Data',1);
-INSERT INTO submission(semester_id,student_id,status,moral_raw,intel_raw,sport_raw,art_raw,labor_raw,total_score,submitted_at) VALUES (1,3,'SUBMITTED',12,82,74,66,78,75.45,NOW());
-INSERT INTO course_item(submission_id,course_name,course_type,score,credit,review_status,reviewer_score) VALUES (1,'Algebra','REQUIRED',86,4,'APPROVED',86);
-INSERT INTO course_item(submission_id,course_name,course_type,score,credit,review_status,reviewer_score) VALUES (1,'Analysis','REQUIRED',88,5,'APPROVED',88);
-INSERT INTO course_item(submission_id,course_name,course_type,score,credit,review_status,reviewer_score) VALUES (1,'PE','REQUIRED',80,2,'APPROVED',80);
-INSERT INTO activity_item(submission_id,module_type,title,description,self_score,final_score,review_status) VALUES (1,'MORAL','LeagueActivity','Joined class activity',8,8,'APPROVED');
-INSERT INTO activity_item(submission_id,module_type,title,description,self_score,final_score,review_status) VALUES (1,'INTEL_PRO_INNOV','MathContest','College level award',6,6,'APPROVED');
-INSERT INTO activity_item(submission_id,module_type,title,description,self_score,final_score,review_status) VALUES (1,'SPORT_ACTIVITY','SportsMeeting','100m event',5,5,'APPROVED');
-INSERT INTO activity_item(submission_id,module_type,title,description,self_score,final_score,review_status) VALUES (1,'ART','Essay','Essay contest',4,4,'APPROVED');
-INSERT INTO activity_item(submission_id,module_type,title,description,self_score,final_score,review_status) VALUES (1,'LABOR','Volunteer','Campus volunteer',7,7,'APPROVED');
+
+SET FOREIGN_KEY_CHECKS=0;
+TRUNCATE TABLE review_log;
+TRUNCATE TABLE activity_item;
+TRUNCATE TABLE course_item;
+TRUNCATE TABLE attachment;
+TRUNCATE TABLE submission;
+TRUNCATE TABLE scoring_config;
+TRUNCATE TABLE semester;
+TRUNCATE TABLE sys_user;
+SET FOREIGN_KEY_CHECKS=1;
+
+-- Semester & scoring config
+INSERT INTO semester(id,name,year_num,term_num,is_active)
+VALUES (1, CONVERT(0x32303236e5b9b4e698a5e5ada3e5ada6e69c9f USING utf8mb4), 2026, 1, 1);
+
+INSERT INTO scoring_config(
+  semester_id, appeal_days, precedence_mode, score_model,
+  w_moral, w_intel, w_sport, w_art, w_labor,
+  cap_moral, cap_intel, cap_sport, cap_art, cap_labor
+) VALUES (1, 10, 'COLLEGE_FIRST', 'STRICT_FORMULA', 0.15, 0.60, 0.10, 0.075, 0.075, 100, 100, 100, 100, 100);
+
+-- Accounts (username/password should be ASCII; names/classes/majors are Chinese in DB)
+INSERT INTO sys_user(id, username, password_hash, role, real_name, enabled)
+VALUES (1, 'admin', '123456', 'ADMIN', CONVERT(0xe7b3bbe7bb9fe7aea1e79086e59198 USING utf8mb4), 1);
+
+INSERT INTO sys_user(id, username, password_hash, role, real_name, enabled)
+VALUES (2, 'counselor1', '123456', 'COUNSELOR', CONVERT(0xe5bca0e88081e5b888 USING utf8mb4), 1);
+
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (3, 'stu0001', '123456', 'STUDENT', '2022000001', CONVERT(0xe5ada6e7949f303031 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (4, 'stu0002', '123456', 'STUDENT', '2022000002', CONVERT(0xe5ada6e7949f303032 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (5, 'stu0003', '123456', 'STUDENT', '2022000003', CONVERT(0xe5ada6e7949f303033 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (6, 'stu0004', '123456', 'STUDENT', '2022000004', CONVERT(0xe5ada6e7949f303034 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (7, 'stu0005', '123456', 'STUDENT', '2022000005', CONVERT(0xe5ada6e7949f303035 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (8, 'stu0006', '123456', 'STUDENT', '2022000006', CONVERT(0xe5ada6e7949f303036 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (9, 'stu0007', '123456', 'STUDENT', '2022000007', CONVERT(0xe5ada6e7949f303037 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (10, 'stu0008', '123456', 'STUDENT', '2022000008', CONVERT(0xe5ada6e7949f303038 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (11, 'stu0009', '123456', 'STUDENT', '2022000009', CONVERT(0xe5ada6e7949f303039 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
+VALUES (12, 'stu0010', '123456', 'STUDENT', '2022000010', CONVERT(0xe5ada6e7949f303130 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+
+-- Example submission (for ranking/export demo)
+INSERT INTO submission(
+  id, semester_id, student_id, status,
+  moral_raw, intel_raw, sport_raw, art_raw, labor_raw,
+  total_score, submitted_at, created_at, updated_at
+) VALUES (1, 1, 3, 'SUBMITTED', 30, 75.56, 69.50, 10, 10, 58.28, NOW(), NOW(), NOW());
+
+INSERT INTO course_item(submission_id, course_name, course_type, score, credit, review_status, reviewer_score)
+VALUES (1, CONVERT(0xe9ab98e7ad89e4bba3e695b0 USING utf8mb4), 'REQUIRED', 86, 4, 'APPROVED', 86);
+INSERT INTO course_item(submission_id, course_name, course_type, score, credit, review_status, reviewer_score)
+VALUES (1, CONVERT(0xe695b0e5ada6e58886e69e90 USING utf8mb4), 'REQUIRED', 88, 5, 'APPROVED', 88);
+INSERT INTO course_item(submission_id, course_name, course_type, score, credit, review_status, reviewer_score)
+VALUES (1, CONVERT(0xe5a4a7e5ada6e4bd93e882b2 USING utf8mb4), 'REQUIRED', 80, 2, 'APPROVED', 80);
+INSERT INTO course_item(submission_id, course_name, course_type, score, credit, review_status, reviewer_score)
+VALUES (1, CONVERT(0xe6a682e78e87e8aeba USING utf8mb4), 'REQUIRED', 90, 5, 'APPROVED', 90);
+
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'MORAL', CONVERT(0xe4b8bbe9a298e59ba2e697a5 USING utf8mb4), CONVERT(0xe58f82e4b88ee6b4bbe58aa8 USING utf8mb4), 10, 10, '', 'APPROVED');
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'MORAL', CONVERT(0xe695b0e5ada6e5bbbae6a8a1e7a4bee68890e59198 USING utf8mb4), '', 20, 20, '', 'APPROVED');
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'INTEL_PRO_INNOV', CONVERT(0xe5ada6e7a791e7ab9ee8b59be88eb7e5a596 USING utf8mb4), '', 10, 10, '', 'APPROVED');
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'SPORT_ACTIVITY', CONVERT(0xe8bf90e58aa8e4bc9a USING utf8mb4), '', 10, 10, '', 'APPROVED');
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'ART', CONVERT(0xe5be81e69687e6af94e8b59b USING utf8mb4), '', 10, 10, '', 'APPROVED');
+INSERT INTO activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status)
+VALUES (1, 'LABOR', CONVERT(0xe58ab3e58aa8e5ae9ee8b7b5 USING utf8mb4), '', 10, 10, '', 'APPROVED');

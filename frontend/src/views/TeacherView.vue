@@ -68,7 +68,7 @@
       <tbody>
         <tr v-for="course in current.courses" :key="`course_${course.id}`">
           <td>{{ course.courseName }}</td>
-          <td>{{ course.courseType }}</td>
+          <td>{{ courseTypeLabel(course.courseType) }}</td>
           <td>{{ course.score }}</td>
           <td>
             <input type="number" v-model.number="drafts[courseKey(course.id)].adjustedScore" min="0" step="0.5" />
@@ -98,17 +98,26 @@
           <th>标题</th>
           <th>原分</th>
           <th>调整分</th>
+          <th>证明图片</th>
           <th>理由</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="activity in current.activities" :key="`act_${activity.id}`">
-          <td>{{ activity.moduleType }}</td>
+          <td>{{ moduleLabel(activity.moduleType) }}</td>
           <td>{{ activity.title }}</td>
           <td>{{ activity.selfScore }}</td>
           <td>
             <input type="number" v-model.number="drafts[activityKey(activity.id)].adjustedScore" min="0" step="0.5" />
+          </td>
+          <td>
+            <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
+              <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
+                <button class="link" @click="previewEvidence(m.id)">{{ m.fileName || ('附件#' + m.id) }}</button>
+              </span>
+            </div>
+            <span v-else class="muted" style="font-size:12px;">未上传</span>
           </td>
           <td>
             <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由" />
@@ -142,9 +151,29 @@ const loadingDetail = ref(false)
 const isDeciding = ref(false)
 
 const drafts = reactive({})
+const evidenceMetaCache = reactive({})
 
 const courseKey = (id) => `COURSE_${id}`
 const activityKey = (id) => `ACTIVITY_${id}`
+
+const courseTypeLabel = (raw) => {
+  const code = (raw || '').trim().toUpperCase()
+  if (code === 'REQUIRED') return '必修'
+  if (code === 'ELECTIVE') return '选修'
+  if (code === 'RETAKE') return '重修'
+  if (code === 'RELEARN') return '再修'
+  return raw || '-'
+}
+
+const moduleLabel = (raw) => {
+  const code = (raw || '').trim().toUpperCase()
+  if (code === 'MORAL') return '德育'
+  if (code === 'INTEL_PRO_INNOV') return '智育（专业创新）'
+  if (code === 'SPORT_ACTIVITY') return '体育（活动）'
+  if (code === 'ART') return '美育'
+  if (code === 'LABOR') return '劳动'
+  return raw || '-'
+}
 
 const ensureDraft = (key) => {
   if (!drafts[key]) {
@@ -186,6 +215,7 @@ const openTask = async (submissionId) => {
     current.value = data.data
     selectedSubmissionId.value = submissionId
     initDrafts(data.data)
+    await hydrateEvidenceMetas()
   } finally {
     loadingDetail.value = false
   }
@@ -230,6 +260,53 @@ const formatDate = (raw) => {
   const date = new Date(raw)
   if (Number.isNaN(date.getTime())) return raw
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+const parseEvidenceIds = (raw) => {
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => Number(s))
+    .filter((n) => Number.isFinite(n) && n > 0)
+}
+
+const hydrateEvidenceMetas = async () => {
+  if (!current.value?.activities) return
+
+  const ids = []
+  for (const a of current.value.activities) {
+    ids.push(...parseEvidenceIds(a.evidenceFileIds))
+  }
+  const uniqueIds = Array.from(new Set(ids))
+  if (!uniqueIds.length) {
+    for (const a of current.value.activities) {
+      a._evidenceMetas = []
+    }
+    return
+  }
+
+  const { data } = await http.post('/files/metas', { ids: uniqueIds })
+  const metas = data.data || []
+  const map = {}
+  for (const m of metas) {
+    map[m.id] = m
+    evidenceMetaCache[m.id] = m
+  }
+
+  for (const a of current.value.activities) {
+    const aIds = parseEvidenceIds(a.evidenceFileIds)
+    a._evidenceMetas = aIds.map((id) => map[id] || evidenceMetaCache[id] || { id, fileName: `附件#${id}` })
+  }
+}
+
+const previewEvidence = async (fileId) => {
+  const resp = await http.get(`/files/${fileId}/download`, { responseType: 'blob' })
+  const blob = new Blob([resp.data])
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 loadTasks()

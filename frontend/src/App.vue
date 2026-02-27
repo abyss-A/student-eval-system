@@ -1,6 +1,6 @@
 <template>
   <div class="shell">
-    <header class="topbar">
+    <header v-if="!isLoginPage" class="topbar">
       <div class="brand">
         <h1>大学生综合测评管理系统</h1>
         <p v-if="state.loggedIn" class="subtitle">{{ state.realName || '未命名用户' }} · {{ roleText }}</p>
@@ -12,7 +12,7 @@
       </nav>
     </header>
 
-    <main class="page">
+    <main :class="isLoginPage ? 'login-main' : 'page'">
       <RouterView />
     </main>
   </div>
@@ -42,6 +42,7 @@ syncAuthState()
 watch(() => route.fullPath, syncAuthState)
 
 const roleText = computed(() => roleLabel(state.role))
+const isLoginPage = computed(() => route.path === '/login')
 
 const navItems = computed(() => {
   if (!state.loggedIn) {
