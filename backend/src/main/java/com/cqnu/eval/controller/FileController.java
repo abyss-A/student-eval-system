@@ -34,7 +34,7 @@ public class FileController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<Map<String, Object>> upload(@RequestPart("file") MultipartFile file) {
         CurrentUser user = UserContext.get();
-        RoleGuard.requireRole(user, "STUDENT");
+        RoleGuard.requireAnyRole(user, "STUDENT", "COUNSELOR", "ADMIN");
         AttachmentEntity entity = fileService.upload(file, user.getId());
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", entity.getId());

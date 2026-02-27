@@ -148,6 +148,34 @@ public class SubmissionService {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void saveActivitiesByModule(Long submissionId, Long studentId, String moduleType, BatchActivityRequest request) {
+        checkSubmissionEditableByStudent(submissionId, studentId);
+
+        String module = normalizeModuleType(moduleType);
+        if (module.isBlank()) {
+            throw new BizException(40001, "moduleType不能为空");
+        }
+        if (!isAllowedModule(module)) {
+            throw new BizException(40001, "不支持的模块类型: " + moduleType);
+        }
+
+        activityItemMapper.deleteBySubmissionIdAndModule(submissionId, module);
+        for (ActivityItemInput item : request.getItems()) {
+            ActivityItemEntity entity = new ActivityItemEntity();
+            entity.setSubmissionId(submissionId);
+            entity.setModuleType(module);
+            entity.setTitle(item.getTitle());
+            entity.setDescription(item.getDescription());
+            entity.setSelfScore(item.getSelfScore());
+            entity.setFinalScore(item.getSelfScore());
+            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
+            entity.setReviewStatus("PENDING");
+            entity.setReviewerComment(null);
+            activityItemMapper.insert(entity);
+        }
+    }
+
     private String sanitizeEvidenceFileIds(String raw, Long studentId) {
         if (raw == null || raw.isBlank()) {
             return "";
@@ -217,6 +245,18 @@ public class SubmissionService {
             sb.append(id);
         }
         return sb.toString();
+    }
+
+    private String normalizeModuleType(String raw) {
+        return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean isAllowedModule(String module) {
+        return "MORAL".equals(module)
+                || "INTEL_PRO_INNOV".equals(module)
+                || "SPORT_ACTIVITY".equals(module)
+                || "ART".equals(module)
+                || "LABOR".equals(module);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -316,6 +356,10 @@ public class SubmissionService {
             row.put("rankMajor", majorRank);
         }
         return all;
+    }
+
+    public List<Map<String, Object>> listSubmittedTasks() {
+        return submissionMapper.listSubmittedTasks();
     }
 
     private void checkSubmissionEditableByStudent(Long submissionId, Long studentId) {

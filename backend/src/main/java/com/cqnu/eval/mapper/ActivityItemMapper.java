@@ -11,8 +11,16 @@ public interface ActivityItemMapper {
     @Select("select * from activity_item where submission_id = #{submissionId} order by id asc")
     List<ActivityItemEntity> listBySubmissionId(@Param("submissionId") Long submissionId);
 
+    @Select("select * from activity_item where submission_id = #{submissionId} and module_type = #{moduleType} order by id asc")
+    List<ActivityItemEntity> listBySubmissionIdAndModule(@Param("submissionId") Long submissionId,
+                                                         @Param("moduleType") String moduleType);
+
     @Delete("delete from activity_item where submission_id = #{submissionId}")
     int deleteBySubmissionId(@Param("submissionId") Long submissionId);
+
+    @Delete("delete from activity_item where submission_id = #{submissionId} and module_type = #{moduleType}")
+    int deleteBySubmissionIdAndModule(@Param("submissionId") Long submissionId,
+                                      @Param("moduleType") String moduleType);
 
     @Insert("insert into activity_item(submission_id, module_type, title, description, self_score, final_score, evidence_file_ids, review_status, reviewer_comment, created_at, updated_at) " +
             "values(#{submissionId}, #{moduleType}, #{title}, #{description}, #{selfScore}, #{finalScore}, #{evidenceFileIds}, #{reviewStatus}, #{reviewerComment}, now(), now())")

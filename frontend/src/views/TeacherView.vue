@@ -41,101 +41,113 @@
     </table>
   </section>
 
-  <section class="card" style="margin-top: 16px;" v-if="current">
-    <div class="toolbar">
-      <div>
-        <h3>审核测评单 #{{ current.submission.id }}</h3>
-        <p class="muted">
-          学生：{{ current.student.realName }}（{{ current.student.studentNo }}）
-          ｜状态：<span class="badge">{{ current.submission.status }}</span>
-        </p>
+  <div v-if="drawerOpen && current" class="drawer-overlay" @click.self="closeDrawer">
+    <div class="drawer-panel drawer-wide">
+      <div class="drawer-header">
+        <div>
+          <div style="font-weight: 900; font-size: 16px;">审核测评单 #{{ current.submission.id }}</div>
+          <p class="muted" style="margin-top: 6px;">
+            学生：<b>{{ current.student.realName }}</b>（{{ current.student.studentNo }}）
+            <span style="margin: 0 6px; color: #cbd5e1;">|</span>
+            状态：<span class="badge">{{ current.submission.status }}</span>
+          </p>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn secondary" type="button" @click="reloadCurrent" :disabled="loadingDetail">刷新详情</button>
+          <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">✕</button>
+        </div>
       </div>
-      <button class="btn secondary" @click="reloadCurrent" :disabled="loadingDetail">刷新详情</button>
+
+      <div class="drawer-body">
+        <h4 class="section-title">课程审核</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>课程</th>
+              <th>类型</th>
+              <th>原分</th>
+              <th>调整分</th>
+              <th>理由</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="course in current.courses" :key="`course_${course.id}`">
+              <td>{{ course.courseName }}</td>
+              <td>{{ courseTypeLabel(course.courseType) }}</td>
+              <td>{{ course.score }}</td>
+              <td>
+                <input type="number" v-model.number="drafts[courseKey(course.id)].adjustedScore" min="0" step="0.5" />
+              </td>
+              <td>
+                <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由" />
+              </td>
+              <td>
+                <div class="action-row">
+                  <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding">通过</button>
+                  <button class="btn secondary" type="button" @click="decide('COURSE', course.id, 'ADJUST')" :disabled="isDeciding">改分</button>
+                  <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding">驳回</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!current.courses?.length">
+              <td colspan="6" class="empty">暂无课程数据</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 class="section-title">活动审核</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>模块</th>
+              <th>标题</th>
+              <th>原分</th>
+              <th>调整分</th>
+              <th>证明图片</th>
+              <th>理由</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="activity in current.activities" :key="`act_${activity.id}`">
+              <td>{{ moduleLabel(activity.moduleType) }}</td>
+              <td>{{ activity.title }}</td>
+              <td>{{ activity.selfScore }}</td>
+              <td>
+                <input type="number" v-model.number="drafts[activityKey(activity.id)].adjustedScore" min="0" step="0.5" />
+              </td>
+              <td>
+                <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
+                  <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
+                    <button class="link" type="button" @click="previewEvidence(m.id)">{{ m.fileName || ('附件#' + m.id) }}</button>
+                  </span>
+                </div>
+                <span v-else class="muted" style="font-size:12px;">未上传</span>
+              </td>
+              <td>
+                <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由" />
+              </td>
+              <td>
+                <div class="action-row">
+                  <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding">通过</button>
+                  <button class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'ADJUST')" :disabled="isDeciding">改分</button>
+                  <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding">驳回</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!current.activities?.length">
+              <td colspan="7" class="empty">暂无活动数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="btn secondary" type="button" @click="closeDrawer">关闭</button>
+      </div>
     </div>
-
-    <h4 class="section-title">课程审核</h4>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>课程</th>
-          <th>类型</th>
-          <th>原分</th>
-          <th>调整分</th>
-          <th>理由</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="course in current.courses" :key="`course_${course.id}`">
-          <td>{{ course.courseName }}</td>
-          <td>{{ courseTypeLabel(course.courseType) }}</td>
-          <td>{{ course.score }}</td>
-          <td>
-            <input type="number" v-model.number="drafts[courseKey(course.id)].adjustedScore" min="0" step="0.5" />
-          </td>
-          <td>
-            <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由" />
-          </td>
-          <td>
-            <div class="action-row">
-              <button class="btn" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-              <button class="btn secondary" @click="decide('COURSE', course.id, 'ADJUST')" :disabled="isDeciding">改分</button>
-              <button class="btn danger" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding">驳回</button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!current.courses?.length">
-          <td colspan="6" class="empty">暂无课程数据</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h4 class="section-title">活动审核</h4>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>模块</th>
-          <th>标题</th>
-          <th>原分</th>
-          <th>调整分</th>
-          <th>证明图片</th>
-          <th>理由</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="activity in current.activities" :key="`act_${activity.id}`">
-          <td>{{ moduleLabel(activity.moduleType) }}</td>
-          <td>{{ activity.title }}</td>
-          <td>{{ activity.selfScore }}</td>
-          <td>
-            <input type="number" v-model.number="drafts[activityKey(activity.id)].adjustedScore" min="0" step="0.5" />
-          </td>
-          <td>
-            <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
-              <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
-                <button class="link" @click="previewEvidence(m.id)">{{ m.fileName || ('附件#' + m.id) }}</button>
-              </span>
-            </div>
-            <span v-else class="muted" style="font-size:12px;">未上传</span>
-          </td>
-          <td>
-            <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由" />
-          </td>
-          <td>
-            <div class="action-row">
-              <button class="btn" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-              <button class="btn secondary" @click="decide('ACTIVITY', activity.id, 'ADJUST')" :disabled="isDeciding">改分</button>
-              <button class="btn danger" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding">驳回</button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!current.activities?.length">
-          <td colspan="6" class="empty">暂无活动数据</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  </div>
 </template>
 
 <script setup>
@@ -149,6 +161,7 @@ const selectedSubmissionId = ref(null)
 const loadingTasks = ref(false)
 const loadingDetail = ref(false)
 const isDeciding = ref(false)
+const drawerOpen = ref(false)
 
 const drafts = reactive({})
 const evidenceMetaCache = reactive({})
@@ -216,9 +229,14 @@ const openTask = async (submissionId) => {
     selectedSubmissionId.value = submissionId
     initDrafts(data.data)
     await hydrateEvidenceMetas()
+    drawerOpen.value = true
   } finally {
     loadingDetail.value = false
   }
+}
+
+const closeDrawer = () => {
+  drawerOpen.value = false
 }
 
 const reloadCurrent = async () => {

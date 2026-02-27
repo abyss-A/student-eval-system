@@ -1,0 +1,220 @@
+[2m20:28:04[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/router/index.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/main.js. Does the file exist?
+[2m20:28:39[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:28:39[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:29:11[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:29:11[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:29:30[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/LoginView.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:2:24
+[33m  1  |  import { createRouter, createWebHistory } from 'vue-router'
+  2  |  import LoginView from '../views/LoginView.vue'
+     |                         ^
+  3  |  import RankingView from '../views/RankingView.vue'
+  4  |  import StudentLayout from '../layouts/StudentLayout.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 1)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:29:54[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:29:54[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:30:13[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/styles/global.css (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/styles/global.css) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/main.js. Does the file exist?
+[2m20:30:13[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:30:13[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:31:42[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:31:42[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:32:06[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:32:06[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m20:32:50[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+[2m20:32:50[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../views/student/EvalCourse.vue" from "src/router/index.js". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mD:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/router/index.js[39m:8:25
+[33m  6  |  import AdminLayout from '../layouts/AdminLayout.vue'
+  7  |  
+  8  |  import EvalCourse from '../views/student/EvalCourse.vue'
+     |                          ^
+  9  |  import EvalModule from '../views/student/EvalModule.vue'
+  10 |  import EvalSubmit from '../views/student/EvalSubmit.vue'[39m
+      at TransformPluginContext._formatLog (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at async file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///D:/%E6%A1%8C%E9%9D%A2/%E6%AF%95%E8%AE%BE%E7%A8%8B%E5%BA%8F/%E5%A4%A7%E5%AD%A6%E7%94%9F%E7%BB%BC%E5%90%88%E6%B5%8B%E8%AF%84%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?
+[2m21:32:35[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to load url /src/api/http.js (resolved id: D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/api/http.js) in D:/桌面/毕设程序/大学生综合测评管理系统/frontend/src/views/AdminView.vue. Does the file exist?

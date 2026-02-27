@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS activity_item;
 DROP TABLE IF EXISTS course_item;
 DROP TABLE IF EXISTS attachment;
 DROP TABLE IF EXISTS submission;
+DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS notice;
 DROP TABLE IF EXISTS scoring_config;
 DROP TABLE IF EXISTS semester;
 DROP TABLE IF EXISTS sys_user;
@@ -129,4 +131,38 @@ CREATE TABLE attachment (
   mime_type VARCHAR(128) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_attachment_user FOREIGN KEY (uploader_id) REFERENCES sys_user(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE notice (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+  publisher_id BIGINT NOT NULL,
+  published_at DATETIME NULL,
+  offline_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notice_publisher FOREIGN KEY (publisher_id) REFERENCES sys_user(id),
+  INDEX idx_notice_status (status),
+  INDEX idx_notice_published_at (published_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE feedback (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  creator_id BIGINT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  screenshot_file_ids VARCHAR(500) NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'NEW',
+  handler_id BIGINT NULL,
+  reply_content TEXT NULL,
+  replied_at DATETIME NULL,
+  closed_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_feedback_creator FOREIGN KEY (creator_id) REFERENCES sys_user(id),
+  CONSTRAINT fk_feedback_handler FOREIGN KEY (handler_id) REFERENCES sys_user(id),
+  INDEX idx_feedback_status (status),
+  INDEX idx_feedback_creator (creator_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -31,4 +31,9 @@ public interface AttachmentMapper {
             "where a.evidence_file_ids is not null and a.evidence_file_ids <> '' and " +
             "find_in_set(#{id}, a.evidence_file_ids) and s.status <> 'DRAFT'")
     int countReferencedByActivity(@Param("id") Long id);
+
+    @Select("select count(1) from feedback f " +
+            "where f.screenshot_file_ids is not null and f.screenshot_file_ids <> '' and " +
+            "find_in_set(#{id}, f.screenshot_file_ids)")
+    int countReferencedByFeedback(@Param("id") Long id);
 }

@@ -25,7 +25,7 @@ public class ReviewController {
     @GetMapping("/tasks")
     public ApiResponse<List<Map<String, Object>>> tasks() {
         CurrentUser user = UserContext.get();
-        RoleGuard.requireAnyRole(user, "COUNSELOR", "ADMIN");
+        RoleGuard.requireRole(user, "COUNSELOR");
         return ApiResponse.ok(reviewService.listTasks());
     }
 
@@ -34,7 +34,7 @@ public class ReviewController {
                                       @PathVariable Long itemId,
                                       @RequestBody @Validated ReviewDecisionRequest request) {
         CurrentUser user = UserContext.get();
-        RoleGuard.requireAnyRole(user, "COUNSELOR", "ADMIN");
+        RoleGuard.requireRole(user, "COUNSELOR");
         reviewService.decision(itemType, itemId, request, user.getId());
         return ApiResponse.ok(null);
     }

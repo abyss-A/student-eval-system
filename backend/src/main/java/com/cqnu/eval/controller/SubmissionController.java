@@ -52,6 +52,16 @@ public class SubmissionController {
         return ApiResponse.ok(null);
     }
 
+    @PutMapping("/submissions/{id}/activities/module/{moduleType}")
+    public ApiResponse<Void> saveActivitiesByModule(@PathVariable Long id,
+                                                    @PathVariable String moduleType,
+                                                    @RequestBody @Validated BatchActivityRequest request) {
+        CurrentUser user = UserContext.get();
+        RoleGuard.requireRole(user, "STUDENT");
+        submissionService.saveActivitiesByModule(id, user.getId(), moduleType, request);
+        return ApiResponse.ok(null);
+    }
+
     @PostMapping("/submissions/{id}/submit")
     public ApiResponse<SubmissionEntity> submit(@PathVariable Long id) {
         CurrentUser user = UserContext.get();

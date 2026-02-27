@@ -74,7 +74,7 @@ const statusLabel = (raw) => {
 const loadTasks = async () => {
   loadingTasks.value = true
   try {
-    const { data } = await http.get('/reviews/tasks')
+    const { data } = await http.get('/admin/tasks')
     tasks.value = data.data || []
   } finally {
     loadingTasks.value = false
