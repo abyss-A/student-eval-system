@@ -27,7 +27,7 @@ public interface SubmissionMapper {
     @Select("select s.*, u.real_name, u.class_name, u.major_name from submission s join sys_user u on s.student_id=u.id where s.semester_id=#{semesterId} and s.status in ('SUBMITTED','COUNSELOR_REVIEWED','FINALIZED','PUBLISHED') order by s.total_score desc")
     List<java.util.Map<String, Object>> listForRanking(@Param("semesterId") Long semesterId);
 
-    @Select("select s.*, u.real_name, u.class_name, u.major_name from submission s join sys_user u on s.student_id=u.id where s.status='SUBMITTED' order by s.submitted_at desc")
+    @Select("select s.*, u.student_no, u.real_name, u.class_name, u.major_name from submission s join sys_user u on s.student_id=u.id where s.status='SUBMITTED' order by s.submitted_at desc")
     List<java.util.Map<String, Object>> listSubmittedTasks();
 
     @Select("select count(1) from submission where id=#{id} and student_id=#{studentId}")

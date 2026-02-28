@@ -25,6 +25,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import http from '../api/http'
+import { previewImageById } from '../utils/imagePreview'
 
 const metaCache = Object.create(null)
 
@@ -154,11 +155,6 @@ const remove = async (id) => {
 }
 
 const preview = async (id) => {
-  const resp = await http.get(`/files/${id}/download`, { responseType: 'blob' })
-  const blob = new Blob([resp.data])
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  await previewImageById(http, id, '证明材料预览')
 }
 </script>
-

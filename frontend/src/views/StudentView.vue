@@ -17,7 +17,7 @@
         <div>智育：{{ score.intelRaw }}</div>
         <div>体育：{{ score.sportRaw }}</div>
         <div>美育：{{ score.artRaw }}</div>
-        <div>劳动：{{ score.laborRaw }}</div>
+        <div>劳育：{{ score.laborRaw }}</div>
         <div>总分：{{ score.totalScore }}</div>
       </div>
       <p v-else>暂无分数</p>
@@ -48,8 +48,8 @@
       </tbody>
     </table>
     <div style="display:flex;gap:10px;margin-top:10px;">
-      <button class="btn secondary" @click="addCourse">新增课程</button>
-      <button class="btn" @click="saveCourses" :disabled="!submissionId">保存课程</button>
+      <button class="btn secondary" @click="addCourse">新增</button>
+      <button class="btn" @click="saveCourses" :disabled="!submissionId">保存</button>
     </div>
   </section>
 
@@ -57,10 +57,10 @@
     <div class="toolbar">
       <div>
         <h3>活动条目（按模块分区填写）</h3>
-        <p class="muted">每个活动最多上传 6 张 JPG/PNG 证明图片。上传后记得点击“保存全部活动”。</p>
+        <p class="muted">每个活动最多上传 6 张 JPG/PNG 证明图片。上传后记得点击“保存”。</p>
       </div>
       <div class="toolbar-row">
-        <button class="btn secondary" @click="saveActivities" :disabled="!submissionId">保存全部活动</button>
+        <button class="btn secondary" @click="saveActivities" :disabled="!submissionId">保存</button>
         <button class="btn" @click="submitForm" :disabled="!submissionId">提交审核</button>
         <button class="btn ghost" @click="exportFile('DOCX')" :disabled="!submissionId">导出Word</button>
         <button class="btn ghost" @click="exportFile('PDF')" :disabled="!submissionId">导出PDF</button>
@@ -69,10 +69,7 @@
 
     <div class="grid two" style="margin-top:12px;">
       <div v-for="b in blocks" :key="b.module" class="subcard">
-        <div class="toolbar" style="margin-bottom:10px;">
-          <h4 style="margin:0;">{{ b.label }}</h4>
-          <button class="btn secondary" @click="addActivity(b.module)" :disabled="!submissionId">新增</button>
-        </div>
+        <h4 style="margin:0 0 10px 0;">{{ b.label }}</h4>
 
         <table class="table table-compact">
           <thead>
@@ -112,6 +109,9 @@
             </tr>
           </tbody>
         </table>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn secondary" @click="addActivity(b.module)" :disabled="!submissionId">新增</button>
+        </div>
       </div>
     </div>
   </section>
@@ -120,6 +120,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import http from '../api/http'
+import { previewImageById } from '../utils/imagePreview'
 
 const role = localStorage.getItem('role') || 'UNKNOWN'
 const realName = localStorage.getItem('realName') || '未登录'
@@ -135,10 +136,10 @@ const courses = ref([
 
 const blocks = [
   { module: 'MORAL', label: '德育' },
-  { module: 'INTEL_PRO_INNOV', label: '智育（专创）' },
+  { module: 'INTEL_PRO_INNOV', label: '智育' },
   { module: 'SPORT_ACTIVITY', label: '体育' },
   { module: 'ART', label: '美育' },
-  { module: 'LABOR', label: '劳动' }
+  { module: 'LABOR', label: '劳育' }
 ]
 
 const activitiesByModule = reactive({
@@ -239,9 +240,32 @@ const exportFile = async (format) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = format === 'PDF' ? `report_${submissionId.value}.pdf` : `report_${submissionId.value}.docx`
+  a.download = resolveDownloadName(resp, format, submissionId.value)
   a.click()
   URL.revokeObjectURL(url)
+}
+
+const resolveDownloadName = (resp, format, id) => {
+  const fallback = format === 'PDF'
+    ? `综合奖学金申请表_${id}.pdf`
+    : `综合奖学金申请表_${id}.docx`
+  const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
+  if (!disposition) return fallback
+
+  const utf8Match = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1])
+    } catch (_) {
+      return utf8Match[1]
+    }
+  }
+
+  const normalMatch = disposition.match(/filename\s*=\s*\"?([^\";]+)\"?/i)
+  if (normalMatch && normalMatch[1]) {
+    return normalMatch[1]
+  }
+  return fallback
 }
 
 const resetActivities = () => {
@@ -373,10 +397,6 @@ const removeEvidence = async (activity, fileId) => {
 }
 
 const previewEvidence = async (fileId) => {
-  const resp = await http.get(`/files/${fileId}/download`, { responseType: 'blob' })
-  const blob = new Blob([resp.data])
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  await previewImageById(http, fileId, '证明材料预览')
 }
 </script>

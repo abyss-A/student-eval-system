@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import RankingView from '../views/RankingView.vue'
 import StudentLayout from '../layouts/StudentLayout.vue'
 import TeacherLayout from '../layouts/TeacherLayout.vue'
@@ -33,6 +34,11 @@ const routes = [
     meta: { public: true, title: '登录' }
   },
   {
+    path: '/register',
+    component: RegisterView,
+    meta: { public: true, title: '注册' }
+  },
+  {
     path: '/student',
     component: StudentLayout,
     meta: { roles: ['STUDENT'] },
@@ -40,18 +46,8 @@ const routes = [
       { path: '', redirect: '/student/eval/course' },
       { path: 'eval/course', component: EvalCourse, meta: { title: '课程成绩' } },
       { path: 'eval/moral', component: EvalModule, props: { moduleType: 'MORAL', label: '德育' }, meta: { title: '德育填报' } },
-      {
-        path: 'eval/intel',
-        component: EvalModule,
-        props: { moduleType: 'INTEL_PRO_INNOV', label: '智育' },
-        meta: { title: '智育填报' }
-      },
-      {
-        path: 'eval/sport',
-        component: EvalModule,
-        props: { moduleType: 'SPORT_ACTIVITY', label: '体育' },
-        meta: { title: '体育填报' }
-      },
+      { path: 'eval/intel', component: EvalModule, props: { moduleType: 'INTEL_PRO_INNOV', label: '智育' }, meta: { title: '智育填报' } },
+      { path: 'eval/sport', component: EvalModule, props: { moduleType: 'SPORT_ACTIVITY', label: '体育' }, meta: { title: '体育填报' } },
       { path: 'eval/art', component: EvalModule, props: { moduleType: 'ART', label: '美育' }, meta: { title: '美育填报' } },
       { path: 'eval/labor', component: EvalModule, props: { moduleType: 'LABOR', label: '劳育' }, meta: { title: '劳育填报' } },
       { path: 'eval/submit', component: EvalSubmit, meta: { title: '综合成绩与提交' } },
@@ -73,7 +69,7 @@ const routes = [
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈' } },
-      { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },
+      { path: 'feedback/mine', component: FeedbackMyList, meta: { title: '我的反馈' } },
       { path: 'feedback/:id', component: FeedbackDetail, meta: { title: '反馈详情' } },
       { path: 'ranking', component: RankingView, meta: { title: '综合排名' } }
     ]
@@ -87,7 +83,6 @@ const routes = [
       { path: 'finalize/tasks', component: AdminFinalizeTasks, meta: { title: '待终审列表' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
-      { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },
       { path: 'feedback/:id', component: FeedbackDetail, meta: { title: '反馈详情' } },
       { path: 'ranking', component: RankingView, meta: { title: '综合排名' } }
@@ -110,9 +105,7 @@ router.beforeEach((to) => {
   const isPublic = to.matched.some((r) => r.meta?.public)
 
   if (isPublic) {
-    if (token) {
-      return getHomeByRole(role)
-    }
+    if (token) return getHomeByRole(role)
     return true
   }
 
@@ -124,7 +117,6 @@ router.beforeEach((to) => {
   if (!canAccessRoute(requiredRoles, role)) {
     return getHomeByRole(role)
   }
-
   return true
 })
 

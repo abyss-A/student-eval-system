@@ -118,7 +118,15 @@ public class FileService {
             return entity;
         }
 
-        if ("COUNSELOR".equals(role) || "ADMIN".equals(role)) {
+        if ("COUNSELOR".equals(role)) {
+            boolean referencedByEval = attachmentMapper.countReferencedByCourse(id) > 0
+                    || attachmentMapper.countReferencedByActivity(id) > 0;
+            if (referencedByEval) {
+                return entity;
+            }
+        }
+
+        if ("ADMIN".equals(role)) {
             boolean referenced = attachmentMapper.countReferencedByCourse(id) > 0
                     || attachmentMapper.countReferencedByActivity(id) > 0
                     || attachmentMapper.countReferencedByFeedback(id) > 0;

@@ -2,6 +2,7 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\cont
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\config\SecurityConfig.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\NoticeService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\ActivityItemInput.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\RegisterStudentResponse.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\security\JwtUtils.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\FileController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\AdminController.java
@@ -31,8 +32,10 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\serv
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\SubmissionEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\ActivityItemMapper.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\BatchCourseRequest.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\ReportTemplateService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\FeedbackCreateRequest.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\SubmissionController.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\RegisterStudentRequest.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\common\RoleGuard.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\SemesterController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\FeedbackService.java

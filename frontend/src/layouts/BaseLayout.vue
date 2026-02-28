@@ -5,7 +5,6 @@
         <div class="brand-mark">综测</div>
         <div class="brand-text">
           <div class="brand-name">{{ appName }}</div>
-          <div class="brand-sub">校园综合测评与奖学金管理</div>
         </div>
       </div>
 
@@ -13,7 +12,7 @@
         <section v-for="g in menuGroups" :key="g.title" class="menu-group">
           <button class="menu-group-title" type="button" @click="toggleGroup(g.title)">
             <span>{{ g.title }}</span>
-            <span class="chev" :class="{ open: isGroupOpen(g.title) }">▾</span>
+            <span class="chev" :class="{ open: isGroupOpen(g.title) }">▼</span>
           </button>
           <div v-show="isGroupOpen(g.title)" class="menu-items">
             <RouterLink v-for="item in g.items" :key="item.to" :to="item.to" class="menu-item">
@@ -53,6 +52,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearAuth, getHomeByRole, getRealName, getRole, roleLabel } from '../utils/auth'
+import submissionStore from '../stores/submissionStore'
 
 const props = defineProps({
   appName: {
@@ -114,6 +114,7 @@ const goHome = () => {
 }
 
 const logout = () => {
+  submissionStore.reset()
   clearAuth()
   router.replace('/login')
 }

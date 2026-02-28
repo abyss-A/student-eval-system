@@ -23,7 +23,7 @@
       class="card"
       style="margin-top: 12px; border-color: #fecaca; background: #fef2f2; box-shadow: none;"
     >
-      <div style="font-weight: 900; color: #b42318;">加载失败</div>
+      <div style="font-weight: 700; color: #b42318;">加载失败</div>
       <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
       <div class="toolbar-row" style="margin-top: 10px;">
         <button class="btn secondary" type="button" @click="load" :disabled="loading">重试</button>
@@ -42,7 +42,7 @@
       </thead>
       <tbody>
         <tr v-for="f in rows" :key="f.id">
-          <td style="font-weight: 900; color: #0f172a;">{{ f.title }}</td>
+          <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
           <td>
             <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
           </td>

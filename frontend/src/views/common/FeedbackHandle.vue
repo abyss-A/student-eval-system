@@ -35,7 +35,7 @@
       </thead>
       <tbody>
         <tr v-for="f in rows" :key="f.id">
-          <td style="font-weight: 900; color: #0f172a;">{{ f.title }}</td>
+          <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
           <td>
             <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
           </td>
@@ -57,7 +57,7 @@
     <div class="drawer-panel drawer-wide">
       <div class="drawer-header">
         <div>
-          <div style="font-weight: 900; font-size: 16px;">反馈处理</div>
+          <div style="font-weight: 700; font-size: 16px;">反馈处理</div>
           <p class="muted" style="margin-top: 6px;">
             状态：<b>{{ statusLabel(drawer.detail?.status) }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -74,24 +74,24 @@
         <div v-else-if="!drawer.detail" class="empty">无数据</div>
         <div v-else class="grid">
           <div class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">标题</div>
-            <div style="margin-top: 8px; font-weight: 900; color: #0f172a;">{{ drawer.detail.title }}</div>
+            <div style="font-weight: 700;">标题</div>
+            <div style="margin-top: 8px; font-weight: 700; color: #0f172a;">{{ drawer.detail.title }}</div>
           </div>
 
           <div class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">反馈内容</div>
+            <div style="font-weight: 700;">反馈内容</div>
             <div class="text-block" style="margin-top: 10px;">{{ drawer.detail.content }}</div>
           </div>
 
           <div class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">截图</div>
+            <div style="font-weight: 700;">截图</div>
             <div style="margin-top: 10px;">
               <ImageIdsUploader :model-value="drawer.detail.screenshot_file_ids || ''" :readonly="true" />
             </div>
           </div>
 
           <div v-if="drawer.detail.reply_content || drawer.detail.replied_at" class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">历史回复</div>
+            <div style="font-weight: 700;">历史回复</div>
             <p class="muted" style="margin-top: 8px;">
               处理人：<b>{{ drawer.detail.handler_real_name || '-' }}</b>
               <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -103,7 +103,7 @@
           </div>
 
           <div v-if="String(drawer.detail.status || '').toUpperCase() !== 'CLOSED'" class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">处理操作</div>
+            <div style="font-weight: 700;">处理操作</div>
             <div class="stack" style="margin-top: 10px;">
               <label class="field">
                 <span class="field-label">回复内容（回复时必填，关闭时可选）</span>
@@ -120,7 +120,7 @@
           </div>
 
           <div v-else class="card" style="box-shadow: none; background: #fbfdff;">
-            <div style="font-weight: 900;">该反馈已关闭</div>
+            <div style="font-weight: 700;">该反馈已关闭</div>
             <div class="toolbar-row" style="margin-top: 10px;">
               <RouterLink class="btn ghost" :to="detailLink(drawer.detail.id)">查看详情页</RouterLink>
             </div>
@@ -256,8 +256,7 @@ const closeIt = async () => {
 }
 
 const detailLink = (id) => {
-  const seg = String(route.path || '').split('/')[1] || 'teacher'
-  return `/${seg}/feedback/${id}`
+  return `/admin/feedback/${id}`
 }
 
 load()
@@ -271,4 +270,3 @@ load()
   font-size: 14px;
 }
 </style>
-

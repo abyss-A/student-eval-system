@@ -21,7 +21,7 @@
     <table class="table" style="margin-top: 16px;">
       <thead>
         <tr>
-          <th>测评单ID</th>
+          <th>学号</th>
           <th>学生</th>
           <th>班级</th>
           <th>状态</th>
@@ -31,7 +31,7 @@
       </thead>
       <tbody>
         <tr v-for="task in tasks" :key="task.id">
-          <td>{{ task.id }}</td>
+          <td>{{ task.student_no || '-' }}</td>
           <td>{{ task.real_name }}</td>
           <td>{{ task.class_name }}</td>
           <td><span class="badge">{{ statusLabel(task.status) }}</span></td>
@@ -83,7 +83,7 @@ const loadTasks = async () => {
 
 const finalize = async (submissionId) => {
   if (!submissionId) {
-    alert('请先输入测评单 ID')
+    alert('请先输入测评单ID')
     return
   }
 
@@ -100,3 +100,4 @@ const finalize = async (submissionId) => {
 
 loadTasks()
 </script>
+

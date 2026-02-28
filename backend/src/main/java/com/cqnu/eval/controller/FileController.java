@@ -55,8 +55,10 @@ public class FileController {
         String type = (meta.getMimeType() == null || meta.getMimeType().isBlank())
                 ? MediaType.APPLICATION_OCTET_STREAM_VALUE
                 : meta.getMimeType();
+        boolean isImage = type.toLowerCase().startsWith("image/");
+        String dispositionPrefix = isImage ? "inline; filename*=UTF-8''" : "attachment; filename*=UTF-8''";
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                .header(HttpHeaders.CONTENT_DISPOSITION, dispositionPrefix + encoded)
                 .contentType(MediaType.parseMediaType(type))
                 .body(resource);
     }

@@ -2,8 +2,8 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2>辅导员审核</h2>
-        <p class="muted">先选择待审测评单，再逐项审核课程和活动。</p>
+        <h2 style="margin: 0;">辅导员审核</h2>
+        <p class="muted" style="margin-top: 6px;">先选择待审核测评单，再逐项审核课程和活动。</p>
       </div>
       <button class="btn" @click="loadTasks" :disabled="loadingTasks">
         {{ loadingTasks ? '刷新中...' : '刷新待审' }}
@@ -13,7 +13,7 @@
     <table class="table" style="margin-top: 12px;">
       <thead>
         <tr>
-          <th>测评单ID</th>
+          <th>学号</th>
           <th>学生</th>
           <th>班级</th>
           <th>总分</th>
@@ -23,7 +23,7 @@
       </thead>
       <tbody>
         <tr v-for="task in tasks" :key="task.id">
-          <td>{{ task.id }}</td>
+          <td>{{ task.student_no || '-' }}</td>
           <td>{{ task.real_name }}</td>
           <td>{{ task.class_name }}</td>
           <td>{{ task.total_score ?? '-' }}</td>
@@ -35,7 +35,7 @@
           </td>
         </tr>
         <tr v-if="!tasks.length">
-          <td colspan="6" class="empty">暂无待审测评单</td>
+          <td colspan="6" class="empty">暂无待审核测评单</td>
         </tr>
       </tbody>
     </table>
@@ -45,16 +45,18 @@
     <div class="drawer-panel drawer-wide">
       <div class="drawer-header">
         <div>
-          <div style="font-weight: 900; font-size: 16px;">审核测评单 #{{ current.submission.id }}</div>
+          <div style="font-weight: 700; font-size: 16px;">审核测评单 #{{ current.submission.id }}</div>
           <p class="muted" style="margin-top: 6px;">
-            学生：<b>{{ current.student.realName }}</b>（{{ current.student.studentNo }}）
+            学号：<b>{{ current.student.studentNo || '-' }}</b>
+            <span style="margin: 0 6px; color: #cbd5e1;">|</span>
+            学生：<b>{{ current.student.realName }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
             状态：<span class="badge">{{ current.submission.status }}</span>
           </p>
         </div>
         <div class="toolbar-row">
           <button class="btn secondary" type="button" @click="reloadCurrent" :disabled="loadingDetail">刷新详情</button>
-          <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">✕</button>
+          <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
         </div>
       </div>
 
@@ -63,60 +65,51 @@
         <table class="table">
           <thead>
             <tr>
-              <th>课程</th>
-              <th>类型</th>
-              <th>原分</th>
-              <th>调整分</th>
+              <th class="nowrap">课程</th>
+              <th class="nowrap">类型</th>
+              <th class="nowrap">原分</th>
               <th>理由</th>
-              <th>操作</th>
+              <th class="nowrap">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="course in current.courses" :key="`course_${course.id}`">
-              <td>{{ course.courseName }}</td>
-              <td>{{ courseTypeLabel(course.courseType) }}</td>
-              <td>{{ course.score }}</td>
+              <td class="nowrap">{{ course.courseName }}</td>
+              <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
+              <td class="nowrap">{{ course.score }}</td>
               <td>
-                <input type="number" v-model.number="drafts[courseKey(course.id)].adjustedScore" min="0" step="0.5" />
+                <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" />
               </td>
               <td>
-                <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由" />
-              </td>
-              <td>
-                <div class="action-row">
+                <div class="action-row inline-actions">
                   <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-                  <button class="btn secondary" type="button" @click="decide('COURSE', course.id, 'ADJUST')" :disabled="isDeciding">改分</button>
                   <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding">驳回</button>
                 </div>
               </td>
             </tr>
             <tr v-if="!current.courses?.length">
-              <td colspan="6" class="empty">暂无课程数据</td>
+              <td colspan="5" class="empty">暂无课程数据</td>
             </tr>
           </tbody>
         </table>
 
         <h4 class="section-title">活动审核</h4>
-        <table class="table">
+        <table class="table activity-table">
           <thead>
             <tr>
-              <th>模块</th>
-              <th>标题</th>
-              <th>原分</th>
-              <th>调整分</th>
-              <th>证明图片</th>
-              <th>理由</th>
-              <th>操作</th>
+              <th class="nowrap col-module">模块</th>
+              <th class="nowrap col-title">标题</th>
+              <th class="nowrap col-score">分数</th>
+              <th class="nowrap col-evidence">证明图片</th>
+              <th class="nowrap col-reason">理由</th>
+              <th class="nowrap col-action">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="activity in current.activities" :key="`act_${activity.id}`">
-              <td>{{ moduleLabel(activity.moduleType) }}</td>
-              <td>{{ activity.title }}</td>
-              <td>{{ activity.selfScore }}</td>
-              <td>
-                <input type="number" v-model.number="drafts[activityKey(activity.id)].adjustedScore" min="0" step="0.5" />
-              </td>
+              <td class="nowrap">{{ moduleLabel(activity.moduleType) }}</td>
+              <td class="nowrap">{{ activity.title }}</td>
+              <td class="nowrap">{{ activity.selfScore }}</td>
               <td>
                 <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
                   <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
@@ -126,18 +119,17 @@
                 <span v-else class="muted" style="font-size:12px;">未上传</span>
               </td>
               <td>
-                <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由" />
+                <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" />
               </td>
               <td>
-                <div class="action-row">
+                <div class="action-row inline-actions">
                   <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-                  <button class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'ADJUST')" :disabled="isDeciding">改分</button>
                   <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding">驳回</button>
                 </div>
               </td>
             </tr>
             <tr v-if="!current.activities?.length">
-              <td colspan="7" class="empty">暂无活动数据</td>
+              <td colspan="6" class="empty">暂无活动数据</td>
             </tr>
           </tbody>
         </table>
@@ -153,6 +145,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import http from '../api/http'
+import { previewImageById } from '../utils/imagePreview'
 
 const tasks = ref([])
 const current = ref(null)
@@ -181,17 +174,26 @@ const courseTypeLabel = (raw) => {
 const moduleLabel = (raw) => {
   const code = (raw || '').trim().toUpperCase()
   if (code === 'MORAL') return '德育'
-  if (code === 'INTEL_PRO_INNOV') return '智育（专业创新）'
-  if (code === 'SPORT_ACTIVITY') return '体育（活动）'
+  if (code === 'INTEL_PRO_INNOV') return '智育'
+  if (code === 'SPORT_ACTIVITY') return '体育'
   if (code === 'ART') return '美育'
-  if (code === 'LABOR') return '劳动'
+  if (code === 'LABOR') return '劳育'
   return raw || '-'
+}
+
+const isAutoReason = (text) => {
+  const value = String(text || '').trim().toUpperCase()
+  return value === '辅导员APPROVE'.toUpperCase() || value === '辅导员REJECT'.toUpperCase()
+}
+
+const normalizeReason = (text) => {
+  if (!text || isAutoReason(text)) return ''
+  return String(text).trim()
 }
 
 const ensureDraft = (key) => {
   if (!drafts[key]) {
     drafts[key] = {
-      adjustedScore: null,
       reason: ''
     }
   }
@@ -201,13 +203,13 @@ const initDrafts = (detail) => {
   ;(detail.courses || []).forEach((course) => {
     const key = courseKey(course.id)
     ensureDraft(key)
-    drafts[key].adjustedScore = Number(course.score)
+    drafts[key].reason = normalizeReason(course.reviewerComment)
   })
 
   ;(detail.activities || []).forEach((activity) => {
     const key = activityKey(activity.id)
     ensureDraft(key)
-    drafts[key].adjustedScore = Number(activity.selfScore)
+    drafts[key].reason = normalizeReason(activity.reviewerComment)
   })
 }
 
@@ -250,16 +252,7 @@ const decide = async (itemType, itemId, action) => {
 
   const payload = {
     action,
-    reason: drafts[key].reason || `辅导员${action}`
-  }
-
-  if (action === 'ADJUST') {
-    const adjusted = Number(drafts[key].adjustedScore)
-    if (Number.isNaN(adjusted)) {
-      alert('改分时请填写有效分数')
-      return
-    }
-    payload.adjustedScore = adjusted
+    reason: (drafts[key].reason || '').trim()
   }
 
   isDeciding.value = true
@@ -320,12 +313,51 @@ const hydrateEvidenceMetas = async () => {
 }
 
 const previewEvidence = async (fileId) => {
-  const resp = await http.get(`/files/${fileId}/download`, { responseType: 'blob' })
-  const blob = new Blob([resp.data])
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank')
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  await previewImageById(http, fileId, '证明材料预览')
 }
 
 loadTasks()
 </script>
+
+<style scoped>
+.nowrap {
+  white-space: nowrap;
+}
+
+.inline-actions {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.inline-actions .btn {
+  flex: 0 0 auto;
+  min-width: 84px;
+  white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.activity-table .col-module {
+  width: 90px;
+}
+
+.activity-table .col-title {
+  width: 150px;
+}
+
+.activity-table .col-score {
+  width: 90px;
+}
+
+.activity-table .col-evidence {
+  width: 280px;
+}
+
+.activity-table .col-reason {
+  width: 220px;
+}
+
+.activity-table .col-action {
+  width: 210px;
+}
+</style>

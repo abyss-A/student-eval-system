@@ -16,10 +16,7 @@ const menuGroups = [
   },
   {
     title: '反馈管理',
-    items: [
-      { label: '我要反馈', to: '/admin/feedback/create' },
-      { label: '反馈处理', to: '/admin/feedback/handle' }
-    ]
+    items: [{ label: '反馈处理', to: '/admin/feedback/handle' }]
   },
   {
     title: '排名公示',

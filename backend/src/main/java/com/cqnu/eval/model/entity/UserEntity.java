@@ -7,6 +7,8 @@ public class UserEntity {
     private String role;
     private String studentNo;
     private String realName;
+    private String gender;
+    private String phone;
     private String className;
     private String majorName;
     private Integer enabled;
@@ -57,6 +59,22 @@ public class UserEntity {
 
     public void setRealName(String realName) {
         this.realName = realName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getClassName() {

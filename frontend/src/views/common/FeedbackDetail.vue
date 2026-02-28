@@ -26,19 +26,19 @@
       </div>
 
       <div class="card" style="box-shadow: none; background: #fbfdff;">
-        <div style="font-weight: 900;">反馈内容</div>
+        <div style="font-weight: 700;">反馈内容</div>
         <div class="text-block" style="margin-top: 10px;">{{ detail.content }}</div>
       </div>
 
       <div class="card" style="box-shadow: none; background: #fbfdff;">
-        <div style="font-weight: 900;">截图</div>
+        <div style="font-weight: 700;">截图</div>
         <div style="margin-top: 10px;">
           <ImageIdsUploader :model-value="detail.screenshot_file_ids || ''" :readonly="true" />
         </div>
       </div>
 
       <div v-if="detail.reply_content || detail.replied_at" class="card" style="box-shadow: none; background: #fbfdff;">
-        <div style="font-weight: 900;">处理回复</div>
+        <div style="font-weight: 700;">处理回复</div>
         <p class="muted" style="margin-top: 8px;">
           处理人：<b>{{ detail.handler_real_name || '-' }}</b>
           <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -64,8 +64,8 @@ const detail = ref(null)
 
 const backTo = computed(() => {
   const seg = String(route.path || '').split('/')[1] || 'student'
-  if (seg === 'student') return '/student/feedback/mine'
-  return `/${seg}/feedback/handle`
+  if (seg === 'student' || seg === 'teacher') return `/${seg}/feedback/mine`
+  return '/admin/feedback/handle'
 })
 
 const statusLabel = (raw) => {
@@ -121,4 +121,3 @@ watch(
   font-size: 14px;
 }
 </style>
-

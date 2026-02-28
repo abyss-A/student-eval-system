@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .cors().configurationSource(corsConfigurationSource()).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
-                .antMatchers("/api/v1/auth/login").permitAll()
+                .antMatchers("/api/v1/auth/login", "/api/v1/auth/register/student").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -18,7 +18,7 @@ const menuGroups = [
     title: '反馈管理',
     items: [
       { label: '我要反馈', to: '/teacher/feedback/create' },
-      { label: '反馈处理', to: '/teacher/feedback/handle' }
+      { label: '我的反馈', to: '/teacher/feedback/mine' }
     ]
   },
   {

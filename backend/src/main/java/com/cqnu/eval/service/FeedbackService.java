@@ -48,8 +48,9 @@ public class FeedbackService {
         return feedbackMapper.listMy(creatorId, normalizeFeedbackStatus(status));
     }
 
+    // Global feedback list is admin-only.
     public List<Map<String, Object>> listAll(CurrentUser user, String status, String keyword) {
-        requireCounselorOrAdmin(user);
+        requireAdmin(user);
         String kw = keyword == null ? null : keyword.trim();
         return feedbackMapper.listAll(normalizeFeedbackStatus(status), kw);
     }
@@ -64,8 +65,9 @@ public class FeedbackService {
             throw new BizException(40401, "反馈不存在");
         }
 
+        // Admin can view all; others can only view their own feedback.
         String role = roleOf(user);
-        if ("COUNSELOR".equals(role) || "ADMIN".equals(role)) {
+        if ("ADMIN".equals(role)) {
             return map;
         }
 
@@ -78,7 +80,7 @@ public class FeedbackService {
 
     @Transactional(rollbackFor = Exception.class)
     public void handle(Long id, FeedbackHandleRequest request, CurrentUser user) {
-        requireCounselorOrAdmin(user);
+        requireAdmin(user);
 
         FeedbackEntity entity = feedbackMapper.findById(id);
         if (entity == null) {
@@ -191,9 +193,9 @@ public class FeedbackService {
         return s;
     }
 
-    private void requireCounselorOrAdmin(CurrentUser user) {
+    private void requireAdmin(CurrentUser user) {
         String role = roleOf(user);
-        if (!"COUNSELOR".equals(role) && !"ADMIN".equals(role)) {
+        if (!"ADMIN".equals(role)) {
             throw new BizException(40301, "无权限访问");
         }
     }

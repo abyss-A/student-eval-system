@@ -24,32 +24,32 @@ INSERT INTO scoring_config(
 ) VALUES (1, 10, 'COLLEGE_FIRST', 'STRICT_FORMULA', 0.15, 0.60, 0.10, 0.075, 0.075, 100, 100, 100, 100, 100);
 
 -- Accounts (username/password should be ASCII; names/classes/majors are Chinese in DB)
-INSERT INTO sys_user(id, username, password_hash, role, real_name, enabled)
-VALUES (1, 'admin', '123456', 'ADMIN', CONVERT(0xe7b3bbe7bb9fe7aea1e79086e59198 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, real_name, gender, phone, enabled)
+VALUES (1, 'admin', '123456', 'ADMIN', CONVERT(0xe7b3bbe7bb9fe7aea1e79086e59198 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13900000001', 1);
 
-INSERT INTO sys_user(id, username, password_hash, role, real_name, enabled)
-VALUES (2, 'counselor1', '123456', 'COUNSELOR', CONVERT(0xe5bca0e88081e5b888 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, real_name, gender, phone, enabled)
+VALUES (2, 'counselor1', '123456', 'COUNSELOR', CONVERT(0xe5bca0e88081e5b888 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13900000002', 1);
 
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (3, 'stu0001', '123456', 'STUDENT', '2022000001', CONVERT(0xe5ada6e7949f303031 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (4, 'stu0002', '123456', 'STUDENT', '2022000002', CONVERT(0xe5ada6e7949f303032 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (5, 'stu0003', '123456', 'STUDENT', '2022000003', CONVERT(0xe5ada6e7949f303033 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (6, 'stu0004', '123456', 'STUDENT', '2022000004', CONVERT(0xe5ada6e7949f303034 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (7, 'stu0005', '123456', 'STUDENT', '2022000005', CONVERT(0xe5ada6e7949f303035 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (8, 'stu0006', '123456', 'STUDENT', '2022000006', CONVERT(0xe5ada6e7949f303036 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (9, 'stu0007', '123456', 'STUDENT', '2022000007', CONVERT(0xe5ada6e7949f303037 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (10, 'stu0008', '123456', 'STUDENT', '2022000008', CONVERT(0xe5ada6e7949f303038 USING utf8mb4), CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (11, 'stu0009', '123456', 'STUDENT', '2022000009', CONVERT(0xe5ada6e7949f303039 USING utf8mb4), CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
-INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, class_name, major_name, enabled)
-VALUES (12, 'stu0010', '123456', 'STUDENT', '2022000010', CONVERT(0xe5ada6e7949f303130 USING utf8mb4), CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (3, 'stu0001', '123456', 'STUDENT', '2022000001', CONVERT(0xe5ada6e7949f303031 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13800000001', CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (4, 'stu0002', '123456', 'STUDENT', '2022000002', CONVERT(0xe5ada6e7949f303032 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13800000002', CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (5, 'stu0003', '123456', 'STUDENT', '2022000003', CONVERT(0xe5ada6e7949f303033 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13800000003', CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (6, 'stu0004', '123456', 'STUDENT', '2022000004', CONVERT(0xe5ada6e7949f303034 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13800000004', CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (7, 'stu0005', '123456', 'STUDENT', '2022000005', CONVERT(0xe5ada6e7949f303035 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13800000005', CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (8, 'stu0006', '123456', 'STUDENT', '2022000006', CONVERT(0xe5ada6e7949f303036 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13800000006', CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (9, 'stu0007', '123456', 'STUDENT', '2022000007', CONVERT(0xe5ada6e7949f303037 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13800000007', CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (10, 'stu0008', '123456', 'STUDENT', '2022000008', CONVERT(0xe5ada6e7949f303038 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13800000008', CONVERT(0x32303232e7baa732e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (11, 'stu0009', '123456', 'STUDENT', '2022000009', CONVERT(0xe5ada6e7949f303039 USING utf8mb4), CONVERT(0xe794b7 USING utf8mb4), '13800000009', CONVERT(0x32303232e7baa733e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
+INSERT INTO sys_user(id, username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled)
+VALUES (12, 'stu0010', '123456', 'STUDENT', '2022000010', CONVERT(0xe5ada6e7949f303130 USING utf8mb4), CONVERT(0xe5a5b3 USING utf8mb4), '13800000010', CONVERT(0x32303232e7baa731e78fad USING utf8mb4), CONVERT(0xe695b0e5ada6e4b88ee5ba94e794a8e695b0e5ada6 USING utf8mb4), 1);
 
 -- Example submission (for ranking/export demo)
 INSERT INTO submission(

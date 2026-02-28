@@ -72,8 +72,8 @@ const submit = async () => {
     const id = data.data?.id
     if (id) {
       router.push(`/${seg}/feedback/${id}`)
-    } else if (seg === 'student') {
-      router.push('/student/feedback/mine')
+    } else if (seg === 'student' || seg === 'teacher') {
+      router.push(`/${seg}/feedback/mine`)
     } else {
       router.push(`/${seg}/feedback/handle`)
     }

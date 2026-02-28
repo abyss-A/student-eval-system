@@ -64,7 +64,7 @@ public class SubmissionService {
     public SubmissionEntity createOrGetMySubmission(Long studentId) {
         SemesterEntity active = semesterMapper.findActive();
         if (active == null) {
-            throw new BizException(40401, "当前没有启用的学期，请联系管理员");
+            throw new BizException(40401, "No active semester is configured, please contact admin");
         }
 
         SubmissionEntity existing = submissionMapper.findBySemesterAndStudent(active.getId(), studentId);
@@ -89,11 +89,11 @@ public class SubmissionService {
     public Map<String, Object> getSubmissionDetail(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "无权限访问该测评单");
+            throw new BizException(40301, "No permission to access this submission");
         }
 
         UserEntity student = userMapper.findById(submission.getStudentId());
@@ -154,10 +154,10 @@ public class SubmissionService {
 
         String module = normalizeModuleType(moduleType);
         if (module.isBlank()) {
-            throw new BizException(40001, "moduleType不能为空");
+            throw new BizException(40001, "moduleType cannot be blank");
         }
         if (!isAllowedModule(module)) {
-            throw new BizException(40001, "不支持的模块类型: " + moduleType);
+            throw new BizException(40001, "婵犵數鍋為崹鍫曞箰閸濄儳鐭撻柣銏㈩焾閺嬩焦銇勯弴妤€浜惧Δ鐘靛仦閸旀牠骞忛崨瀛樺€绘俊顖氬悑濞堝憡绻濈喊妯活潑闁割煈浜崺鈧い鎺戝暞閻濐亪鏌涚€ｃ劌鍔ょ紒杈ㄥ浮椤㈡洟濡烽鍏碱唲闂? " + moduleType);
         }
 
         activityItemMapper.deleteBySubmissionIdAndModule(submissionId, module);
@@ -194,10 +194,10 @@ public class SubmissionService {
             try {
                 id = Long.parseLong(trimmed);
             } catch (NumberFormatException e) {
-                throw new BizException(40001, "附件ID格式不正确: " + trimmed);
+                throw new BizException(40001, "闂傚倸鍊搁崐鍝モ偓姘煎墰閳ь剚鍑规禍婊堝煝鎼淬劊鈧線鎮垮澶嬧拺闁告繂瀚倴闂佸憡顭嗛崨顕呮綗闂佹枼鏅涢崯浼村煝閺冨倵鍋撻獮鍨姎婵☆偒鍙冨畷婵嬪焵椤掑倻纾? " + trimmed);
             }
             if (id <= 0) {
-                throw new BizException(40001, "附件ID必须为正数");
+                throw new BizException(40001, "Attachment ID must be a positive integer");
             }
             if (!ids.contains(id)) {
                 ids.add(id);
@@ -205,17 +205,17 @@ public class SubmissionService {
         }
 
         if (ids.size() > 6) {
-            throw new BizException(40001, "每个活动最多上传6张证明图片");
+            throw new BizException(40001, "At most 6 evidence images are allowed for one activity");
         }
 
         // Only allow referencing images uploaded by the current student.
         for (Long id : ids) {
             AttachmentEntity meta = attachmentMapper.findById(id);
             if (meta == null) {
-                throw new BizException(40401, "附件不存在: " + id);
+                throw new BizException(40401, "闂傚倸鍊搁崐鍝モ偓姘煎墰閳ь剚鍑规禍婊堝煝鎼淬劌顫呴柨娑樺閺嬫牠鎮楅獮鍨姎闁硅櫕鍔欓獮妤呮偐缂佹鍘? " + id);
             }
             if (meta.getUploaderId() == null || !meta.getUploaderId().equals(studentId)) {
-                throw new BizException(40301, "只能引用自己上传的证明图片");
+                throw new BizException(40301, "Only self-uploaded evidence images can be referenced");
             }
             // Evidence material: only allow JPG/PNG images to be referenced.
             String mime = meta.getMimeType();
@@ -233,7 +233,7 @@ public class SubmissionService {
             boolean allowedByExt = nameLower.endsWith(".jpg") || nameLower.endsWith(".jpeg") || nameLower.endsWith(".png");
 
             if (!allowedByMime && !allowedByExt) {
-                throw new BizException(40001, "证明材料仅支持JPG/PNG图片");
+                throw new BizException(40001, "Evidence supports JPG/PNG images only");
             }
         }
 
@@ -281,7 +281,7 @@ public class SubmissionService {
     public SubmissionEntity finalizeSubmission(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
 
         ScoreResult score = calculateScore(submissionId);
@@ -301,7 +301,7 @@ public class SubmissionService {
     public SubmissionEntity recalculate(Long submissionId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
 
         ScoreResult score = calculateScore(submissionId);
@@ -318,11 +318,11 @@ public class SubmissionService {
     public Map<String, Object> getScore(Long submissionId, CurrentUser currentUser) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
-            throw new BizException(40301, "无权限操作该测评单");
+            throw new BizException(40301, "No permission to operate this submission");
         }
 
         ScoreResult result = calculateScore(submissionId);
@@ -334,9 +334,16 @@ public class SubmissionService {
         map.put("sportRaw", result.getSportRaw());
         map.put("artRaw", result.getArtRaw());
         map.put("laborRaw", result.getLaborRaw());
+        map.put("moralScore", result.getMoralScore());
+        map.put("intelScore", result.getIntelScore());
+        map.put("sportScore", result.getSportScore());
+        map.put("artScore", result.getArtScore());
+        map.put("laborScore", result.getLaborScore());
         map.put("totalScore", result.getTotalScore());
         map.put("courseAvg", result.getCourseAvg());
-        map.put("formula", "MORAL*15% + INTEL*60% + SPORT*10% + ART*7.5% + LABOR*7.5%");
+        map.put("intelCourseAvg", result.getIntelCourseAvg());
+        map.put("formula", "综合总分 = 德育原始分×15% + 智育原始分×60% + 体育原始分×10% + 美育原始分×7.5% + 劳育原始分×7.5%");
+        map.put("intelFormula", "智育原始分 = 智育课程加权平均分×85% + min(智育活动总分,100)×15%；智育计入分 = 智育原始分×60%");
         return map;
     }
 
@@ -365,20 +372,20 @@ public class SubmissionService {
     private void checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (submissionMapper.checkOwner(submissionId, studentId) == 0) {
-            throw new BizException(40301, "无权限操作该测评单");
+            throw new BizException(40301, "No permission to operate this submission");
         }
         if ("FINALIZED".equals(entity.getStatus()) || "PUBLISHED".equals(entity.getStatus())) {
-            throw new BizException(40003, "当前状态不可编辑");
+            throw new BizException(40003, "Current status is not editable");
         }
     }
 
     public ScoreResult calculateScore(Long submissionId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
 
         ScoringConfigEntity cfg = scoringConfigMapper.findBySemesterId(submission.getSemesterId());
@@ -389,8 +396,8 @@ public class SubmissionService {
         List<CourseItemEntity> courses = courseItemMapper.listBySubmissionId(submissionId);
         List<ActivityItemEntity> activities = activityItemMapper.listBySubmissionId(submissionId);
 
-        BigDecimal creditSum = BigDecimal.ZERO;
-        BigDecimal weightedSum = BigDecimal.ZERO;
+        BigDecimal intelCreditSum = BigDecimal.ZERO;
+        BigDecimal intelWeightedSum = BigDecimal.ZERO;
         BigDecimal sportCourseCreditSum = BigDecimal.ZERO;
         BigDecimal sportCourseWeightedSum = BigDecimal.ZERO;
 
@@ -398,8 +405,10 @@ public class SubmissionService {
             BigDecimal score = safe(course.getReviewerScore() == null ? course.getScore() : course.getReviewerScore());
             BigDecimal credit = safe(course.getCredit());
 
-            creditSum = creditSum.add(credit);
-            weightedSum = weightedSum.add(score.multiply(credit));
+            if (isIntelAcademicCourse(course)) {
+                intelCreditSum = intelCreditSum.add(credit);
+                intelWeightedSum = intelWeightedSum.add(score.multiply(credit));
+            }
 
             if (isSportCourse(course)) {
                 sportCourseCreditSum = sportCourseCreditSum.add(credit);
@@ -407,12 +416,14 @@ public class SubmissionService {
             }
         }
 
-        BigDecimal courseAvg = creditSum.compareTo(BigDecimal.ZERO) == 0
+        // 闂佸搫鎳樼紓姘跺磻濞戞碍瀚氶柛鎾椻偓閺屻倝鏌涜濞层倝宕规惔銊︽櫖婵﹩鍋嗙粔濂告煠閼艰泛钄兼い鏇熷▕濮婁粙濡堕崪浣光枎闂佹寧绋戞總鏃傜箔閺嶃劎顩烽柛娑卞灣閸╃娀鎮规担娴嬪亾瀹曞洨鐣辨繛?闂備焦褰冪粔鎶藉箞?闂佸憡鍔曠粔鎶藉箞閵娾晛违?
+        BigDecimal courseAvg = intelCreditSum.compareTo(BigDecimal.ZERO) == 0
                 ? BigDecimal.ZERO
-                : weightedSum.divide(creditSum, 4, RoundingMode.HALF_UP);
+                : intelWeightedSum.divide(intelCreditSum, 4, RoundingMode.HALF_UP);
 
+        // If there is no sport course, sport course average should be 0 instead of a fixed baseline.
         BigDecimal sportCourseAvg = sportCourseCreditSum.compareTo(BigDecimal.ZERO) == 0
-                ? new BigDecimal("60")
+                ? BigDecimal.ZERO
                 : sportCourseWeightedSum.divide(sportCourseCreditSum, 4, RoundingMode.HALF_UP);
 
         BigDecimal moral = BigDecimal.ZERO;
@@ -459,14 +470,21 @@ public class SubmissionService {
         BigDecimal sportRaw = sportCourseAvg.multiply(new BigDecimal("0.85"))
                 .add(sportCap.multiply(new BigDecimal("0.15")));
 
-        BigDecimal total = moralRaw.multiply(BigDecimal.valueOf(cfg.getwMoral()))
-                .add(intelRaw.multiply(BigDecimal.valueOf(cfg.getwIntel())))
-                .add(sportRaw.multiply(BigDecimal.valueOf(cfg.getwSport())))
-                .add(artRaw.multiply(BigDecimal.valueOf(cfg.getwArt())))
-                .add(laborRaw.multiply(BigDecimal.valueOf(cfg.getwLabor())));
+        BigDecimal moralScore = moralRaw.multiply(BigDecimal.valueOf(cfg.getwMoral()));
+        BigDecimal intelScore = intelRaw.multiply(BigDecimal.valueOf(cfg.getwIntel()));
+        BigDecimal sportScore = sportRaw.multiply(BigDecimal.valueOf(cfg.getwSport()));
+        BigDecimal artScore = artRaw.multiply(BigDecimal.valueOf(cfg.getwArt()));
+        BigDecimal laborScore = laborRaw.multiply(BigDecimal.valueOf(cfg.getwLabor()));
+
+        BigDecimal total = moralScore
+                .add(intelScore)
+                .add(sportScore)
+                .add(artScore)
+                .add(laborScore);
 
         ScoreResult result = new ScoreResult();
         result.setCourseAvg(courseAvg.setScale(2, RoundingMode.HALF_UP));
+        result.setIntelCourseAvg(courseAvg.setScale(2, RoundingMode.HALF_UP));
         result.setIntelInnovation(intelInnovation.setScale(2, RoundingMode.HALF_UP));
         result.setSportActivity(sportActivity.setScale(2, RoundingMode.HALF_UP));
         result.setMoralRaw(moralRaw.setScale(2, RoundingMode.HALF_UP));
@@ -474,20 +492,49 @@ public class SubmissionService {
         result.setSportRaw(sportRaw.setScale(2, RoundingMode.HALF_UP));
         result.setArtRaw(artRaw.setScale(2, RoundingMode.HALF_UP));
         result.setLaborRaw(laborRaw.setScale(2, RoundingMode.HALF_UP));
+        result.setMoralScore(moralScore.setScale(2, RoundingMode.HALF_UP));
+        result.setIntelScore(intelScore.setScale(2, RoundingMode.HALF_UP));
+        result.setSportScore(sportScore.setScale(2, RoundingMode.HALF_UP));
+        result.setArtScore(artScore.setScale(2, RoundingMode.HALF_UP));
+        result.setLaborScore(laborScore.setScale(2, RoundingMode.HALF_UP));
         result.setTotalScore(total.setScale(2, RoundingMode.HALF_UP));
         return result;
     }
 
+    private boolean isIntelAcademicCourse(CourseItemEntity course) {
+        if (course == null) {
+            return false;
+        }
+        if (isSportCourse(course)) {
+            return false;
+        }
+        String type = course.getCourseType() == null ? "" : course.getCourseType().trim().toUpperCase(Locale.ROOT);
+        if (type.isEmpty()) {
+            return true;
+        }
+        return "REQUIRED".equals(type)
+                || "RETAKE".equals(type)
+                || "RELEARN".equals(type)
+                || type.contains("MANDATORY")
+                || type.contains("\u5fc5\u4fee")
+                || type.contains("\u91cd\u4fee")
+                || type.contains("\u518d\u4fee");
+    }
+
     private boolean isSportCourse(CourseItemEntity course) {
+        if (course == null) {
+            return false;
+        }
         String name = course.getCourseName() == null ? "" : course.getCourseName().toUpperCase(Locale.ROOT);
         String type = course.getCourseType() == null ? "" : course.getCourseType().toUpperCase(Locale.ROOT);
-        if (type.contains("SPORT") || type.contains("PE") || type.contains("PHYSICAL")) {
+        if (type.contains("SPORT") || type.contains("PE") || type.contains("PHYSICAL") || type.contains("\u4f53\u80b2")) {
             return true;
         }
         if (name.contains("SPORT") || name.contains("PE") || name.contains("PHYSICAL")) {
             return true;
         }
-        return course.getCourseName() != null && course.getCourseName().contains("体育");
+        String rawName = course.getCourseName() == null ? "" : course.getCourseName().replace(" ", "");
+        return rawName.contains("\u4f53\u80b2") || rawName.contains("\u4f53\u6d4b") || rawName.contains("\u4f53\u80fd");
     }
 
     private BigDecimal safe(BigDecimal value) {
@@ -516,3 +563,4 @@ public class SubmissionService {
         return cfg;
     }
 }
+

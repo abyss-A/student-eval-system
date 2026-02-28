@@ -30,7 +30,7 @@
       class="card"
       style="margin-top: 12px; border-color: #fecaca; background: #fef2f2; box-shadow: none;"
     >
-      <div style="font-weight: 900; color: #b42318;">加载失败</div>
+      <div style="font-weight: 700; color: #b42318;">加载失败</div>
       <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
       <div class="toolbar-row" style="margin-top: 10px;">
         <button class="btn secondary" type="button" @click="load" :disabled="loading">重试</button>
@@ -51,7 +51,7 @@
       <tbody>
         <tr v-for="n in rows" :key="n.id">
           <td>
-            <div style="font-weight: 900; color: #0f172a;">{{ n.title }}</div>
+            <div style="font-weight: 700; color: #0f172a;">{{ n.title }}</div>
           </td>
           <td>
             <span class="badge" :class="statusBadge(n.status)">{{ statusLabel(n.status) }}</span>
@@ -80,7 +80,7 @@
     <div class="drawer-panel">
       <div class="drawer-header">
         <div>
-          <div style="font-weight: 900; font-size: 16px;">{{ drawer.mode === 'create' ? '新建公告' : '编辑公告' }}</div>
+          <div style="font-weight: 700; font-size: 16px;">{{ drawer.mode === 'create' ? '新建公告' : '编辑公告' }}</div>
           <p class="muted" style="margin-top: 6px;">公告内容支持换行显示。已发布公告需先下线再修改。</p>
         </div>
         <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">✕</button>

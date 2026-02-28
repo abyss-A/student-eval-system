@@ -45,7 +45,8 @@ public class ReviewService {
     @Transactional(rollbackFor = Exception.class)
     public void decision(String itemType, Long itemId, ReviewDecisionRequest request, Long reviewerId) {
         String action = request.getAction().toUpperCase(Locale.ROOT);
-        if (!"APPROVE".equals(action) && !"REJECT".equals(action) && !"ADJUST".equals(action)) {
+        // Counselor review: only approve/reject, no score adjustment.
+        if (!"APPROVE".equals(action) && !"REJECT".equals(action)) {
             throw new BizException(40001, "不支持的审核动作");
         }
 
@@ -70,13 +71,6 @@ public class ReviewService {
             after = BigDecimal.ZERO;
             item.setReviewStatus("REJECTED");
             item.setReviewerComment(req.getReason());
-        } else if ("ADJUST".equals(action)) {
-            if (req.getAdjustedScore() == null) {
-                throw new BizException(40001, "改分时必须传adjustedScore");
-            }
-            after = req.getAdjustedScore();
-            item.setReviewStatus("APPROVED");
-            item.setReviewerComment(req.getReason());
         } else {
             item.setReviewStatus("APPROVED");
             item.setReviewerComment(req.getReason());
@@ -99,13 +93,6 @@ public class ReviewService {
         if ("REJECT".equals(action)) {
             after = BigDecimal.ZERO;
             item.setReviewStatus("REJECTED");
-            item.setReviewerComment(req.getReason());
-        } else if ("ADJUST".equals(action)) {
-            if (req.getAdjustedScore() == null) {
-                throw new BizException(40001, "改分时必须传adjustedScore");
-            }
-            after = req.getAdjustedScore();
-            item.setReviewStatus("APPROVED");
             item.setReviewerComment(req.getReason());
         } else {
             item.setReviewStatus("APPROVED");
@@ -138,3 +125,4 @@ public class ReviewService {
         reviewLogMapper.insert(log);
     }
 }
+

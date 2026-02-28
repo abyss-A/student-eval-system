@@ -17,6 +17,11 @@ mybatis:
     map-underscore-to-camel-case: true
   type-aliases-package: com.cqnu.eval.model.entity
 
+report:
+  template:
+    name: scholarship_form_v1.docx
+    version: v1
+
 app:
   jwt:
     secret: 5J6h0k2n8Qq3i9wY1eR7tU4pL0mN6xZs

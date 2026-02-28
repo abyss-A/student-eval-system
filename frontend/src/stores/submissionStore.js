@@ -1,7 +1,9 @@
 import { reactive } from 'vue'
 import http from '../api/http'
+import { getUserId } from '../utils/auth'
 
 const state = reactive({
+  ownerUserId: '',
   submissionId: null,
   status: '',
   detail: null,
@@ -9,7 +11,26 @@ const state = reactive({
   loading: false
 })
 
+function reset() {
+  state.submissionId = null
+  state.status = ''
+  state.detail = null
+  state.score = null
+  state.loading = false
+}
+
+function syncOwner() {
+  const currentUserId = String(getUserId() || '')
+  if (state.ownerUserId !== currentUserId) {
+    reset()
+    state.ownerUserId = currentUserId
+  }
+  return currentUserId
+}
+
 async function ensureSubmission() {
+  const userId = syncOwner()
+  if (!userId) return null
   if (state.submissionId) return state.submissionId
   state.loading = true
   try {
@@ -26,6 +47,8 @@ async function ensureSubmission() {
 }
 
 async function loadDetail() {
+  const userId = syncOwner()
+  if (!userId) return null
   if (!state.submissionId) return null
   const { data } = await http.get(`/submissions/${state.submissionId}`)
   state.detail = data.data
@@ -34,6 +57,8 @@ async function loadDetail() {
 }
 
 async function loadScore() {
+  const userId = syncOwner()
+  if (!userId) return null
   if (!state.submissionId) return null
   const { data } = await http.get(`/submissions/${state.submissionId}/score`)
   state.score = data.data
@@ -73,13 +98,36 @@ async function exportReport(format) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = format === 'PDF' ? `综合测评报告_${state.submissionId}.pdf` : `综合测评报告_${state.submissionId}.docx`
+  a.download = resolveDownloadName(resp, format, state.submissionId)
   a.click()
   URL.revokeObjectURL(url)
 }
 
+function resolveDownloadName(resp, format, submissionId) {
+  const fallback = format === 'PDF'
+    ? `综合奖学金申请表_${submissionId}.pdf`
+    : `综合奖学金申请表_${submissionId}.docx`
+  const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
+  if (!disposition) return fallback
+
+  const utf8Match = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1])
+    } catch (_) {
+      return utf8Match[1]
+    }
+  }
+
+  const normalMatch = disposition.match(/filename\s*=\s*\"?([^\";]+)\"?/i)
+  if (normalMatch && normalMatch[1]) {
+    return normalMatch[1]
+  }
+  return fallback
+}
 export default {
   state,
+  reset,
   ensureSubmission,
   loadDetail,
   loadScore,
