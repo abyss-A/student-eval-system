@@ -1,56 +1,72 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
         <h2 style="margin: 0;">反馈处理</h2>
-        <p class="muted" style="margin-top: 6px;">辅导员/管理员查看反馈、回复并关闭。</p>
-      </div>
-      <div class="toolbar-row">
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">{{ loading ? '刷新中...' : '刷新' }}</button>
+        <p class="muted" style="margin-top: 6px;">管理员查看反馈、回复并关闭。</p>
       </div>
     </div>
 
-    <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="setStatus('ALL')" :disabled="loading">全部</button>
-      <button class="btn secondary" type="button" @click="setStatus('NEW')" :disabled="loading">待处理</button>
-      <button class="btn secondary" type="button" @click="setStatus('REPLIED')" :disabled="loading">已回复</button>
-      <button class="btn secondary" type="button" @click="setStatus('CLOSED')" :disabled="loading">已关闭</button>
-      <span class="muted">当前：<b>{{ statusLabel(activeStatus) }}</b></span>
-      <div class="toolbar-row" style="flex: 1; justify-content: flex-end;">
-        <input v-model.trim="keyword" placeholder="搜索标题/内容关键词" style="max-width: 320px;" />
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">搜索</button>
+    <div class="table-search-bar">
+      <div class="table-search-left">
+        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
+        <SearchCapsule
+          v-model="keyword"
+          width="340px"
+          placeholder="搜索标题/内容关键词"
+          :disabled="loading"
+          @submit="handleSearch"
+          @clear="handleSearch"
+        />
+        <select v-model="activeStatus" style="width: 140px;" :disabled="loading" @change="handleSearch">
+          <option value="ALL">全部状态</option>
+          <option value="NEW">待处理</option>
+          <option value="REPLIED">已回复</option>
+          <option value="CLOSED">已关闭</option>
+        </select>
       </div>
     </div>
 
-    <table class="table" style="margin-top: 12px;">
-      <thead>
-        <tr>
-          <th>标题</th>
-          <th style="width: 110px;">状态</th>
-          <th style="width: 160px;">提交人</th>
-          <th style="width: 180px;">班级</th>
-          <th style="width: 170px;">提交时间</th>
-          <th style="width: 140px;">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="f in rows" :key="f.id">
-          <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
-          <td>
-            <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
-          </td>
-          <td>{{ f.creator_real_name || '-' }}</td>
-          <td>{{ f.class_name || '-' }}</td>
-          <td>{{ formatDate(f.created_at) }}</td>
-          <td>
-            <button class="btn ghost" type="button" @click="openDrawer(f.id)">处理</button>
-          </td>
-        </tr>
-        <tr v-if="!rows.length">
-          <td colspan="6" class="empty">暂无数据</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-shell">
+      <div class="table-scroll-main">
+        <table class="table table-sticky">
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th style="width: 110px;">状态</th>
+              <th style="width: 160px;">提交人</th>
+              <th style="width: 180px;">班级</th>
+              <th style="width: 170px;">提交时间</th>
+              <th style="width: 140px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="f in pager.pagedRows.value" :key="f.id">
+              <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
+              <td>
+                <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
+              </td>
+              <td>{{ f.creator_real_name || '-' }}</td>
+              <td>{{ f.class_name || '-' }}</td>
+              <td>{{ formatDate(f.created_at) }}</td>
+              <td>
+                <button class="btn ghost" type="button" @click="openDrawer(f.id)">处理</button>
+              </td>
+            </tr>
+            <tr v-if="!pager.pagedRows.value.length">
+              <td colspan="6" class="empty">暂无数据</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TablePager
+        :page="pager.page.value"
+        :total-pages="pager.totalPages.value"
+        :total="pager.total.value"
+        :disabled="loading"
+        @change="pager.goPage"
+      />
+    </div>
   </section>
 
   <div v-if="drawer.open" class="drawer-overlay" @click.self="closeDrawer">
@@ -66,7 +82,7 @@
             提交时间：<b>{{ formatDate(drawer.detail?.created_at) }}</b>
           </p>
         </div>
-        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">✕</button>
+        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
       </div>
 
       <div class="drawer-body">
@@ -136,17 +152,20 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
 import http from '../../api/http'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
-
-const route = useRoute()
+import SearchCapsule from '../../components/SearchCapsule.vue'
+import TablePager from '../../components/TablePager.vue'
+import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
+import useTablePager from '../../composables/useTablePager'
 
 const rows = ref([])
 const loading = ref(false)
 const activeStatus = ref('NEW')
 const keyword = ref('')
+
+const pager = useTablePager(rows, 10)
 
 const drawer = reactive({
   open: false,
@@ -169,7 +188,6 @@ const statusBadge = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
   if (s === 'NEW') return 'warning'
   if (s === 'REPLIED') return 'success'
-  if (s === 'CLOSED') return ''
   return ''
 }
 
@@ -185,22 +203,31 @@ const formatDate = (raw) => {
   return `${y}-${m}-${d} ${hh}:${mm}`
 }
 
-const setStatus = (s) => {
-  activeStatus.value = s
-  load()
-}
-
-const load = async () => {
+const load = async ({ keepPage = false } = {}) => {
   loading.value = true
   try {
     const params = {}
     if (activeStatus.value && activeStatus.value !== 'ALL') params.status = activeStatus.value
     if (keyword.value) params.keyword = keyword.value
+
     const { data } = await http.get('/feedbacks', { params })
     rows.value = data.data || []
+    if (!keepPage) {
+      pager.resetPage()
+    }
   } finally {
     loading.value = false
   }
+}
+
+const handleSearch = () => {
+  load()
+}
+
+const resetFilters = () => {
+  activeStatus.value = 'NEW'
+  keyword.value = ''
+  load()
 }
 
 const openDrawer = async (id) => {
@@ -234,7 +261,7 @@ const reply = async () => {
   try {
     await http.post(`/feedbacks/${drawer.detail.id}/handle`, { action: 'REPLY', replyContent: drawer.replyContent })
     await openDrawer(drawer.detail.id)
-    await load()
+    await load({ keepPage: true })
     alert('已回复')
   } finally {
     drawer.handling = false
@@ -248,18 +275,28 @@ const closeIt = async () => {
   try {
     await http.post(`/feedbacks/${drawer.detail.id}/handle`, { action: 'CLOSE', replyContent: drawer.replyContent || '' })
     await openDrawer(drawer.detail.id)
-    await load()
+    await load({ keepPage: true })
     alert('已关闭')
   } finally {
     drawer.handling = false
   }
 }
 
-const detailLink = (id) => {
-  return `/admin/feedback/${id}`
-}
+const detailLink = (id) => `/admin/feedback/${id}`
 
-load()
+const busyRef = computed(() => loading.value || drawer.loading || drawer.handling)
+const pausedRef = computed(() => drawer.open)
+
+useIdleAutoRefresh({
+  refreshFn: () => load({ keepPage: true }),
+  intervalMs: 30000,
+  isBusy: busyRef,
+  isPaused: pausedRef
+})
+
+onMounted(() => {
+  load()
+})
 </script>
 
 <style scoped>

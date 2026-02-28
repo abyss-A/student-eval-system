@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+﻿import { reactive } from 'vue'
 import http from '../api/http'
 import { getUserId } from '../utils/auth'
 
@@ -11,12 +11,15 @@ const state = reactive({
   loading: false
 })
 
+const autoSaveFlushers = new Map()
+
 function reset() {
   state.submissionId = null
   state.status = ''
   state.detail = null
   state.score = null
   state.loading = false
+  autoSaveFlushers.clear()
 }
 
 function syncOwner() {
@@ -32,6 +35,7 @@ async function ensureSubmission() {
   const userId = syncOwner()
   if (!userId) return null
   if (state.submissionId) return state.submissionId
+
   state.loading = true
   try {
     const { data } = await http.post('/submissions')
@@ -48,8 +52,8 @@ async function ensureSubmission() {
 
 async function loadDetail() {
   const userId = syncOwner()
-  if (!userId) return null
-  if (!state.submissionId) return null
+  if (!userId || !state.submissionId) return null
+
   const { data } = await http.get(`/submissions/${state.submissionId}`)
   state.detail = data.data
   state.status = data.data?.submission?.status || ''
@@ -58,26 +62,32 @@ async function loadDetail() {
 
 async function loadScore() {
   const userId = syncOwner()
-  if (!userId) return null
-  if (!state.submissionId) return null
+  if (!userId || !state.submissionId) return null
+
   const { data } = await http.get(`/submissions/${state.submissionId}/score`)
   state.score = data.data
   state.status = data.data?.status || state.status
   return state.score
 }
 
-async function saveCourses(items) {
+async function saveCourses(items, options = {}) {
+  const syncAfterSave = options.syncAfterSave !== false
   await ensureSubmission()
   await http.put(`/submissions/${state.submissionId}/courses/batch`, { items })
-  await loadDetail()
-  await loadScore()
+  if (syncAfterSave) {
+    await loadDetail()
+    await loadScore()
+  }
 }
 
-async function saveActivitiesModule(moduleType, items) {
+async function saveActivitiesModule(moduleType, items, options = {}) {
+  const syncAfterSave = options.syncAfterSave !== false
   await ensureSubmission()
   await http.put(`/submissions/${state.submissionId}/activities/module/${moduleType}`, { items })
-  await loadDetail()
-  await loadScore()
+  if (syncAfterSave) {
+    await loadDetail()
+    await loadScore()
+  }
 }
 
 async function submit() {
@@ -94,6 +104,7 @@ async function exportReport(format) {
     { format },
     { responseType: 'blob' }
   )
+
   const blob = new Blob([resp.data])
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -103,10 +114,23 @@ async function exportReport(format) {
   URL.revokeObjectURL(url)
 }
 
+function registerAutoSaveFlusher(key, flusher) {
+  if (!key || typeof flusher !== 'function') return
+  autoSaveFlushers.set(String(key), flusher)
+}
+
+async function flushAutoSaveFlushers() {
+  const jobs = Array.from(autoSaveFlushers.values())
+  for (const fn of jobs) {
+    await fn()
+  }
+}
+
 function resolveDownloadName(resp, format, submissionId) {
   const fallback = format === 'PDF'
     ? `综合奖学金申请表_${submissionId}.pdf`
     : `综合奖学金申请表_${submissionId}.docx`
+
   const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
   if (!disposition) return fallback
 
@@ -119,12 +143,14 @@ function resolveDownloadName(resp, format, submissionId) {
     }
   }
 
-  const normalMatch = disposition.match(/filename\s*=\s*\"?([^\";]+)\"?/i)
+  const normalMatch = disposition.match(/filename\s*=\s*"?([^";]+)"?/i)
   if (normalMatch && normalMatch[1]) {
     return normalMatch[1]
   }
+
   return fallback
 }
+
 export default {
   state,
   reset,
@@ -133,7 +159,8 @@ export default {
   loadScore,
   saveCourses,
   saveActivitiesModule,
+  registerAutoSaveFlusher,
+  flushAutoSaveFlushers,
   submit,
   exportReport
 }
-

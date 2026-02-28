@@ -1,13 +1,12 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
         <h2 style="margin: 0;">公告通知</h2>
-        <p class="muted" style="margin-top: 6px;">发布通知、查看公告。学生仅能查看已发布公告。</p>
+        <p class="muted" style="margin-top: 6px;">发布通知、查看公告。学生仅可查看已发布公告。</p>
       </div>
       <div class="toolbar-row">
         <button v-if="canManage" class="btn" type="button" @click="openCreate">新建公告</button>
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">{{ loading ? '刷新中...' : '刷新' }}</button>
       </div>
     </div>
 
@@ -19,9 +18,19 @@
         <button class="btn ghost" type="button" @click="setTab('ALL')" :disabled="loading">全部</button>
         <span class="muted">当前：<b>{{ tabLabel(activeTab) }}</b></span>
       </div>
-      <div class="toolbar-row" style="flex: 1; justify-content: flex-end;">
-        <input v-model.trim="keyword" placeholder="按标题关键字搜索" style="max-width: 280px;" />
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">搜索</button>
+    </div>
+
+    <div class="table-search-bar">
+      <div class="table-search-left">
+        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
+        <SearchCapsule
+          v-model="keyword"
+          width="340px"
+          placeholder="搜索公告标题/内容"
+          :disabled="loading"
+          @submit="handleSearch"
+          @clear="handleSearch"
+        />
       </div>
     </div>
 
@@ -33,47 +42,58 @@
       <div style="font-weight: 700; color: #b42318;">加载失败</div>
       <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
       <div class="toolbar-row" style="margin-top: 10px;">
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">重试</button>
+        <button class="btn secondary" type="button" @click="load()" :disabled="loading">重试</button>
       </div>
     </div>
 
-    <table class="table" style="margin-top: 12px;">
-      <thead>
-        <tr>
-          <th>标题</th>
-          <th style="width: 110px;">状态</th>
-          <th style="width: 140px;">发布人</th>
-          <th style="width: 170px;">发布时间</th>
-          <th style="width: 170px;">更新时间</th>
-          <th style="width: 250px;">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="n in rows" :key="n.id">
-          <td>
-            <div style="font-weight: 700; color: #0f172a;">{{ n.title }}</div>
-          </td>
-          <td>
-            <span class="badge" :class="statusBadge(n.status)">{{ statusLabel(n.status) }}</span>
-          </td>
-          <td>{{ n.publisher_real_name || '-' }}</td>
-          <td>{{ formatDate(n.published_at) }}</td>
-          <td>{{ formatDate(n.updated_at) }}</td>
-          <td>
-            <div class="action-row">
-              <button class="btn ghost" type="button" @click="goDetail(n.id)">查看</button>
-              <button v-if="canManage && canEdit(n)" class="btn secondary" type="button" @click="openEdit(n)">编辑</button>
-              <button v-if="canManage && canPublish(n)" class="btn" type="button" @click="publish(n.id)">发布</button>
-              <button v-if="canManage && canOffline(n)" class="btn secondary" type="button" @click="offline(n.id)">下线</button>
-              <button v-if="canManage && canDelete(n)" class="btn danger" type="button" @click="remove(n.id)">删除</button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!rows.length && !errorMsg">
-          <td colspan="6" class="empty">暂无公告</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-shell">
+      <div class="table-scroll-main">
+        <table class="table table-sticky">
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th style="width: 110px;">状态</th>
+              <th style="width: 140px;">发布人</th>
+              <th style="width: 170px;">发布时间</th>
+              <th style="width: 170px;">更新时间</th>
+              <th style="width: 250px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="n in pager.pagedRows.value" :key="n.id">
+              <td>
+                <div style="font-weight: 700; color: #0f172a;">{{ n.title }}</div>
+              </td>
+              <td>
+                <span class="badge" :class="statusBadge(n.status)">{{ statusLabel(n.status) }}</span>
+              </td>
+              <td>{{ n.publisher_real_name || '-' }}</td>
+              <td>{{ formatDate(n.published_at) }}</td>
+              <td>{{ formatDate(n.updated_at) }}</td>
+              <td>
+                <div class="action-row">
+                  <button class="btn ghost" type="button" @click="goDetail(n.id)">查看</button>
+                  <button v-if="canManage && canEdit(n)" class="btn secondary" type="button" @click="openEdit(n)">编辑</button>
+                  <button v-if="canManage && canPublish(n)" class="btn" type="button" @click="publish(n.id)">发布</button>
+                  <button v-if="canManage && canOffline(n)" class="btn secondary" type="button" @click="offline(n.id)">下线</button>
+                  <button v-if="canManage && canDelete(n)" class="btn danger" type="button" @click="remove(n.id)">删除</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!pager.pagedRows.value.length && !errorMsg">
+              <td colspan="6" class="empty">暂无公告</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TablePager
+        :page="pager.page.value"
+        :total-pages="pager.totalPages.value"
+        :total="pager.total.value"
+        :disabled="loading"
+        @change="pager.goPage"
+      />
+    </div>
   </section>
 
   <div v-if="drawer.open" class="drawer-overlay" @click.self="closeDrawer">
@@ -83,7 +103,7 @@
           <div style="font-weight: 700; font-size: 16px;">{{ drawer.mode === 'create' ? '新建公告' : '编辑公告' }}</div>
           <p class="muted" style="margin-top: 6px;">公告内容支持换行显示。已发布公告需先下线再修改。</p>
         </div>
-        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">✕</button>
+        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
       </div>
 
       <div class="drawer-body">
@@ -113,9 +133,13 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import http from '../../api/http'
+import SearchCapsule from '../../components/SearchCapsule.vue'
+import TablePager from '../../components/TablePager.vue'
+import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
+import useTablePager from '../../composables/useTablePager'
 import { getRole, getUserId } from '../../utils/auth'
 
 const router = useRouter()
@@ -132,9 +156,20 @@ const rows = ref([])
 const loading = ref(false)
 const errorMsg = ref('')
 
+const filteredRows = computed(() => {
+  const kw = String(keyword.value || '').trim().toLowerCase()
+  if (!kw) return rows.value
+  return rows.value.filter((item) => {
+    const source = `${item.title || ''} ${item.content || ''}`.toLowerCase()
+    return source.includes(kw)
+  })
+})
+
+const pager = useTablePager(filteredRows, 10)
+
 const drawer = reactive({
   open: false,
-  mode: 'create', // create|edit
+  mode: 'create',
   saving: false
 })
 
@@ -169,7 +204,6 @@ const statusBadge = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
   if (s === 'PUBLISHED') return 'success'
   if (s === 'DRAFT') return 'warning'
-  if (s === 'OFFLINE') return ''
   return ''
 }
 
@@ -213,7 +247,7 @@ const canDelete = (n) => {
   return Number(n.publisher_id) === myUserId
 }
 
-const load = async () => {
+const load = async ({ keepPage = false } = {}) => {
   loading.value = true
   errorMsg.value = ''
   try {
@@ -222,15 +256,43 @@ const load = async () => {
       if (activeTab.value && activeTab.value !== 'ALL') params.status = activeTab.value
       if (keyword.value) params.keyword = keyword.value
     }
+
     const { data } = await http.get('/notices', { params, meta: { silent: true } })
     rows.value = data.data || []
+    if (!keepPage) {
+      pager.resetPage()
+    }
   } catch (e) {
     errorMsg.value = e?.userMessage || e?.message || '加载失败'
     rows.value = []
+    if (!keepPage) {
+      pager.resetPage()
+    }
   } finally {
     loading.value = false
   }
 }
+
+const handleSearch = () => {
+  if (canManage.value) {
+    load()
+  } else {
+    pager.resetPage()
+  }
+}
+
+const resetFilters = () => {
+  keyword.value = ''
+  if (canManage.value) {
+    load()
+  } else {
+    pager.resetPage()
+  }
+}
+
+watch(keyword, () => {
+  pager.resetPage()
+})
 
 const goDetail = (id) => {
   router.push(`${route.path}/${id}`)
@@ -265,6 +327,7 @@ const saveDraft = async () => {
     alert('标题和内容不能为空')
     return
   }
+
   drawer.saving = true
   try {
     if (drawer.mode === 'create') {
@@ -274,7 +337,7 @@ const saveDraft = async () => {
     } else {
       await http.put(`/notices/${form.id}`, { title: form.title, content: form.content })
     }
-    await load()
+    await load({ keepPage: true })
     alert('已保存')
   } finally {
     drawer.saving = false
@@ -287,22 +350,34 @@ const publish = async (id) => {
     return
   }
   await http.post(`/notices/${id}/publish`)
-  await load()
+  await load({ keepPage: true })
   alert('已发布')
 }
 
 const offline = async (id) => {
   await http.post(`/notices/${id}/offline`)
-  await load()
+  await load({ keepPage: true })
   alert('已下线')
 }
 
 const remove = async (id) => {
   if (!confirm('确认删除该公告？')) return
   await http.delete(`/notices/${id}`)
-  await load()
+  await load({ keepPage: true })
   alert('已删除')
 }
 
-load()
+const busyRef = computed(() => loading.value || drawer.saving)
+const pausedRef = computed(() => drawer.open)
+
+useIdleAutoRefresh({
+  refreshFn: () => load({ keepPage: true }),
+  intervalMs: 30000,
+  isBusy: busyRef,
+  isPaused: pausedRef
+})
+
+onMounted(() => {
+  load()
+})
 </script>

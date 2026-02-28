@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
@@ -13,7 +13,6 @@
       </div>
       <div class="toolbar-row">
         <RouterLink class="btn ghost" :to="backTo">返回</RouterLink>
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">刷新</button>
       </div>
     </div>
 
@@ -80,7 +79,6 @@ const statusBadge = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
   if (s === 'NEW') return 'warning'
   if (s === 'REPLIED') return 'success'
-  if (s === 'CLOSED') return ''
   return ''
 }
 

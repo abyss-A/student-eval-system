@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
@@ -10,98 +10,142 @@
         </p>
       </div>
       <div class="toolbar-row">
-        <button class="btn secondary" type="button" @click="reload" :disabled="loading">刷新</button>
         <button class="btn" type="button" @click="save" :disabled="loading || !canEdit">保存</button>
       </div>
     </div>
 
-    <p class="muted" style="margin-top: 10px;">
-      每条活动最多上传 6 张 JPG/PNG 图片作为证明材料。审核后可查看每条活动的审核结论与审核理由。
-    </p>
     <p v-if="!canEdit" class="muted" style="margin-top: 6px; color: #64748b;">
       当前测评单状态不可编辑，如需修改请联系管理员。
     </p>
 
-    <table class="table" style="margin-top: 12px;">
-      <thead>
-        <tr>
-          <th style="width: 180px;">活动标题</th>
-          <th>说明</th>
-          <th style="width: 110px;">分数</th>
-          <th style="width: 320px;">证明材料</th>
-          <th style="width: 110px;">审核结论</th>
-          <th style="width: 200px;">审核理由</th>
-          <th style="width: 90px;">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(a, idx) in rows" :key="a._rowKey || idx">
-          <td>
-            <input
-              v-model.trim="a.title"
-              placeholder="例如：主题团日"
-              :disabled="loading || !canEdit"
-            />
-          </td>
-          <td>
-            <input
-              v-model.trim="a.description"
-              placeholder="可填写简要说明"
-              :disabled="loading || !canEdit"
-            />
-          </td>
-          <td>
-            <input
-              v-model.number="a.selfScore"
-              type="number"
-              min="0"
-              step="0.5"
-              :disabled="loading || !canEdit"
-            />
-          </td>
-          <td>
-            <ImageIdsUploader v-model="a.evidenceFileIds" :max="6" :hint="''" :readonly="!canEdit" />
-          </td>
-          <td>
-            <span class="badge" :class="reviewResultBadge(activityReviewResult(a))">
-              {{ activityReviewResult(a) }}
-            </span>
-          </td>
-          <td>
-            <div style="white-space: pre-wrap;">{{ displayReviewerComment(a.reviewerComment) }}</div>
-          </td>
-          <td>
-            <button
-              class="btn secondary"
-              type="button"
-              @click="removeRow(idx)"
-              :disabled="loading || !canEdit"
-            >
-              删除
-            </button>
-          </td>
-        </tr>
-        <tr v-if="!rows.length">
-          <td colspan="7" class="empty">暂无活动，请点击“新增”</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !canEdit">新增</button>
-      <p class="muted">提示：保存时会自动忽略“完全空白”的行。</p>
+    <div v-if="canEdit" :class="['save-state-chip', autoSave.error.value ? 'error' : '']">
+      <template v-if="autoSave.error.value">自动保存失败：{{ autoSave.error.value }}</template>
+      <template v-else-if="autoSave.saving.value">自动保存中...</template>
+      <template v-else-if="autoSave.dirty.value">有未保存变更</template>
+      <template v-else-if="autoSave.lastSavedAt.value">已自动保存 {{ autoSave.lastSavedAt.value }}</template>
+      <template v-else>编辑后将自动保存</template>
     </div>
 
-    <div class="formula-note">
-      {{ moduleFormulaText }}
+    <div class="table-search-bar">
+      <div class="table-search-left">
+        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="clearFilters">&lt;</button>
+        <SearchCapsule
+          v-model="keyword"
+          width="320px"
+          placeholder="搜索活动标题或说明"
+          @submit="onSearchSubmit"
+          @clear="onSearchSubmit"
+        />
+        <select v-model="reviewFilter" style="width: 140px;">
+          <option value="ALL">全部审核</option>
+          <option value="PENDING">待审核</option>
+          <option value="APPROVED">通过</option>
+          <option value="REJECTED">驳回</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-shell">
+      <div class="table-scroll-main">
+        <table class="table table-sticky">
+          <thead>
+            <tr>
+              <th style="width: 180px;">活动标题</th>
+              <th>说明</th>
+              <th style="width: 110px;">分数</th>
+              <th style="width: 320px;">证明材料</th>
+              <th style="width: 110px;">审核结论</th>
+              <th style="width: 200px;">审核理由</th>
+              <th style="width: 90px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(a, idx) in pagedRows" :key="a.id || a._rowKey || idx">
+              <td>
+                <input
+                  v-model.trim="a.title"
+                  placeholder="例如：主题团日"
+                  :disabled="loading || !canEdit"
+                  @blur="triggerImmediateSave"
+                />
+              </td>
+              <td>
+                <input
+                  v-model.trim="a.description"
+                  placeholder="可填写简要说明"
+                  :disabled="loading || !canEdit"
+                  @blur="triggerImmediateSave"
+                />
+              </td>
+              <td>
+                <input
+                  v-model.number="a.selfScore"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  :disabled="loading || !canEdit"
+                  @blur="triggerImmediateSave"
+                />
+              </td>
+              <td>
+                <ImageIdsUploader
+                  v-model="a.evidenceFileIds"
+                  :max="6"
+                  :hint="''"
+                  :readonly="!canEdit"
+                />
+              </td>
+              <td>
+                <span class="badge" :class="reviewResultBadge(activityReviewResult(a))">
+                  {{ activityReviewResult(a) }}
+                </span>
+              </td>
+              <td>
+                <div style="white-space: pre-wrap;">{{ displayReviewerComment(a.reviewerComment) }}</div>
+              </td>
+              <td>
+                <button
+                  class="btn secondary"
+                  type="button"
+                  @click="removeItem(a)"
+                  :disabled="loading || !canEdit"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!pagedRows.length">
+              <td colspan="7" class="empty">暂无符合条件的活动</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TablePager
+        :page="page"
+        :total-pages="totalPages"
+        :total="total"
+        :disabled="loading"
+        @change="goPage"
+      />
+    </div>
+
+    <div class="toolbar-row module-footer-row" style="margin-top: 10px;">
+      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !canEdit">新增</button>
+      <div class="formula-note">
+        {{ moduleFormulaText }}
+      </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import submissionStore from '../../stores/submissionStore'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
+import TablePager from '../../components/TablePager.vue'
+import SearchCapsule from '../../components/SearchCapsule.vue'
+import useTablePager from '../../composables/useTablePager'
+import useAutoSaveDraft from '../../composables/useAutoSaveDraft'
 
 const props = defineProps({
   moduleType: { type: String, required: true },
@@ -111,6 +155,9 @@ const props = defineProps({
 const store = submissionStore
 const rows = ref([])
 const loading = ref(false)
+const keyword = ref('')
+const reviewFilter = ref('ALL')
+const suppressDirty = ref(false)
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
@@ -193,39 +240,32 @@ const mapActivity = (a) => ({
   _rowKey: a?.id ? `act_${a.id}` : `tmp_${props.moduleType}_${Date.now()}_${Math.random()}`
 })
 
+const filteredRows = computed(() => {
+  const kw = String(keyword.value || '').trim().toLowerCase()
+  return rows.value.filter((item) => {
+    const source = `${item.title || ''} ${item.description || ''}`.toLowerCase()
+    const matchedKeyword = !kw || source.includes(kw)
+    const matchedReview = reviewFilter.value === 'ALL' || String(item.reviewStatus || '').toUpperCase() === reviewFilter.value
+    return matchedKeyword && matchedReview
+  })
+})
+
+const {
+  page,
+  total,
+  totalPages,
+  pagedRows,
+  goPage,
+  resetPage
+} = useTablePager(filteredRows, 10)
+
 const ensureEditable = () => {
   if (canEdit.value) return true
   alert('当前测评单状态不可编辑')
   return false
 }
 
-const reload = async () => {
-  loading.value = true
-  try {
-    await store.ensureSubmission()
-    await store.loadDetail()
-    const all = store.state.detail?.activities || []
-    rows.value = all
-      .filter((x) => String(x.moduleType || '').toUpperCase() === props.moduleType)
-      .map(mapActivity)
-    if (!rows.value.length) rows.value.push(blankRow())
-  } finally {
-    loading.value = false
-  }
-}
-
-const addRow = () => {
-  if (!ensureEditable()) return
-  rows.value.push(blankRow())
-}
-
-const removeRow = (idx) => {
-  if (!ensureEditable()) return
-  rows.value.splice(idx, 1)
-  if (!rows.value.length) rows.value.push(blankRow())
-}
-
-const normalizeRows = () => {
+const buildActivityPayload = ({ silent }) => {
   const out = []
   for (const a of rows.value) {
     const title = String(a.title || '').trim()
@@ -237,12 +277,14 @@ const normalizeRows = () => {
     if (isBlank) continue
 
     if (!title) {
-      alert('活动标题不能为空')
-      return null
+      const msg = '活动标题不能为空'
+      if (!silent) alert(msg)
+      return { ok: false, message: msg, items: [] }
     }
     if (!Number.isFinite(score) || score < 0) {
-      alert('活动分数必须是大于等于 0 的数字')
-      return null
+      const msg = '活动分数必须是大于等于 0 的数字'
+      if (!silent) alert(msg)
+      return { ok: false, message: msg, items: [] }
     }
 
     out.push({
@@ -254,34 +296,127 @@ const normalizeRows = () => {
       evidenceFileIds: ev
     })
   }
-  return out
+  return { ok: true, message: '', items: out }
+}
+
+const autoSave = useAutoSaveDraft(async () => {
+  if (!canEdit.value) return
+  const payload = buildActivityPayload({ silent: true })
+  if (!payload.ok) {
+    throw new Error(payload.message || '当前填写内容未完成，暂未自动保存')
+  }
+  await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: false })
+}, { debounceMs: 1200 })
+
+const syncRowsFromStore = () => {
+  suppressDirty.value = true
+  const all = store.state.detail?.activities || []
+  rows.value = all
+    .filter((x) => String(x.moduleType || '').toUpperCase() === props.moduleType)
+    .map(mapActivity)
+  if (!rows.value.length) rows.value.push(blankRow())
+  suppressDirty.value = false
+}
+
+const reload = async () => {
+  loading.value = true
+  try {
+    await store.ensureSubmission()
+    await store.loadDetail()
+    await store.loadScore()
+    syncRowsFromStore()
+    resetPage()
+    autoSave.resetState()
+  } finally {
+    loading.value = false
+  }
+}
+
+const addRow = () => {
+  if (!ensureEditable()) return
+  rows.value.push(blankRow())
+  resetPage()
+}
+
+const removeRow = (idx) => {
+  if (!ensureEditable()) return
+  rows.value.splice(idx, 1)
+  if (!rows.value.length) rows.value.push(blankRow())
+  resetPage()
+}
+
+const removeItem = (item) => {
+  const idx = rows.value.findIndex((x) => x === item || (item.id && x.id === item.id))
+  if (idx >= 0) removeRow(idx)
+}
+
+const clearFilters = () => {
+  keyword.value = ''
+  reviewFilter.value = 'ALL'
+  resetPage()
+}
+
+const onSearchSubmit = () => {
+  resetPage()
 }
 
 const save = async () => {
   if (!ensureEditable()) return
-  const items = normalizeRows()
-  if (!items) return
+  const payload = buildActivityPayload({ silent: false })
+  if (!payload.ok) return
+
   loading.value = true
   try {
-    await store.saveActivitiesModule(props.moduleType, items)
-    await reload()
+    await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: true })
+    syncRowsFromStore()
+    autoSave.resetState()
     alert('本模块活动已保存')
   } finally {
     loading.value = false
   }
 }
 
+const triggerImmediateSave = () => {
+  if (!canEdit.value || suppressDirty.value || !autoSave.dirty.value) return
+  autoSave.saveNow().catch(() => {})
+}
+
 watch(
   () => props.moduleType,
-  () => reload(),
+  () => {
+    store.registerAutoSaveFlusher(`module_${props.moduleType}`, autoSave.flushBeforeSubmit)
+    reload()
+  },
   { immediate: true }
 )
+
+watch([keyword, reviewFilter], () => {
+  resetPage()
+})
+
+watch(
+  rows,
+  () => {
+    if (suppressDirty.value || loading.value || !canEdit.value) return
+    autoSave.markDirty()
+  },
+  { deep: true }
+)
+
+onBeforeUnmount(() => {
+  autoSave.saveNow().catch(() => {})
+})
 </script>
 
 <style scoped>
 .formula-note {
-  margin-top: 10px;
   font-size: 13px;
   color: #475569;
+}
+
+.module-footer-row {
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 </style>

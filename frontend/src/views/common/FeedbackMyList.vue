@@ -1,21 +1,30 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
         <h2 style="margin: 0;">我的反馈</h2>
         <p class="muted" style="margin-top: 6px;">查看我提交的反馈与处理结果。</p>
       </div>
-      <div class="toolbar-row">
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">{{ loading ? '刷新中...' : '刷新' }}</button>
-      </div>
     </div>
 
-    <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="setStatus('ALL')" :disabled="loading">全部</button>
-      <button class="btn secondary" type="button" @click="setStatus('NEW')" :disabled="loading">待处理</button>
-      <button class="btn secondary" type="button" @click="setStatus('REPLIED')" :disabled="loading">已回复</button>
-      <button class="btn secondary" type="button" @click="setStatus('CLOSED')" :disabled="loading">已关闭</button>
-      <span class="muted">当前：<b>{{ statusLabel(activeStatus) }}</b></span>
+    <div class="table-search-bar">
+      <div class="table-search-left">
+        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
+        <SearchCapsule
+          v-model="keyword"
+          width="320px"
+          placeholder="搜索反馈标题"
+          :disabled="loading"
+          @submit="onSearchSubmit"
+          @clear="onSearchSubmit"
+        />
+        <select v-model="activeStatus" style="width: 140px;" :disabled="loading" @change="onStatusChange">
+          <option value="ALL">全部状态</option>
+          <option value="NEW">待处理</option>
+          <option value="REPLIED">已回复</option>
+          <option value="CLOSED">已关闭</option>
+        </select>
+      </div>
     </div>
 
     <div
@@ -26,44 +35,59 @@
       <div style="font-weight: 700; color: #b42318;">加载失败</div>
       <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
       <div class="toolbar-row" style="margin-top: 10px;">
-        <button class="btn secondary" type="button" @click="load" :disabled="loading">重试</button>
+        <button class="btn secondary" type="button" @click="load()" :disabled="loading">重试</button>
       </div>
     </div>
 
-    <table class="table" style="margin-top: 12px;">
-      <thead>
-        <tr>
-          <th>标题</th>
-          <th style="width: 110px;">状态</th>
-          <th style="width: 170px;">提交时间</th>
-          <th style="width: 170px;">更新时间</th>
-          <th style="width: 120px;">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="f in rows" :key="f.id">
-          <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
-          <td>
-            <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
-          </td>
-          <td>{{ formatDate(f.created_at) }}</td>
-          <td>{{ formatDate(f.updated_at) }}</td>
-          <td>
-            <button class="btn ghost" type="button" @click="goDetail(f.id)">查看</button>
-          </td>
-        </tr>
-        <tr v-if="!rows.length && !errorMsg">
-          <td colspan="5" class="empty">暂无反馈</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-shell">
+      <div class="table-scroll-main">
+        <table class="table table-sticky">
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th style="width: 110px;">状态</th>
+              <th style="width: 170px;">提交时间</th>
+              <th style="width: 170px;">更新时间</th>
+              <th style="width: 120px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="f in pager.pagedRows.value" :key="f.id">
+              <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
+              <td>
+                <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
+              </td>
+              <td>{{ formatDate(f.created_at) }}</td>
+              <td>{{ formatDate(f.updated_at) }}</td>
+              <td>
+                <button class="btn ghost" type="button" @click="goDetail(f.id)">查看</button>
+              </td>
+            </tr>
+            <tr v-if="!pager.pagedRows.value.length && !errorMsg">
+              <td colspan="5" class="empty">暂无反馈</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TablePager
+        :page="pager.page.value"
+        :total-pages="pager.totalPages.value"
+        :total="pager.total.value"
+        :disabled="loading"
+        @change="pager.goPage"
+      />
+    </div>
   </section>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import http from '../../api/http'
+import SearchCapsule from '../../components/SearchCapsule.vue'
+import TablePager from '../../components/TablePager.vue'
+import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
+import useTablePager from '../../composables/useTablePager'
 
 const router = useRouter()
 const route = useRoute()
@@ -71,7 +95,16 @@ const route = useRoute()
 const rows = ref([])
 const loading = ref(false)
 const activeStatus = ref('ALL')
+const keyword = ref('')
 const errorMsg = ref('')
+
+const filteredRows = computed(() => {
+  const kw = String(keyword.value || '').trim().toLowerCase()
+  if (!kw) return rows.value
+  return rows.value.filter((item) => String(item.title || '').toLowerCase().includes(kw))
+})
+
+const pager = useTablePager(filteredRows, 10)
 
 const statusLabel = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
@@ -86,7 +119,6 @@ const statusBadge = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
   if (s === 'NEW') return 'warning'
   if (s === 'REPLIED') return 'success'
-  if (s === 'CLOSED') return ''
   return ''
 }
 
@@ -102,12 +134,7 @@ const formatDate = (raw) => {
   return `${y}-${m}-${d} ${hh}:${mm}`
 }
 
-const setStatus = (s) => {
-  activeStatus.value = s
-  load()
-}
-
-const load = async () => {
+const load = async ({ keepPage = false } = {}) => {
   loading.value = true
   errorMsg.value = ''
   try {
@@ -117,18 +144,53 @@ const load = async () => {
     }
     const { data } = await http.get('/feedbacks/my', { params, meta: { silent: true } })
     rows.value = data.data || []
+    if (!keepPage) {
+      pager.resetPage()
+    }
   } catch (e) {
     errorMsg.value = e?.userMessage || e?.message || '加载失败'
     rows.value = []
+    if (!keepPage) {
+      pager.resetPage()
+    }
   } finally {
     loading.value = false
   }
 }
+
+const onSearchSubmit = () => {
+  pager.resetPage()
+}
+
+const onStatusChange = () => {
+  load()
+}
+
+const resetFilters = () => {
+  keyword.value = ''
+  activeStatus.value = 'ALL'
+  load()
+}
+
+watch(keyword, () => {
+  pager.resetPage()
+})
 
 const goDetail = (id) => {
   const seg = String(route.path || '').split('/')[1] || 'student'
   router.push(`/${seg}/feedback/${id}`)
 }
 
-load()
+const busyRef = computed(() => loading.value)
+
+useIdleAutoRefresh({
+  refreshFn: () => load({ keepPage: true }),
+  intervalMs: 30000,
+  isBusy: busyRef,
+  isPaused: false
+})
+
+onMounted(() => {
+  load()
+})
 </script>

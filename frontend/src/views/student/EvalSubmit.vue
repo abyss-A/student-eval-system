@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="card submit-panel">
     <div class="toolbar">
       <div>
@@ -8,9 +8,6 @@
           <span style="margin: 0 6px; color: #cbd5e1;">|</span>
           状态：<span class="badge">{{ statusLabel(status) }}</span>
         </p>
-      </div>
-      <div class="toolbar-row">
-        <button class="btn secondary" type="button" @click="reload" :disabled="loading">刷新</button>
       </div>
     </div>
 
@@ -58,7 +55,7 @@
     </div>
 
     <div class="formula-line">
-      总分公式：综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分 = 德育原始分×15% + 智育原始分×60% + 体育原始分×10% + 美育原始分×7.5% + 劳育原始分×7.5%
+      总分公式：综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分
     </div>
   </section>
 </template>
@@ -111,8 +108,12 @@ const reload = async () => {
 const submitForm = async () => {
   loading.value = true
   try {
+    await store.flushAutoSaveFlushers()
     await store.submit()
     alert('已提交审核')
+  } catch (e) {
+    const msg = e?.userMessage || e?.message || '保存失败，请点击保存后重试提交'
+    alert(msg)
   } finally {
     loading.value = false
   }
