@@ -11,12 +11,15 @@
       </div>
       <div class="toolbar-row">
         <button class="btn secondary" type="button" @click="reload" :disabled="loading">刷新</button>
-        <button class="btn" type="button" @click="save" :disabled="loading">保存</button>
+        <button class="btn" type="button" @click="save" :disabled="loading || !canEdit">保存</button>
       </div>
     </div>
 
     <p class="muted" style="margin-top: 10px;">
-      每条活动最多 6 张 JPG/PNG 图片作为证明材料。审核后可查看每条活动的审核结论与审核理由。
+      每条活动最多上传 6 张 JPG/PNG 图片作为证明材料。审核后可查看每条活动的审核结论与审核理由。
+    </p>
+    <p v-if="!canEdit" class="muted" style="margin-top: 6px; color: #64748b;">
+      当前测评单状态不可编辑，如需修改请联系管理员。
     </p>
 
     <table class="table" style="margin-top: 12px;">
@@ -33,20 +36,49 @@
       </thead>
       <tbody>
         <tr v-for="(a, idx) in rows" :key="a._rowKey || idx">
-          <td><input v-model.trim="a.title" placeholder="例如：主题班会" /></td>
-          <td><input v-model.trim="a.description" placeholder="可填写简要说明" /></td>
-          <td><input v-model.number="a.selfScore" type="number" min="0" step="0.5" /></td>
           <td>
-            <ImageIdsUploader v-model="a.evidenceFileIds" :max="6" :hint="''" />
+            <input
+              v-model.trim="a.title"
+              placeholder="例如：主题团日"
+              :disabled="loading || !canEdit"
+            />
           </td>
           <td>
-            <span class="badge" :class="reviewResultBadge(activityReviewResult(a))">{{ activityReviewResult(a) }}</span>
+            <input
+              v-model.trim="a.description"
+              placeholder="可填写简要说明"
+              :disabled="loading || !canEdit"
+            />
+          </td>
+          <td>
+            <input
+              v-model.number="a.selfScore"
+              type="number"
+              min="0"
+              step="0.5"
+              :disabled="loading || !canEdit"
+            />
+          </td>
+          <td>
+            <ImageIdsUploader v-model="a.evidenceFileIds" :max="6" :hint="''" :readonly="!canEdit" />
+          </td>
+          <td>
+            <span class="badge" :class="reviewResultBadge(activityReviewResult(a))">
+              {{ activityReviewResult(a) }}
+            </span>
           </td>
           <td>
             <div style="white-space: pre-wrap;">{{ displayReviewerComment(a.reviewerComment) }}</div>
           </td>
           <td>
-            <button class="btn secondary" type="button" @click="removeRow(idx)">删除</button>
+            <button
+              class="btn secondary"
+              type="button"
+              @click="removeRow(idx)"
+              :disabled="loading || !canEdit"
+            >
+              删除
+            </button>
           </td>
         </tr>
         <tr v-if="!rows.length">
@@ -56,7 +88,7 @@
     </table>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading">新增</button>
+      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !canEdit">新增</button>
       <p class="muted">提示：保存时会自动忽略“完全空白”的行。</p>
     </div>
 
@@ -82,6 +114,11 @@ const loading = ref(false)
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
+const canEdit = computed(() => {
+  const code = String(status.value || '').trim().toUpperCase()
+  return code !== 'FINALIZED' && code !== 'PUBLISHED'
+})
+
 const moduleFormulaText = computed(() => {
   if (props.moduleType === 'MORAL') {
     return '德育计入分公式：德育计入分 = min(德育活动总分, 100) × 15%'
@@ -125,7 +162,7 @@ const reviewResultBadge = (label) => {
 
 const isAutoReason = (text) => {
   const value = String(text || '').trim().toUpperCase()
-  return value === '辅导员APPROVE'.toUpperCase() || value === '辅导员REJECT'.toUpperCase()
+  return value === '辅导员APPROVE' || value === '辅导员REJECT'
 }
 
 const displayReviewerComment = (text) => {
@@ -156,13 +193,21 @@ const mapActivity = (a) => ({
   _rowKey: a?.id ? `act_${a.id}` : `tmp_${props.moduleType}_${Date.now()}_${Math.random()}`
 })
 
+const ensureEditable = () => {
+  if (canEdit.value) return true
+  alert('当前测评单状态不可编辑')
+  return false
+}
+
 const reload = async () => {
   loading.value = true
   try {
     await store.ensureSubmission()
     await store.loadDetail()
     const all = store.state.detail?.activities || []
-    rows.value = all.filter((x) => String(x.moduleType || '').toUpperCase() === props.moduleType).map(mapActivity)
+    rows.value = all
+      .filter((x) => String(x.moduleType || '').toUpperCase() === props.moduleType)
+      .map(mapActivity)
     if (!rows.value.length) rows.value.push(blankRow())
   } finally {
     loading.value = false
@@ -170,10 +215,12 @@ const reload = async () => {
 }
 
 const addRow = () => {
+  if (!ensureEditable()) return
   rows.value.push(blankRow())
 }
 
 const removeRow = (idx) => {
+  if (!ensureEditable()) return
   rows.value.splice(idx, 1)
   if (!rows.value.length) rows.value.push(blankRow())
 }
@@ -194,7 +241,7 @@ const normalizeRows = () => {
       return null
     }
     if (!Number.isFinite(score) || score < 0) {
-      alert('活动分数必须是大于等于0的数字')
+      alert('活动分数必须是大于等于 0 的数字')
       return null
     }
 
@@ -211,6 +258,7 @@ const normalizeRows = () => {
 }
 
 const save = async () => {
+  if (!ensureEditable()) return
   const items = normalizeRows()
   if (!items) return
   loading.value = true

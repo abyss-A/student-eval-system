@@ -378,7 +378,7 @@ public class SubmissionService {
             throw new BizException(40301, "No permission to operate this submission");
         }
         if ("FINALIZED".equals(entity.getStatus()) || "PUBLISHED".equals(entity.getStatus())) {
-            throw new BizException(40003, "Current status is not editable");
+            throw new BizException(40003, "当前测评单状态不可编辑");
         }
     }
 

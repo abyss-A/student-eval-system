@@ -1,4 +1,4 @@
-package com.cqnu.eval.service;
+﻿package com.cqnu.eval.service;
 
 import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.model.entity.ActivityItemEntity;
@@ -15,6 +15,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +40,24 @@ public class ReportTemplateService {
     private static final BigDecimal WEIGHT_SPORT = new BigDecimal("0.10");
     private static final BigDecimal WEIGHT_ART = new BigDecimal("0.075");
     private static final BigDecimal WEIGHT_LABOR = new BigDecimal("0.075");
+
+    private static final String TITLE_KEYWORD = "\u7efc\u5408\u5956\u5b66\u91d1\u7533\u8bf7\u8868";
+    private static final String FORMULA_ANCHOR = "\u672c\u671f\u8bfe\u7a0b\u6210\u7ee9";
+    private static final String HEADER_TOTAL = "\u603b\u5206";
+    private static final String ROW_INTEL = "\u4e13\u4e1a\u6280\u80fd\u4e0e\u521b\u65b0\u521b\u4e1a";
+    private static final String ROW_MORAL = "\u5fb7\u80b2\u5f97\u5206";
+    private static final String ROW_SPORT = "\u4f53\u80b2\u5f97\u5206";
+    private static final String ROW_ART = "\u7f8e\u80b2\u5f97\u5206";
+    private static final String ROW_LABOR = "\u52b3\u80b2\u5f97\u5206";
+    private static final String ROW_TOTAL = "\u7efc\u5408\u6d4b\u8bc4\u5206\u6570";
+    private static final String COLOR_BLACK = "000000";
+    private static final int ROW_INDEX_INTEL = 12;
+    private static final int ROW_INDEX_MORAL = 13;
+    private static final int ROW_INDEX_SPORT = 14;
+    private static final int ROW_INDEX_ART = 15;
+    private static final int ROW_INDEX_LABOR = 16;
+    private static final int ROW_INDEX_TOTAL = 17;
+    private static final int DEFAULT_TOTAL_COLUMN_INDEX = 15;
 
     private final String templateName;
 
@@ -55,11 +75,11 @@ public class ReportTemplateService {
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             if (doc.getTables().isEmpty()) {
-                throw new BizException(50001, "模板格式不正确：未找到表格结构");
+                throw new BizException(50001, "\u6a21\u677f\u683c\u5f0f\u4e0d\u6b63\u786e\uff1a\u672a\u627e\u5230\u8868\u683c\u7ed3\u6784");
             }
             XWPFTable table = doc.getTables().get(0);
             if (table.getNumberOfRows() < 18) {
-                throw new BizException(50001, "模板格式不正确：关键行数量不足");
+                throw new BizException(50001, "\u6a21\u677f\u683c\u5f0f\u4e0d\u6b63\u786e\uff1a\u5173\u952e\u884c\u6570\u91cf\u4e0d\u8db3");
             }
 
             int fillFontSize = resolveFillFontSize(courses, activities);
@@ -67,8 +87,9 @@ public class ReportTemplateService {
             fillBaseInfo(table, student, fillFontSize);
             fillCourseSummary(table, courses, fillFontSize);
             fillCourses(table, courses, fillFontSize);
-            fillCourseFormula(table, courses, fillFontSize);
-            fillActivities(table, activities, score, fillFontSize);
+            fillCourseFormula(table, courses);
+            fillActivities(table, activities, fillFontSize);
+            fillRightScoreColumn(table, score, fillFontSize);
             fillFinalScore(table, score, fillFontSize);
             removeNoteSection(doc);
 
@@ -77,7 +98,7 @@ public class ReportTemplateService {
         } catch (BizException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BizException(50001, "模板填充失败: " + ex.getMessage());
+            throw new BizException(50001, "\u6a21\u677f\u586b\u5145\u5931\u8d25: " + ex.getMessage());
         }
     }
 
@@ -85,13 +106,13 @@ public class ReportTemplateService {
         try {
             ClassPathResource resource = new ClassPathResource("report-templates/" + templateName);
             if (!resource.exists()) {
-                throw new BizException(50001, "模板不存在: " + templateName);
+                throw new BizException(50001, "\u6a21\u677f\u4e0d\u5b58\u5728: " + templateName);
             }
             return resource.getInputStream();
         } catch (BizException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new BizException(50001, "读取模板失败: " + ex.getMessage());
+            throw new BizException(50001, "\u8bfb\u53d6\u6a21\u677f\u5931\u8d25: " + ex.getMessage());
         }
     }
 
@@ -132,14 +153,13 @@ public class ReportTemplateService {
         setCellText(table, 0, 1, str(student == null ? null : student.getRealName()), fillFontSize);
         setCellText(table, 0, 3, normalizeGender(student == null ? null : student.getGender()), fillFontSize);
         setCellText(table, 0, 5, str(student == null ? null : student.getStudentNo()), fillFontSize);
-        setCellText(table, 1, 1, "本科", fillFontSize);
+        setCellText(table, 1, 1, "\u672c\u79d1", fillFontSize);
         setCellText(table, 1, 3, str(student == null ? null : student.getClassName()), fillFontSize);
 
         String phone = str(student == null ? null : student.getPhone()).trim();
         setCellText(table, 1, 5, phone.isEmpty() ? "-" : phone, fillFontSize);
 
-        // 智育得分仅保留竖排标题，不再把分数写在这里
-        setCellText(table, 2, 0, "智\n育\n得\n分", fillFontSize);
+        // 鏅鸿偛寰楀垎鍙繚鐣欑珫鎺掓爣绛撅紝涓嶅湪姝ゅ闄勫姞鍒嗘暟銆?        setCellText(table, 2, 0, "\u667a\n\u80b2\n\u5f97\n\u5206", fillFontSize);
     }
 
     private void fillCourseSummary(XWPFTable table, List<CourseItemEntity> courses, int fillFontSize) {
@@ -173,7 +193,7 @@ public class ReportTemplateService {
         }
 
         String summary = String.format(
-                "本学期共修 %s 门课，其中必修课 %s 门，选修课 %s 门，重修 %s 门，再修 %s 门；不及格 %s 门。",
+                "\u672c\u5b66\u671f\u5171\u4fee %s \u95e8\u8bfe\uff0c\u5176\u4e2d\u5fc5\u4fee\u8bfe %s \u95e8\uff0c\u9009\u4fee\u8bfe %s \u95e8\uff0c\u91cd\u4fee %s \u95e8\uff0c\u518d\u4fee %s \u95e8\uff1b\u4e0d\u53ca\u683c %s \u95e8\u3002",
                 total, required, elective, retake, relearn, failed
         );
         setCellText(table, 2, 1, summary, fillFontSize);
@@ -206,7 +226,7 @@ public class ReportTemplateService {
         }
     }
 
-    private void fillCourseFormula(XWPFTable table, List<CourseItemEntity> courses, int fillFontSize) {
+    private void fillCourseFormula(XWPFTable table, List<CourseItemEntity> courses) {
         BigDecimal weightedSum = BigDecimal.ZERO;
         BigDecimal creditSum = BigDecimal.ZERO;
         for (CourseItemEntity c : courses) {
@@ -224,63 +244,120 @@ public class ReportTemplateService {
                 : weightedSum.divide(creditSum, 4, RoundingMode.HALF_UP);
 
         XWPFTableCell cell = requireCell(table, 10, 1);
-        RunStyle style = snapshotFirstCellRunStyle(cell);
-        while (cell.getParagraphs().size() > 0) {
-            cell.removeParagraph(0);
+        XWPFParagraph formulaParagraph = null;
+        for (XWPFParagraph paragraph : cell.getParagraphs()) {
+            if (normalizeForMatch(paragraph.getText()).contains(normalizeForMatch(FORMULA_ANCHOR))) {
+                formulaParagraph = paragraph;
+                break;
+            }
+        }
+        if (formulaParagraph == null) {
+            throw new BizException(50001, "\u6a21\u677f\u516c\u5f0f\u533a\u5360\u4f4d\u672a\u5339\u914d");
         }
 
-        int formulaFontSize = Math.max(8, Math.min(fillFontSize, 10));
-
-        XWPFParagraph p1 = cell.addParagraph();
-        initParagraph(p1, ParagraphAlignment.CENTER);
-        XWPFRun p1Run = p1.createRun();
-        applyStyle(p1Run, style, formulaFontSize);
-        p1Run.setText("∑（所修课程成绩×该课程学分）");
-
-        XWPFParagraph p2 = cell.addParagraph();
-        initParagraph(p2, ParagraphAlignment.CENTER);
-        XWPFRun p2Prefix = p2.createRun();
-        applyStyle(p2Prefix, style, formulaFontSize);
-        p2Prefix.setText("本期课程成绩 = ");
-
-        XWPFRun lineRun = p2.createRun();
-        applyStyle(lineRun, style, formulaFontSize);
-        lineRun.setUnderline(UnderlinePatterns.SINGLE);
-        lineRun.setText("                                        ");
-
-        XWPFRun p2Suffix = p2.createRun();
-        applyStyle(p2Suffix, style, formulaFontSize);
-        p2Suffix.setUnderline(UnderlinePatterns.NONE);
-        p2Suffix.setText(" = （" + formatScore2(avg) + "）分。");
-
-        XWPFParagraph p3 = cell.addParagraph();
-        initParagraph(p3, ParagraphAlignment.CENTER);
-        XWPFRun p3Run = p3.createRun();
-        applyStyle(p3Run, style, formulaFontSize);
-        p3Run.setText("∑所修课程学分");
+        if (!replaceFormulaScorePlaceholder(formulaParagraph, formatScore2(avg))) {
+            throw new BizException(50001, "\u6a21\u677f\u516c\u5f0f\u533a\u5360\u4f4d\u672a\u5339\u914d");
+        }
     }
 
-    private void fillActivities(XWPFTable table, List<ActivityItemEntity> activities, Map<String, Object> score, int fillFontSize) {
+    private boolean replaceFormulaScorePlaceholder(XWPFParagraph paragraph, String score) {
+        List<XWPFRun> runs = paragraph.getRuns();
+        if (runs == null || runs.isEmpty()) {
+            return false;
+        }
+
+        int leftParenRun = -1;
+        int rightParenRun = -1;
+        for (int i = 0; i < runs.size(); i++) {
+            String text = getRunText(runs.get(i));
+            if (leftParenRun < 0 && text.contains("(")) {
+                leftParenRun = i;
+            }
+            if (leftParenRun >= 0 && text.contains(")")) {
+                rightParenRun = i;
+                break;
+            }
+        }
+        if (leftParenRun < 0 || rightParenRun < 0 || rightParenRun - leftParenRun < 1) {
+            return false;
+        }
+
+        int placeholderRun = -1;
+        for (int i = leftParenRun + 1; i < rightParenRun; i++) {
+            String text = getRunText(runs.get(i));
+            if (text.trim().isEmpty()) {
+                placeholderRun = i;
+                break;
+            }
+        }
+        if (placeholderRun < 0) {
+            placeholderRun = leftParenRun + 1;
+        }
+
+        String normalized = str(score).trim();
+        // Keep the bracket group compact and adaptive: ( score )
+        XWPFRun leftRun = runs.get(leftParenRun);
+        overwriteRunText(leftRun, "(");
+        leftRun.setColor(COLOR_BLACK);
+
+        XWPFRun rightRun = runs.get(rightParenRun);
+        overwriteRunText(rightRun, ")");
+        rightRun.setColor(COLOR_BLACK);
+
+        for (int i = leftParenRun + 1; i < rightParenRun; i++) {
+            XWPFRun run = runs.get(i);
+            if (i == placeholderRun) {
+                overwriteRunText(run, " " + normalized + " ");
+                run.setColor(COLOR_BLACK);
+            } else {
+                overwriteRunText(run, "");
+            }
+        }
+        return true;
+    }
+
+    private void fillActivities(XWPFTable table, List<ActivityItemEntity> activities, int fillFontSize) {
         setCellText(table, 12, 2, joinActivities(activities, "INTEL_PRO_INNOV"), fillFontSize, ParagraphAlignment.LEFT);
-        setRightmostCellText(table, 12, formatScore2(readWeightedScore(score, "intelScore", "intelRaw", WEIGHT_INTEL)), fillFontSize);
-
         setCellText(table, 13, 2, joinActivities(activities, "MORAL"), fillFontSize, ParagraphAlignment.LEFT);
-        setRightmostCellText(table, 13, formatScore2(readWeightedScore(score, "moralScore", "moralRaw", WEIGHT_MORAL)), fillFontSize);
-
         setCellText(table, 14, 2, joinActivities(activities, "SPORT_ACTIVITY"), fillFontSize, ParagraphAlignment.LEFT);
-        setRightmostCellText(table, 14, formatScore2(readWeightedScore(score, "sportScore", "sportRaw", WEIGHT_SPORT)), fillFontSize);
-
         setCellText(table, 15, 2, joinActivities(activities, "ART"), fillFontSize, ParagraphAlignment.LEFT);
-        setRightmostCellText(table, 15, formatScore2(readWeightedScore(score, "artScore", "artRaw", WEIGHT_ART)), fillFontSize);
-
         setCellText(table, 16, 2, joinActivities(activities, "LABOR"), fillFontSize, ParagraphAlignment.LEFT);
-        setRightmostCellText(table, 16, formatScore2(readWeightedScore(score, "laborScore", "laborRaw", WEIGHT_LABOR)), fillFontSize);
+    }
+
+    private void fillRightScoreColumn(XWPFTable table, Map<String, Object> score, int fillFontSize) {
+        int totalCol = findGridColumnByCellText(table, HEADER_TOTAL);
+        if (totalCol < 0) {
+            totalCol = DEFAULT_TOTAL_COLUMN_INDEX;
+        }
+
+        Map<String, String> valueByRow = new LinkedHashMap<>();
+        valueByRow.put(ROW_INTEL, formatScore2(readWeightedScore(score, "intelScore", "intelRaw", WEIGHT_INTEL)));
+        valueByRow.put(ROW_MORAL, formatScore2(readWeightedScore(score, "moralScore", "moralRaw", WEIGHT_MORAL)));
+        valueByRow.put(ROW_SPORT, formatScore2(readWeightedScore(score, "sportScore", "sportRaw", WEIGHT_SPORT)));
+        valueByRow.put(ROW_ART, formatScore2(readWeightedScore(score, "artScore", "artRaw", WEIGHT_ART)));
+        valueByRow.put(ROW_LABOR, formatScore2(readWeightedScore(score, "laborScore", "laborRaw", WEIGHT_LABOR)));
+        valueByRow.put(ROW_TOTAL, formatScore2(readDecimal(score, "totalScore")));
+
+        Map<String, Integer> fallbackRowIndexes = new LinkedHashMap<>();
+        fallbackRowIndexes.put(ROW_INTEL, ROW_INDEX_INTEL);
+        fallbackRowIndexes.put(ROW_MORAL, ROW_INDEX_MORAL);
+        fallbackRowIndexes.put(ROW_SPORT, ROW_INDEX_SPORT);
+        fallbackRowIndexes.put(ROW_ART, ROW_INDEX_ART);
+        fallbackRowIndexes.put(ROW_LABOR, ROW_INDEX_LABOR);
+        fallbackRowIndexes.put(ROW_TOTAL, ROW_INDEX_TOTAL);
+
+        for (Map.Entry<String, String> entry : valueByRow.entrySet()) {
+            int rowIndex = resolveRowIndex(table, entry.getKey(), fallbackRowIndexes.getOrDefault(entry.getKey(), -1));
+            if (rowIndex < 0) {
+                throw new BizException(50001, "\u6a21\u677f\u603b\u5206\u5217\u5b9a\u4f4d\u5931\u8d25");
+            }
+            setCellTextByGridColumn(table, rowIndex, totalCol, entry.getValue(), fillFontSize, ParagraphAlignment.CENTER);
+        }
     }
 
     private void fillFinalScore(XWPFTable table, Map<String, Object> score, int fillFontSize) {
         String total = formatScore2(readDecimal(score, "totalScore"));
         setCellText(table, 17, 1, total, fillFontSize);
-        setRightmostCellText(table, 17, total, fillFontSize);
     }
 
     private void removeNoteSection(XWPFDocument doc) {
@@ -296,7 +373,7 @@ public class ReportTemplateService {
             return;
         }
 
-        // 保留申请表标题，删除说明段落
+        // Keep title paragraph, remove note paragraphs.
         for (int i = doc.getBodyElements().size() - 1; i > firstTableIndex; i--) {
             IBodyElement element = doc.getBodyElements().get(i);
             if (element.getElementType() != BodyElementType.PARAGRAPH) {
@@ -305,16 +382,93 @@ public class ReportTemplateService {
             }
             XWPFParagraph paragraph = (XWPFParagraph) element;
             String text = str(paragraph.getText()).trim();
-            if (text.contains("综合奖学金申请表")) {
+            if (text.contains(TITLE_KEYWORD)) {
                 continue;
             }
             doc.removeBodyElement(i);
         }
     }
 
-    private boolean hasCell(XWPFTable table, int rowIndex, int colIndex) {
-        XWPFTableRow row = table.getRow(rowIndex);
-        return row != null && row.getCell(colIndex) != null;
+    private int findGridColumnByCellText(XWPFTable table, String text) {
+        String target = normalizeForMatch(text);
+        for (int rowIndex = 0; rowIndex < table.getNumberOfRows(); rowIndex++) {
+            XWPFTableRow row = table.getRow(rowIndex);
+            if (row == null) {
+                continue;
+            }
+            int gridStart = 0;
+            for (XWPFTableCell cell : row.getTableCells()) {
+                int span = getGridSpan(cell);
+                String normalized = normalizeForMatch(extractCellText(cell));
+                if (normalized.contains(target)) {
+                    return gridStart;
+                }
+                gridStart += span;
+            }
+        }
+        return -1;
+    }
+
+    private int findRowByLabel(XWPFTable table, String rowLabel) {
+        String target = normalizeForMatch(rowLabel);
+        for (int rowIndex = 0; rowIndex < table.getNumberOfRows(); rowIndex++) {
+            XWPFTableRow row = table.getRow(rowIndex);
+            if (row == null) {
+                continue;
+            }
+            StringBuilder sb = new StringBuilder();
+            for (XWPFTableCell cell : row.getTableCells()) {
+                sb.append(extractCellText(cell));
+            }
+            if (normalizeForMatch(sb.toString()).contains(target)) {
+                return rowIndex;
+            }
+        }
+        return -1;
+    }
+
+    private int resolveRowIndex(XWPFTable table, String rowLabel, int fallbackRowIndex) {
+        int rowIndex = findRowByLabel(table, rowLabel);
+        if (rowIndex >= 0) {
+            return rowIndex;
+        }
+        if (fallbackRowIndex >= 0 && fallbackRowIndex < table.getNumberOfRows()) {
+            return fallbackRowIndex;
+        }
+        return -1;
+    }
+
+    private int getGridSpan(XWPFTableCell cell) {
+        if (cell == null || cell.getCTTc() == null || cell.getCTTc().getTcPr() == null || !cell.getCTTc().getTcPr().isSetGridSpan()) {
+            return 1;
+        }
+        return cell.getCTTc().getTcPr().getGridSpan().getVal().intValue();
+    }
+
+    private String extractCellText(XWPFTableCell cell) {
+        if (cell == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (XWPFParagraph p : cell.getParagraphs()) {
+            sb.append(str(p.getText()));
+        }
+        return sb.toString();
+    }
+
+    private String normalizeForMatch(String raw) {
+        String value = str(raw);
+        return value
+                .replaceAll("[\\s\\u3000\\r\\n\\t]+", "")
+                .replace("：", "")
+                .replace(":", "")
+                .replace("（", "")
+                .replace("）", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("、", "")
+                .replace("，", "")
+                .replace(",", "");
     }
 
     private String joinActivities(List<ActivityItemEntity> activities, String moduleType) {
@@ -330,20 +484,20 @@ public class ReportTemplateService {
 
             BigDecimal value = activity.getFinalScore() == null ? activity.getSelfScore() : activity.getFinalScore();
             StringBuilder item = new StringBuilder();
-            item.append(index).append("、").append(str(activity.getTitle()).trim());
+            item.append(index).append("\u3001").append(str(activity.getTitle()).trim());
 
             String desc = str(activity.getDescription()).trim();
             if (!desc.isEmpty()) {
-                item.append("：").append(desc);
+                item.append("\uff1a").append(desc);
             }
-            item.append("（").append(formatScore2(value)).append("分）");
+            item.append("\uff08").append(formatScore2(value)).append("\u5206\uff09");
             parts.add(item.toString());
             index++;
         }
         if (parts.isEmpty()) {
             return "-";
         }
-        return String.join("；", parts);
+        return String.join("\uff1b", parts);
     }
 
     private BigDecimal readWeightedScore(Map<String, Object> score, String weightedKey, String rawKey, BigDecimal weight) {
@@ -360,7 +514,35 @@ public class ReportTemplateService {
 
     private void setCellText(XWPFTable table, int rowIndex, int colIndex, String value, int fillFontSize, ParagraphAlignment alignment) {
         XWPFTableCell cell = requireCell(table, rowIndex, colIndex);
+        setCellText(cell, value, fillFontSize, alignment);
+    }
 
+    private void setCellTextByGridColumn(XWPFTable table, int rowIndex, int gridColIndex, String value, int fillFontSize, ParagraphAlignment alignment) {
+        XWPFTableRow row = table.getRow(rowIndex);
+        if (row == null) {
+            throw new BizException(50001, "\u6a21\u677f\u603b\u5206\u5217\u5b9a\u4f4d\u5931\u8d25");
+        }
+        XWPFTableCell cell = findCellByGridColumn(row, gridColIndex);
+        if (cell == null) {
+            throw new BizException(50001, "\u6a21\u677f\u603b\u5206\u5217\u5b9a\u4f4d\u5931\u8d25");
+        }
+        setCellText(cell, value, fillFontSize, alignment);
+    }
+
+    private XWPFTableCell findCellByGridColumn(XWPFTableRow row, int gridColIndex) {
+        int start = 0;
+        for (XWPFTableCell cell : row.getTableCells()) {
+            int span = getGridSpan(cell);
+            int end = start + span - 1;
+            if (gridColIndex >= start && gridColIndex <= end) {
+                return cell;
+            }
+            start += span;
+        }
+        return null;
+    }
+
+    private void setCellText(XWPFTableCell cell, String value, int fillFontSize, ParagraphAlignment alignment) {
         XWPFParagraph paragraph;
         if (cell.getParagraphs() == null || cell.getParagraphs().isEmpty()) {
             paragraph = cell.addParagraph();
@@ -370,8 +552,8 @@ public class ReportTemplateService {
                 cell.removeParagraph(i);
             }
         }
-        initParagraph(paragraph, alignment);
 
+        initParagraph(paragraph, alignment);
         RunStyle style = snapshotFirstRunStyle(paragraph);
         while (paragraph.getRuns().size() > 0) {
             paragraph.removeRun(0);
@@ -382,23 +564,14 @@ public class ReportTemplateService {
         writeTextWithLineBreaks(run, str(value));
     }
 
-    private void setRightmostCellText(XWPFTable table, int rowIndex, String value, int fillFontSize) {
-        XWPFTableRow row = table.getRow(rowIndex);
-        if (row == null || row.getTableCells() == null || row.getTableCells().isEmpty()) {
-            throw new BizException(50001, "模板字段定位失败: row=" + rowIndex);
-        }
-        int lastColIndex = row.getTableCells().size() - 1;
-        setCellText(table, rowIndex, lastColIndex, value, fillFontSize, ParagraphAlignment.CENTER);
-    }
-
     private XWPFTableCell requireCell(XWPFTable table, int rowIndex, int colIndex) {
         XWPFTableRow row = table.getRow(rowIndex);
         if (row == null) {
-            throw new BizException(50001, "模板字段定位失败: row=" + rowIndex);
+            throw new BizException(50001, "\u6a21\u677f\u5b57\u6bb5\u5b9a\u4f4d\u5931\u8d25: row=" + rowIndex);
         }
         XWPFTableCell cell = row.getCell(colIndex);
         if (cell == null) {
-            throw new BizException(50001, "模板字段定位失败: row=" + rowIndex + ", col=" + colIndex);
+            throw new BizException(50001, "\u6a21\u677f\u5b57\u6bb5\u5b9a\u4f4d\u5931\u8d25: row=" + rowIndex + ", col=" + colIndex);
         }
         return cell;
     }
@@ -409,18 +582,26 @@ public class ReportTemplateService {
         paragraph.setSpacingBetween(1.0);
         paragraph.setIndentationLeft(0);
         paragraph.setIndentationFirstLine(0);
+        if (paragraph.getCTP() != null && paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetInd()) {
+            CTInd ind = paragraph.getCTP().getPPr().getInd();
+            if (ind.isSetLeftChars()) {
+                ind.unsetLeftChars();
+            }
+            if (ind.isSetFirstLineChars()) {
+                ind.unsetFirstLineChars();
+            }
+            if (ind.isSetRightChars()) {
+                ind.unsetRightChars();
+            }
+            if (ind.isSetHangingChars()) {
+                ind.unsetHangingChars();
+            }
+        }
         paragraph.setAlignment(alignment == null ? ParagraphAlignment.CENTER : alignment);
     }
 
-    private RunStyle snapshotFirstCellRunStyle(XWPFTableCell cell) {
-        if (cell == null || cell.getParagraphs() == null || cell.getParagraphs().isEmpty()) {
-            return new RunStyle();
-        }
-        return snapshotFirstRunStyle(cell.getParagraphs().get(0));
-    }
-
-    private void writeTextWithLineBreaks(XWPFRun run, String value) {
-        String[] lines = value.split("\\n", -1);
+    private void writeTextWithLineBreaks(XWPFRun run, String text) {
+        String[] lines = text.split("\\n", -1);
         for (int i = 0; i < lines.length; i++) {
             if (i > 0) {
                 run.addBreak();
@@ -434,7 +615,6 @@ public class ReportTemplateService {
         if (paragraph.getRuns() == null || paragraph.getRuns().isEmpty()) {
             return style;
         }
-
         XWPFRun first = paragraph.getRuns().get(0);
         style.fontSize = first.getFontSize();
         style.bold = first.isBold();
@@ -448,9 +628,7 @@ public class ReportTemplateService {
         RunStyle resolvedStyle = style == null ? new RunStyle() : style;
         run.setBold(resolvedStyle.bold);
         run.setItalic(resolvedStyle.italic);
-        if (resolvedStyle.color != null && !resolvedStyle.color.isEmpty()) {
-            run.setColor(resolvedStyle.color);
-        }
+        run.setColor(COLOR_BLACK);
         if (resolvedStyle.underline != null) {
             run.setUnderline(resolvedStyle.underline);
         }
@@ -460,10 +638,32 @@ public class ReportTemplateService {
 
         CTRPr rPr = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
         CTFonts rFonts = rPr.sizeOfRFontsArray() > 0 ? rPr.getRFontsArray(0) : rPr.addNewRFonts();
-        rFonts.setEastAsia("宋体");
+        rFonts.setEastAsia("\u5b8b\u4f53");
         rFonts.setAscii("Times New Roman");
         rFonts.setHAnsi("Times New Roman");
         rFonts.setCs("Times New Roman");
+    }
+
+    private String getRunText(XWPFRun run) {
+        if (run == null) {
+            return "";
+        }
+        String text = run.getText(0);
+        return text == null ? "" : text;
+    }
+
+    private void overwriteRunText(XWPFRun run, String text) {
+        if (run == null) {
+            return;
+        }
+        if (run.getCTR().sizeOfTArray() == 0) {
+            run.setText(text == null ? "" : text);
+            return;
+        }
+        run.setText(text == null ? "" : text, 0);
+        for (int i = run.getCTR().sizeOfTArray() - 1; i > 0; i--) {
+            run.getCTR().removeT(i);
+        }
     }
 
     private String normalizeGender(String raw) {
@@ -471,11 +671,11 @@ public class ReportTemplateService {
         if (value.isEmpty()) {
             return "";
         }
-        if ("M".equals(value) || "MALE".equals(value) || "男".equals(raw)) {
-            return "男";
+        if ("M".equals(value) || "MALE".equals(value) || "\u7537".equals(raw)) {
+            return "\u7537";
         }
-        if ("F".equals(value) || "FEMALE".equals(value) || "女".equals(raw)) {
-            return "女";
+        if ("F".equals(value) || "FEMALE".equals(value) || "\u5973".equals(raw)) {
+            return "\u5973";
         }
         return str(raw);
     }
@@ -519,7 +719,11 @@ public class ReportTemplateService {
     }
 
     private String formatScore2(BigDecimal value) {
-        return safe(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
+        BigDecimal normalized = safe(value).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+        if (normalized.compareTo(BigDecimal.ZERO) == 0) {
+            return "0";
+        }
+        return normalized.toPlainString();
     }
 
     private String str(Object value) {
@@ -533,7 +737,7 @@ public class ReportTemplateService {
         if (obj instanceof UserEntity) {
             return (UserEntity) obj;
         }
-        throw new BizException(50001, "学生信息类型异常: " + obj.getClass().getName());
+        throw new BizException(50001, "\u5b66\u751f\u4fe1\u606f\u7c7b\u578b\u5f02\u5e38: " + obj.getClass().getName());
     }
 
     @SuppressWarnings("unchecked")
@@ -544,7 +748,7 @@ public class ReportTemplateService {
         if (obj instanceof List) {
             return (List<T>) obj;
         }
-        throw new BizException(50001, "模板填充数据类型异常: " + obj.getClass().getName());
+        throw new BizException(50001, "\u6a21\u677f\u586b\u5145\u6570\u636e\u7c7b\u578b\u5f02\u5e38: " + obj.getClass().getName());
     }
 
     private static class RunStyle {
