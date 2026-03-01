@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="fb-login-page">
     <div class="fb-login-main">
       <section class="fb-brand-panel" aria-hidden="true">
@@ -15,18 +15,18 @@
 
           <form class="stack" @submit.prevent="login" novalidate>
             <label class="field">
-              <span class="visually-hidden">用户名</span>
+              <span class="visually-hidden">学号</span>
               <input
-                v-model.trim="loginForm.username"
-                :class="{ 'is-error': Boolean(loginErrors.username) }"
-                placeholder="请输入用户名"
+                v-model.trim="loginForm.studentNo"
+                :class="{ 'is-error': Boolean(loginErrors.studentNo) }"
+                placeholder="请输入学号"
                 autocomplete="username"
-                :aria-invalid="Boolean(loginErrors.username)"
-                aria-describedby="login-username-error"
-                @blur="validateLoginField('username')"
-                @input="clearLoginFieldError('username')"
+                :aria-invalid="Boolean(loginErrors.studentNo)"
+                aria-describedby="login-studentno-error"
+                @blur="validateLoginField('studentNo')"
+                @input="clearLoginFieldError('studentNo')"
               />
-              <span id="login-username-error" class="field-error">{{ loginErrors.username }}</span>
+              <span id="login-studentno-error" class="field-error">{{ loginErrors.studentNo }}</span>
             </label>
 
             <label class="field">
@@ -57,8 +57,8 @@
             </label>
 
             <label class="fb-remember-line">
-              <input v-model="rememberUsername" type="checkbox" />
-              <span>记住账号</span>
+              <input v-model="rememberStudentNo" type="checkbox" />
+              <span>记住学号</span>
             </label>
 
             <button class="fb-btn fb-btn-primary" type="submit" :disabled="loading">
@@ -98,15 +98,15 @@ import '../styles/login.css'
 const router = useRouter()
 const route = useRoute()
 
-const REMEMBER_FLAG_KEY = 'login_remember_username'
-const SAVED_USERNAME_KEY = 'login_saved_username'
+const REMEMBER_FLAG_KEY = 'login_remember_student_no'
+const SAVED_STUDENT_NO_KEY = 'login_saved_student_no'
 
 const showQuickFill = import.meta.env.DEV === true
 const savedRememberFlag = localStorage.getItem(REMEMBER_FLAG_KEY) === '1'
-const savedUsername = savedRememberFlag ? String(localStorage.getItem(SAVED_USERNAME_KEY) || '') : ''
+const savedStudentNo = savedRememberFlag ? String(localStorage.getItem(SAVED_STUDENT_NO_KEY) || '') : ''
 
 const loading = ref(false)
-const rememberUsername = ref(savedRememberFlag)
+const rememberStudentNo = ref(savedRememberFlag)
 const showLoginPassword = ref(false)
 const loginPasswordRef = ref(null)
 
@@ -116,13 +116,13 @@ const loginState = reactive({
 })
 
 const loginForm = reactive({
-  username: savedUsername || (showQuickFill ? 'stu0001' : ''),
+  studentNo: savedStudentNo || (showQuickFill ? '2022000001' : ''),
   password: showQuickFill ? '123456' : ''
 })
 
 const loginErrors = reactive({
   form: '',
-  username: '',
+  studentNo: '',
   password: ''
 })
 
@@ -138,9 +138,9 @@ const clearLoginFieldError = (field) => {
 }
 
 const validateLoginField = (field) => {
-  if (field === 'username') {
-    const username = String(loginForm.username || '').trim()
-    loginErrors.username = username ? '' : '请输入用户名'
+  if (field === 'studentNo') {
+    const studentNo = String(loginForm.studentNo || '').trim()
+    loginErrors.studentNo = studentNo ? '' : '请输入学号'
   }
   if (field === 'password') {
     const password = String(loginForm.password || '')
@@ -149,26 +149,26 @@ const validateLoginField = (field) => {
 }
 
 const validateLoginForm = () => {
-  validateLoginField('username')
+  validateLoginField('studentNo')
   validateLoginField('password')
-  return !loginErrors.username && !loginErrors.password
+  return !loginErrors.studentNo && !loginErrors.password
 }
 
-const rememberUsernameIfNeeded = () => {
-  if (rememberUsername.value && loginForm.username.trim()) {
+const rememberStudentNoIfNeeded = () => {
+  if (rememberStudentNo.value && loginForm.studentNo.trim()) {
     localStorage.setItem(REMEMBER_FLAG_KEY, '1')
-    localStorage.setItem(SAVED_USERNAME_KEY, loginForm.username.trim())
+    localStorage.setItem(SAVED_STUDENT_NO_KEY, loginForm.studentNo.trim())
     return
   }
   localStorage.removeItem(REMEMBER_FLAG_KEY)
-  localStorage.removeItem(SAVED_USERNAME_KEY)
+  localStorage.removeItem(SAVED_STUDENT_NO_KEY)
 }
 
 const fill = (role) => {
   clearLoginMessages()
-  if (role === 'STUDENT') loginForm.username = 'stu0001'
-  else if (role === 'COUNSELOR') loginForm.username = 'counselor1'
-  else loginForm.username = 'admin'
+  if (role === 'STUDENT') loginForm.studentNo = '2022000001'
+  else if (role === 'COUNSELOR') loginForm.studentNo = '9000000002'
+  else loginForm.studentNo = '9000000001'
   loginForm.password = '123456'
 }
 
@@ -189,7 +189,7 @@ const login = async () => {
   try {
     submissionStore.reset()
     const payload = {
-      username: String(loginForm.username || '').trim(),
+      studentNo: String(loginForm.studentNo || '').trim(),
       password: String(loginForm.password || '')
     }
     const { data } = await http.post('/auth/login', payload, { meta: { silent: true } })
@@ -199,7 +199,7 @@ const login = async () => {
     localStorage.setItem('role', authData.role)
     localStorage.setItem('userId', String(authData.userId))
     localStorage.setItem('realName', authData.realName || '')
-    rememberUsernameIfNeeded()
+    rememberStudentNoIfNeeded()
 
     if (authData.role === 'STUDENT') {
       router.replace('/student')
@@ -218,11 +218,11 @@ const login = async () => {
 onMounted(() => {
   if (String(route.query.registered || '') !== '1') return
 
-  const username = String(route.query.username || '').trim()
+  const studentNo = String(route.query.studentNo || '').trim()
   loginState.success = '注册成功，请登录。'
   loginState.info = ''
   loginErrors.form = ''
-  if (username) loginForm.username = username
+  if (studentNo) loginForm.studentNo = studentNo
 
   router.replace({ path: '/login', query: {} })
   loginPasswordRef.value?.focus()

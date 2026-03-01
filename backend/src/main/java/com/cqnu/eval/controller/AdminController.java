@@ -27,7 +27,7 @@ public class AdminController {
     @GetMapping("/tasks")
     public ApiResponse<List<Map<String, Object>>> tasks() {
         RoleGuard.requireRole(UserContext.get(), "ADMIN");
-        return ApiResponse.ok(submissionService.listSubmittedTasks());
+        return ApiResponse.ok(submissionService.listCounselorReviewedTasks());
     }
 
     @PostMapping("/submissions/{id}/finalize")

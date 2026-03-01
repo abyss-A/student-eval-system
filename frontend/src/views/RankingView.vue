@@ -43,7 +43,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="ranking_main">
           <thead>
             <tr>
               <th>学号</th>

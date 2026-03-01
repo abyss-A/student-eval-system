@@ -23,7 +23,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="teacher_tasks">
           <thead>
             <tr>
               <th>学号</th>
@@ -31,6 +31,7 @@
               <th>班级</th>
               <th>总分</th>
               <th>提交时间</th>
+              <th>状态</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -42,13 +43,26 @@
               <td>{{ task.total_score ?? '-' }}</td>
               <td>{{ formatDate(task.submitted_at) }}</td>
               <td>
-                <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail">
-                  {{ selectedSubmissionId === task.id ? '已打开' : '打开审核' }}
-                </button>
+                <span class="badge" :class="taskProgressBadge(task.review_progress)">{{ taskProgressLabel(task.review_progress) }}</span>
+                <span class="muted" style="margin-left: 6px;">{{ task.review_done_count ?? 0 }}/{{ task.review_total_count ?? 0 }}</span>
+              </td>
+              <td>
+                <div class="action-row inline-actions">
+                  <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail || submittingTaskId === task.id">
+                    {{ selectedSubmissionId === task.id ? '已打开' : '打开审核' }}
+                  </button>
+                  <button
+                    class="btn"
+                    @click="submitTaskToAdmin(task)"
+                    :disabled="!canSubmitTask(task) || submittingTaskId === task.id"
+                  >
+                    {{ submittingTaskId === task.id ? '提交中...' : '提交管理员' }}
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!taskPager.pagedRows.value.length">
-              <td colspan="6" class="empty">暂无符合条件的测评单</td>
+              <td colspan="7" class="empty">暂无符合条件的测评单</td>
             </tr>
           </tbody>
         </table>
@@ -64,7 +78,7 @@
   </section>
 
   <div v-if="drawerOpen && current" class="drawer-overlay" @click.self="closeDrawer">
-    <div class="drawer-panel drawer-wide">
+    <div class="drawer-panel drawer-wide drawer-review">
       <div class="drawer-header">
         <div>
           <div style="font-weight: 700; font-size: 16px;">审核测评单 #{{ current.submission.id }}</div>
@@ -104,7 +118,7 @@
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky">
+            <table class="table table-sticky" data-resize-key="teacher_drawer_courses">
               <thead>
                 <tr>
                   <th class="nowrap">课程</th>
@@ -115,17 +129,20 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="course in coursePager.pagedRows.value" :key="`course_${course.id}`">
+            <tr v-for="course in coursePager.pagedRows.value" :key="`course_${course.id}`">
                   <td class="nowrap">{{ course.courseName }}</td>
                   <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
                   <td class="nowrap">{{ course.score }}</td>
                   <td>
-                    <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" />
+                    <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
                   </td>
                   <td>
                     <div class="action-row inline-actions">
-                      <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-                      <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding">驳回</button>
+                      <template v-if="isPendingStatus(course.reviewStatus)">
+                        <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
+                        <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                      </template>
+                      <button v-else class="btn secondary" type="button" @click="decide('COURSE', course.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</button>
                     </div>
                   </td>
                 </tr>
@@ -169,7 +186,7 @@
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky activity-table">
+            <table class="table table-sticky activity-table" data-resize-key="teacher_drawer_activities">
               <thead>
                 <tr>
                   <th class="nowrap col-module">模块</th>
@@ -188,18 +205,21 @@
                   <td>
                     <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
                       <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
-                        <button class="link" type="button" @click="previewEvidence(m.id)">{{ m.fileName || ('附件#' + m.id) }}</button>
+                        <button class="link" type="button" @click="previewEvidence(m.id, activity._evidenceMetas)">{{ m.fileName || ('附件#' + m.id) }}</button>
                       </span>
                     </div>
                     <span v-else class="muted" style="font-size: 12px;">未上传</span>
                   </td>
                   <td>
-                    <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" />
+                    <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
                   </td>
                   <td>
                     <div class="action-row inline-actions">
-                      <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding">通过</button>
-                      <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding">驳回</button>
+                      <template v-if="isPendingStatus(activity.reviewStatus)">
+                        <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
+                        <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                      </template>
+                      <button v-else class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</button>
                     </div>
                   </td>
                 </tr>
@@ -242,6 +262,7 @@ const selectedSubmissionId = ref(null)
 const loadingTasks = ref(false)
 const loadingDetail = ref(false)
 const isDeciding = ref(false)
+const submittingTaskId = ref(null)
 const drawerOpen = ref(false)
 
 const drafts = reactive({})
@@ -266,6 +287,7 @@ const filteredTasks = computed(() => {
 })
 
 const taskPager = useTablePager(filteredTasks, 10)
+const canReviewCurrent = computed(() => String(current.value?.submission?.status || '').trim().toUpperCase() === 'SUBMITTED')
 
 const filteredCourses = computed(() => {
   const list = current.value?.courses || []
@@ -308,6 +330,29 @@ const moduleLabel = (raw) => {
   if (code === 'ART') return '美育'
   if (code === 'LABOR') return '劳育'
   return raw || '-'
+}
+
+const isPendingStatus = (raw) => String(raw || '').trim().toUpperCase() === 'PENDING'
+
+const taskProgressLabel = (raw) => {
+  const code = String(raw || '').trim().toUpperCase()
+  if (code === 'DONE') return '审核完毕'
+  if (code === 'IN_PROGRESS') return '正在审核'
+  return '未审核'
+}
+
+const taskProgressBadge = (raw) => {
+  const code = String(raw || '').trim().toUpperCase()
+  if (code === 'DONE') return 'success'
+  if (code === 'IN_PROGRESS') return ''
+  return 'danger'
+}
+
+const canSubmitTask = (task) => {
+  if (!task) return false
+  const progress = String(task.review_progress || '').trim().toUpperCase()
+  const status = String(task.status || '').trim().toUpperCase()
+  return progress === 'DONE' && status === 'SUBMITTED'
 }
 
 const isAutoReason = (text) => {
@@ -389,6 +434,10 @@ const reloadCurrent = async () => {
 }
 
 const decide = async (itemType, itemId, action) => {
+  if (!canReviewCurrent.value) {
+    alert('该测评单当前不可继续审核，请刷新列表')
+    return
+  }
   const key = itemType === 'COURSE' ? courseKey(itemId) : activityKey(itemId)
   ensureDraft(key)
 
@@ -405,6 +454,28 @@ const decide = async (itemType, itemId, action) => {
     alert('审核操作已提交')
   } finally {
     isDeciding.value = false
+  }
+}
+
+const submitTaskToAdmin = async (task) => {
+  if (!task?.id) return
+  if (!canSubmitTask(task)) {
+    alert('当前测评单还未审核完毕，不能提交管理员')
+    return
+  }
+
+  submittingTaskId.value = task.id
+  try {
+    await http.post(`/reviews/submissions/${task.id}/submit`)
+    if (selectedSubmissionId.value === task.id) {
+      closeDrawer()
+      current.value = null
+      selectedSubmissionId.value = null
+    }
+    await loadTasks({ keepPage: true })
+    alert('已提交管理员')
+  } finally {
+    submittingTaskId.value = null
   }
 }
 
@@ -454,8 +525,17 @@ const hydrateEvidenceMetas = async () => {
   }
 }
 
-const previewEvidence = async (fileId) => {
-  await previewImageById(http, fileId, '证明材料预览')
+const previewEvidence = async (fileId, metas = []) => {
+  const galleryIds = (metas || [])
+    .map((m) => Number(m?.id))
+    .filter((id) => Number.isFinite(id) && id > 0)
+  const fileNameMap = {}
+  for (const m of metas || []) {
+    const id = Number(m?.id)
+    if (!Number.isFinite(id) || id <= 0) continue
+    fileNameMap[id] = m.fileName || `附件#${id}`
+  }
+  await previewImageById(http, fileId, '证明材料预览', galleryIds, fileNameMap)
 }
 
 const onTaskSearch = () => {
@@ -495,7 +575,7 @@ watch([activityKeyword, activityModuleFilter], () => {
   activityPager.resetPage()
 })
 
-const busyRef = computed(() => loadingTasks.value || loadingDetail.value || isDeciding.value)
+const busyRef = computed(() => loadingTasks.value || loadingDetail.value || isDeciding.value || !!submittingTaskId.value)
 const pausedRef = computed(() => drawerOpen.value)
 
 useIdleAutoRefresh({

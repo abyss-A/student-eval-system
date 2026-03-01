@@ -9,6 +9,7 @@ import com.cqnu.eval.model.dto.ReviewDecisionRequest;
 import com.cqnu.eval.model.entity.ActivityItemEntity;
 import com.cqnu.eval.model.entity.CourseItemEntity;
 import com.cqnu.eval.model.entity.ReviewLogEntity;
+import com.cqnu.eval.model.entity.SubmissionEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,18 +45,42 @@ public class ReviewService {
 
     @Transactional(rollbackFor = Exception.class)
     public void decision(String itemType, Long itemId, ReviewDecisionRequest request, Long reviewerId) {
-        String action = request.getAction().toUpperCase(Locale.ROOT);
-        // Counselor review: only approve/reject, no score adjustment.
-        if (!"APPROVE".equals(action) && !"REJECT".equals(action)) {
+        String action = normalizeAction(request.getAction());
+        if (!"APPROVE".equals(action) && !"REJECT".equals(action) && !"UNDO".equals(action)) {
             throw new BizException(40001, "不支持的审核动作");
         }
 
         if ("COURSE".equalsIgnoreCase(itemType)) {
             handleCourse(itemId, action, request, reviewerId);
-        } else if ("ACTIVITY".equalsIgnoreCase(itemType)) {
+            return;
+        }
+        if ("ACTIVITY".equalsIgnoreCase(itemType)) {
             handleActivity(itemId, action, request, reviewerId);
-        } else {
-            throw new BizException(40001, "不支持的条目类型");
+            return;
+        }
+        throw new BizException(40001, "不支持的条目类型");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void submitToAdmin(Long submissionId) {
+        SubmissionEntity submission = submissionMapper.findById(submissionId);
+        if (submission == null) {
+            throw new BizException(40401, "测评单不存在");
+        }
+        if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
+            throw new BizException(40003, "当前测评单状态不可提交管理员");
+        }
+
+        int total = countTotalItems(submissionId);
+        int reviewed = countReviewedItems(submissionId);
+        if (reviewed < total) {
+            throw new BizException(40001, "该测评单仍有未审核条目，请完成审核后再提交");
+        }
+
+        submissionService.recalculate(submissionId);
+        int updated = submissionMapper.updateStatusIfCurrent(submissionId, "SUBMITTED", "COUNSELOR_REVIEWED");
+        if (updated == 0) {
+            throw new BizException(40901, "状态已变化，请刷新后重试");
         }
     }
 
@@ -64,21 +89,31 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "课程条目不存在");
         }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
         BigDecimal before = item.getReviewerScore() == null ? item.getScore() : item.getReviewerScore();
-        BigDecimal after = before;
+        BigDecimal after;
+        String reason = normalizeReason(req.getReason());
+        int updated;
 
-        if ("REJECT".equals(action)) {
+        if ("APPROVE".equals(action)) {
+            after = safe(item.getScore());
+            updated = courseItemMapper.approveIfPending(itemId, reason);
+        } else if ("REJECT".equals(action)) {
             after = BigDecimal.ZERO;
-            item.setReviewStatus("REJECTED");
-            item.setReviewerComment(req.getReason());
+            updated = courseItemMapper.rejectIfPending(itemId, reason);
         } else {
-            item.setReviewStatus("APPROVED");
-            item.setReviewerComment(req.getReason());
+            after = safe(item.getScore());
+            reason = null;
+            updated = courseItemMapper.undoIfReviewed(itemId);
         }
-        item.setReviewerScore(after);
-        courseItemMapper.updateReview(item);
 
-        log("COURSE", itemId, item.getSubmissionId(), action, before, after, req.getReason(), reviewerId);
+        if (updated == 0) {
+            throw new BizException(40901, "状态已变化，请刷新后重试");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        log("COURSE", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
         submissionService.recalculate(item.getSubmissionId());
     }
 
@@ -87,22 +122,71 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "活动条目不存在");
         }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
         BigDecimal before = item.getFinalScore() == null ? item.getSelfScore() : item.getFinalScore();
-        BigDecimal after = before;
+        BigDecimal after;
+        String reason = normalizeReason(req.getReason());
+        int updated;
 
-        if ("REJECT".equals(action)) {
+        if ("APPROVE".equals(action)) {
+            after = safe(item.getSelfScore());
+            updated = activityItemMapper.approveIfPending(itemId, reason);
+        } else if ("REJECT".equals(action)) {
             after = BigDecimal.ZERO;
-            item.setReviewStatus("REJECTED");
-            item.setReviewerComment(req.getReason());
+            updated = activityItemMapper.rejectIfPending(itemId, reason);
         } else {
-            item.setReviewStatus("APPROVED");
-            item.setReviewerComment(req.getReason());
+            after = safe(item.getSelfScore());
+            reason = null;
+            updated = activityItemMapper.undoIfReviewed(itemId);
         }
-        item.setFinalScore(after);
-        activityItemMapper.updateReview(item);
 
-        log("ACTIVITY", itemId, item.getSubmissionId(), action, before, after, req.getReason(), reviewerId);
+        if (updated == 0) {
+            throw new BizException(40901, "状态已变化，请刷新后重试");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        log("ACTIVITY", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
         submissionService.recalculate(item.getSubmissionId());
+    }
+
+    private void ensureSubmissionSubmitted(Long submissionId) {
+        SubmissionEntity submission = submissionMapper.findById(submissionId);
+        if (submission == null) {
+            throw new BizException(40401, "测评单不存在");
+        }
+        if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
+            throw new BizException(40003, "当前测评单不在可审核状态");
+        }
+    }
+
+    private int countTotalItems(Long submissionId) {
+        return courseItemMapper.countBySubmissionId(submissionId)
+                + activityItemMapper.countBySubmissionId(submissionId);
+    }
+
+    private int countReviewedItems(Long submissionId) {
+        return courseItemMapper.countReviewedBySubmissionId(submissionId)
+                + activityItemMapper.countReviewedBySubmissionId(submissionId);
+    }
+
+    private String normalizeAction(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeReason(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private BigDecimal safe(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     private void log(String itemType,
@@ -125,4 +209,3 @@ public class ReviewService {
         reviewLogMapper.insert(log);
     }
 }
-

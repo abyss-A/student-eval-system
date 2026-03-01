@@ -77,6 +77,12 @@ async function saveCourses(items, options = {}) {
   if (syncAfterSave) {
     await loadDetail()
     await loadScore()
+  } else if (String(state.status || '').trim().toUpperCase() === 'SUBMITTED') {
+    state.status = 'DRAFT'
+    if (state.detail?.submission) {
+      state.detail.submission.status = 'DRAFT'
+      state.detail.submission.submittedAt = null
+    }
   }
 }
 
@@ -87,6 +93,12 @@ async function saveActivitiesModule(moduleType, items, options = {}) {
   if (syncAfterSave) {
     await loadDetail()
     await loadScore()
+  } else if (String(state.status || '').trim().toUpperCase() === 'SUBMITTED') {
+    state.status = 'DRAFT'
+    if (state.detail?.submission) {
+      state.detail.submission.status = 'DRAFT'
+      state.detail.submission.submittedAt = null
+    }
   }
 }
 

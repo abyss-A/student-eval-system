@@ -41,7 +41,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="feedback_my_list">
           <thead>
             <tr>
               <th>标题</th>

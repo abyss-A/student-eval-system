@@ -1,4 +1,4 @@
-const ROLE_HOME = {
+﻿const ROLE_HOME = {
   STUDENT: '/student/eval/course',
   COUNSELOR: '/teacher/review/tasks',
   ADMIN: '/admin/finalize/tasks'
@@ -26,6 +26,13 @@ export function isLoggedIn() {
 
 export function getHomeByRole(role = getRole()) {
   return ROLE_HOME[role] || '/login'
+}
+
+export function getProfilePathByRole(role = getRole()) {
+  if (role === 'STUDENT') return '/student/me/profile'
+  if (role === 'COUNSELOR') return '/teacher/me/profile'
+  if (role === 'ADMIN') return '/admin/me/profile'
+  return '/login'
 }
 
 export function canAccessRoute(roles, role = getRole()) {

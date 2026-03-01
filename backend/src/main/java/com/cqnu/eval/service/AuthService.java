@@ -8,6 +8,7 @@ import com.cqnu.eval.model.dto.RegisterStudentRequest;
 import com.cqnu.eval.model.dto.RegisterStudentResponse;
 import com.cqnu.eval.model.entity.UserEntity;
 import com.cqnu.eval.security.JwtUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
@@ -17,23 +18,25 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final JwtUtils jwtUtils;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserMapper userMapper, JwtUtils jwtUtils) {
+    public AuthService(UserMapper userMapper, JwtUtils jwtUtils, PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
         this.jwtUtils = jwtUtils;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public LoginResponse login(LoginRequest request) {
-        UserEntity user = userMapper.findByUsername(request.getUsername());
-        if (user == null || !request.getPassword().equals(user.getPasswordHash())) {
-            throw new BizException(40101, "用户名或密码错误");
+        String studentNo = request.getStudentNo() == null ? "" : request.getStudentNo().trim();
+        UserEntity user = userMapper.findEnabledByStudentNo(studentNo);
+        if (user == null || !verifyPasswordAndUpgradeIfNeeded(user, request.getPassword())) {
+            throw new BizException(40101, "学号或密码错误");
         }
         String token = jwtUtils.createToken(user.getId(), user.getUsername(), user.getRole());
         return new LoginResponse(token, user.getRole(), user.getId(), user.getRealName());
     }
 
     public RegisterStudentResponse registerStudent(RegisterStudentRequest request) {
-        String username = request.getUsername().trim();
         String password = request.getPassword().trim();
         String realName = request.getRealName().trim();
         String gender = request.getGender().trim();
@@ -47,16 +50,16 @@ public class AuthService {
             throw new BizException(40001, "性别仅支持：男、女");
         }
 
-        if (userMapper.findByUsername(username) != null) {
-            throw new BizException(40001, "用户名已存在，请更换后再试");
-        }
         if (userMapper.findByStudentNo(studentNo) != null) {
             throw new BizException(40001, "学号已被注册");
         }
+        if (userMapper.findByUsername(studentNo) != null) {
+            throw new BizException(40001, "账号已存在，请更换后再试");
+        }
 
         UserEntity user = new UserEntity();
-        user.setUsername(username);
-        user.setPasswordHash(password);
+        user.setUsername(studentNo);
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole("STUDENT");
         user.setStudentNo(studentNo);
         user.setRealName(realName);
@@ -67,7 +70,29 @@ public class AuthService {
         user.setEnabled(1);
         userMapper.insert(user);
 
-        return new RegisterStudentResponse(user.getId(), user.getUsername(), user.getRealName());
+        return new RegisterStudentResponse(user.getId(), user.getStudentNo(), user.getRealName());
+    }
+
+    private boolean verifyPasswordAndUpgradeIfNeeded(UserEntity user, String rawPassword) {
+        String stored = user.getPasswordHash();
+        if (stored == null || stored.isEmpty()) {
+            return false;
+        }
+
+        if (isBcryptHash(stored)) {
+            return passwordEncoder.matches(rawPassword, stored);
+        }
+
+        if (!stored.equals(rawPassword)) {
+            return false;
+        }
+
+        userMapper.updatePasswordById(user.getId(), passwordEncoder.encode(rawPassword));
+        return true;
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
     }
 
     private String normalizeGender(String raw) {

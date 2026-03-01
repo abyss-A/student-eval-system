@@ -100,16 +100,14 @@ const isAllowedImage = (file) => {
   return byExt || byMime
 }
 
-const pickImages = () => {
-  return new Promise((resolve) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.jpg,.jpeg,.png,image/jpeg,image/png'
-    input.multiple = true
-    input.onchange = () => resolve(Array.from(input.files || []))
-    input.click()
-  })
-}
+const pickImages = () => new Promise((resolve) => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.jpg,.jpeg,.png,image/jpeg,image/png'
+  input.multiple = true
+  input.onchange = () => resolve(Array.from(input.files || []))
+  input.click()
+})
 
 const uploadImages = async () => {
   if (props.readonly) return
@@ -155,6 +153,13 @@ const remove = async (id) => {
 }
 
 const preview = async (id) => {
-  await previewImageById(http, id, '证明材料预览')
+  const fileNameMap = {}
+  for (const m of metas.value) {
+    const mid = Number(m?.id)
+    if (!Number.isFinite(mid) || mid <= 0) continue
+    fileNameMap[mid] = m.fileName || `附件#${mid}`
+  }
+  await previewImageById(http, id, '图片预览', ids.value, fileNameMap)
 }
 </script>
+

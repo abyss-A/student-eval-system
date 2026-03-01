@@ -1,4 +1,4 @@
-﻿package com.cqnu.eval.service;
+package com.cqnu.eval.service;
 
 import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.model.entity.ActivityItemEntity;

@@ -12,46 +12,79 @@
     </div>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn" type="button" @click="submitForm" :disabled="loading">提交审核</button>
+      <button class="btn" type="button" @click="submitForm" :disabled="loading || !canSubmit">提交审核</button>
       <button class="btn ghost" type="button" @click="exportFile('DOCX')" :disabled="loading">导出Word</button>
       <button class="btn ghost" type="button" @click="exportFile('PDF')" :disabled="loading">导出PDF</button>
     </div>
 
     <div class="score-block" style="margin-top: 14px;">
-      <h3 style="margin: 0;">分数预览（计入总分）</h3>
+      <h3 style="margin: 0;">预览分数</h3>
       <p class="muted" style="margin-top: 6px;">以下德智体美劳显示的是“已乘权重后”的计入分。</p>
 
-      <div v-if="score" class="score-grid">
+      <div v-if="previewScore" class="score-grid">
         <div class="score-item">
           <span class="name">德育</span>
-          <b class="value">{{ moduleValue('moralScore', 'moralRaw') }}</b>
+          <b class="value">{{ toDisplay(previewScore.moralScore) }}</b>
         </div>
         <div class="score-item">
           <span class="name">智育</span>
-          <b class="value">{{ moduleValue('intelScore', 'intelRaw') }}</b>
+          <b class="value">{{ toDisplay(previewScore.intelScore) }}</b>
         </div>
         <div class="score-item">
           <span class="name">体育</span>
-          <b class="value">{{ moduleValue('sportScore', 'sportRaw') }}</b>
+          <b class="value">{{ toDisplay(previewScore.sportScore) }}</b>
         </div>
         <div class="score-item">
           <span class="name">美育</span>
-          <b class="value">{{ moduleValue('artScore', 'artRaw') }}</b>
+          <b class="value">{{ toDisplay(previewScore.artScore) }}</b>
         </div>
         <div class="score-item">
           <span class="name">劳育</span>
-          <b class="value">{{ moduleValue('laborScore', 'laborRaw') }}</b>
+          <b class="value">{{ toDisplay(previewScore.laborScore) }}</b>
         </div>
         <div class="score-item total">
           <span class="name">总分</span>
-          <b class="value">{{ score.totalScore }}</b>
+          <b class="value">{{ toDisplay(previewScore.totalScore) }}</b>
         </div>
       </div>
       <p v-else class="muted" style="margin-top: 10px;">暂无分数，请先填写课程与活动并保存。</p>
 
-      <div v-if="score" class="raw-line">
-        原始分：德育 {{ score.moralRaw }}，智育 {{ score.intelRaw }}，体育 {{ score.sportRaw }}，美育 {{ score.artRaw }}，劳育 {{ score.laborRaw }}
+      <div v-if="previewScore" class="raw-line">
+        原始分：德育 {{ toDisplay(previewScore.moralRaw) }}，智育 {{ toDisplay(previewScore.intelRaw) }}，体育 {{ toDisplay(previewScore.sportRaw) }}，美育 {{ toDisplay(previewScore.artRaw) }}，劳育 {{ toDisplay(previewScore.laborRaw) }}
       </div>
+    </div>
+
+    <div class="score-block" style="margin-top: 12px;">
+      <h3 style="margin: 0;">审核分数</h3>
+      <p class="muted" style="margin-top: 6px;">仅在辅导员完成整单审核后展示。</p>
+
+      <div v-if="reviewReady && reviewedScore" class="score-grid">
+        <div class="score-item">
+          <span class="name">德育</span>
+          <b class="value">{{ toDisplay(reviewedScore.moralScore) }}</b>
+        </div>
+        <div class="score-item">
+          <span class="name">智育</span>
+          <b class="value">{{ toDisplay(reviewedScore.intelScore) }}</b>
+        </div>
+        <div class="score-item">
+          <span class="name">体育</span>
+          <b class="value">{{ toDisplay(reviewedScore.sportScore) }}</b>
+        </div>
+        <div class="score-item">
+          <span class="name">美育</span>
+          <b class="value">{{ toDisplay(reviewedScore.artScore) }}</b>
+        </div>
+        <div class="score-item">
+          <span class="name">劳育</span>
+          <b class="value">{{ toDisplay(reviewedScore.laborScore) }}</b>
+        </div>
+        <div class="score-item total">
+          <span class="name">总分</span>
+          <b class="value">{{ toDisplay(reviewedScore.totalScore) }}</b>
+        </div>
+      </div>
+      <p v-else class="muted" style="margin-top: 10px;">辅导员尚未完成审核，审核分数暂未开放。</p>
     </div>
 
     <div class="formula-line">
@@ -70,11 +103,60 @@ const loading = ref(false)
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
 const score = computed(() => store.state.score)
+const canSubmit = computed(() => {
+  const code = String(status.value || '').trim().toUpperCase()
+  return code !== 'COUNSELOR_REVIEWED' && code !== 'FINALIZED' && code !== 'PUBLISHED'
+})
+const reviewReady = computed(() => Boolean(score.value?.reviewReady))
+
+const pickScoreValue = (source, prefixedKey, fallbackKey) => {
+  if (!source) return null
+  if (source[prefixedKey] !== undefined && source[prefixedKey] !== null) return source[prefixedKey]
+  if (fallbackKey && source[fallbackKey] !== undefined && source[fallbackKey] !== null) return source[fallbackKey]
+  return null
+}
+
+const previewScore = computed(() => {
+  const s = score.value
+  if (!s) return null
+  return {
+    moralRaw: pickScoreValue(s, 'previewMoralRaw', 'moralRaw'),
+    intelRaw: pickScoreValue(s, 'previewIntelRaw', 'intelRaw'),
+    sportRaw: pickScoreValue(s, 'previewSportRaw', 'sportRaw'),
+    artRaw: pickScoreValue(s, 'previewArtRaw', 'artRaw'),
+    laborRaw: pickScoreValue(s, 'previewLaborRaw', 'laborRaw'),
+    moralScore: pickScoreValue(s, 'previewMoralScore', 'moralScore'),
+    intelScore: pickScoreValue(s, 'previewIntelScore', 'intelScore'),
+    sportScore: pickScoreValue(s, 'previewSportScore', 'sportScore'),
+    artScore: pickScoreValue(s, 'previewArtScore', 'artScore'),
+    laborScore: pickScoreValue(s, 'previewLaborScore', 'laborScore'),
+    totalScore: pickScoreValue(s, 'previewTotalScore', 'totalScore')
+  }
+})
+
+const reviewedScore = computed(() => {
+  const s = score.value
+  if (!s) return null
+  return {
+    moralRaw: pickScoreValue(s, 'reviewedMoralRaw', null),
+    intelRaw: pickScoreValue(s, 'reviewedIntelRaw', null),
+    sportRaw: pickScoreValue(s, 'reviewedSportRaw', null),
+    artRaw: pickScoreValue(s, 'reviewedArtRaw', null),
+    laborRaw: pickScoreValue(s, 'reviewedLaborRaw', null),
+    moralScore: pickScoreValue(s, 'reviewedMoralScore', null),
+    intelScore: pickScoreValue(s, 'reviewedIntelScore', null),
+    sportScore: pickScoreValue(s, 'reviewedSportScore', null),
+    artScore: pickScoreValue(s, 'reviewedArtScore', null),
+    laborScore: pickScoreValue(s, 'reviewedLaborScore', null),
+    totalScore: pickScoreValue(s, 'reviewedTotalScore', null)
+  }
+})
 
 const statusLabel = (raw) => {
   const code = String(raw || '').trim().toUpperCase()
   if (code === 'DRAFT') return '草稿'
   if (code === 'SUBMITTED') return '已提交'
+  if (code === 'COUNSELOR_REVIEWED') return '已提交管理员'
   if (code === 'FINALIZED') return '已终审'
   if (code === 'PUBLISHED') return '已公示'
   return raw || '-'
@@ -85,13 +167,6 @@ const toDisplay = (v) => {
   const n = Number(v)
   if (!Number.isFinite(n)) return String(v)
   return n.toFixed(2)
-}
-
-const moduleValue = (weightedKey, rawKey) => {
-  const s = score.value || {}
-  const weighted = s[weightedKey]
-  const raw = s[rawKey]
-  return toDisplay(weighted !== null && weighted !== undefined ? weighted : raw)
 }
 
 const reload = async () => {

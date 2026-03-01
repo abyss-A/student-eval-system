@@ -32,4 +32,25 @@ public interface ActivityItemMapper {
 
     @Update("update activity_item set review_status=#{reviewStatus}, final_score=#{finalScore}, reviewer_comment=#{reviewerComment}, updated_at=now() where id=#{id}")
     int updateReview(ActivityItemEntity entity);
+
+    @Update("update activity_item set review_status='APPROVED', final_score=self_score, reviewer_comment=#{reason}, updated_at=now() " +
+            "where id=#{id} and review_status='PENDING'")
+    int approveIfPending(@Param("id") Long id, @Param("reason") String reason);
+
+    @Update("update activity_item set review_status='REJECTED', final_score=0, reviewer_comment=#{reason}, updated_at=now() " +
+            "where id=#{id} and review_status='PENDING'")
+    int rejectIfPending(@Param("id") Long id, @Param("reason") String reason);
+
+    @Update("update activity_item set review_status='PENDING', final_score=self_score, reviewer_comment=null, updated_at=now() " +
+            "where id=#{id} and review_status in ('APPROVED','REJECTED')")
+    int undoIfReviewed(@Param("id") Long id);
+
+    @Select("select count(1) from activity_item where submission_id = #{submissionId}")
+    int countBySubmissionId(@Param("submissionId") Long submissionId);
+
+    @Select("select count(1) from activity_item where submission_id = #{submissionId} and review_status <> 'PENDING'")
+    int countReviewedBySubmissionId(@Param("submissionId") Long submissionId);
+
+    @Update("update activity_item set review_status='PENDING', final_score=self_score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId}")
+    int resetReviewBySubmissionId(@Param("submissionId") Long submissionId);
 }

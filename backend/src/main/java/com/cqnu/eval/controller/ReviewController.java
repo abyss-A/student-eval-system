@@ -38,4 +38,12 @@ public class ReviewController {
         reviewService.decision(itemType, itemId, request, user.getId());
         return ApiResponse.ok(null);
     }
+
+    @PostMapping("/submissions/{submissionId}/submit")
+    public ApiResponse<Void> submitToAdmin(@PathVariable Long submissionId) {
+        CurrentUser user = UserContext.get();
+        RoleGuard.requireRole(user, "COUNSELOR");
+        reviewService.submitToAdmin(submissionId);
+        return ApiResponse.ok(null);
+    }
 }

@@ -2923,3 +2923,16 @@ Caused by: java.io.IOException: Cannot delete C:\Windows\Temp\tomcat.8080.159831
 2026-03-01 02:25:15.288 DEBUG 43572 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
 2026-03-01 02:25:15.288 DEBUG 43572 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@72469f00]
 2026-03-01 02:25:15.288 DEBUG 43572 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  04:29 h
+[INFO] Finished at: 2026-03-01T03:17:52+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:2.7.18:run (default-cli) on project student-eval-backend: Application finished with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

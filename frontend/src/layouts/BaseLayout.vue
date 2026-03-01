@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-shell">
     <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-brand" @click="goHome" role="button" tabindex="0">
@@ -32,11 +32,11 @@
           <div class="topbar-title">{{ pageTitle }}</div>
         </div>
         <div class="topbar-right">
-          <div class="user-pill">
+          <button class="user-pill user-pill-btn" type="button" @click="goProfile" aria-label="打开账号中心">
             <span class="user-name">{{ state.realName || '未命名用户' }}</span>
             <span class="user-sep">·</span>
             <span class="user-role">{{ roleText }}</span>
-          </div>
+          </button>
           <button class="btn ghost" type="button" @click="logout">退出登录</button>
         </div>
       </header>
@@ -51,7 +51,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { clearAuth, getHomeByRole, getRealName, getRole, roleLabel } from '../utils/auth'
+import { clearAuth, getHomeByRole, getProfilePathByRole, getRealName, getRole, roleLabel } from '../utils/auth'
 import submissionStore from '../stores/submissionStore'
 
 const props = defineProps({
@@ -113,10 +113,13 @@ const goHome = () => {
   router.push(getHomeByRole())
 }
 
+const goProfile = () => {
+  router.push(getProfilePathByRole(state.role))
+}
+
 const logout = () => {
   submissionStore.reset()
   clearAuth()
   router.replace('/login')
 }
 </script>
-

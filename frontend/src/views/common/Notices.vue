@@ -10,16 +10,6 @@
       </div>
     </div>
 
-    <div v-if="canManage" class="toolbar-row" style="margin-top: 12px;">
-      <div class="toolbar-row" style="gap: 8px;">
-        <button class="btn secondary" type="button" @click="setTab('DRAFT')" :disabled="loading">草稿</button>
-        <button class="btn secondary" type="button" @click="setTab('PUBLISHED')" :disabled="loading">已发布</button>
-        <button class="btn secondary" type="button" @click="setTab('OFFLINE')" :disabled="loading">已下线</button>
-        <button class="btn ghost" type="button" @click="setTab('ALL')" :disabled="loading">全部</button>
-        <span class="muted">当前：<b>{{ tabLabel(activeTab) }}</b></span>
-      </div>
-    </div>
-
     <div class="table-search-bar">
       <div class="table-search-left">
         <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
@@ -31,6 +21,18 @@
           @submit="handleSearch"
           @clear="handleSearch"
         />
+        <select
+          v-if="canManage"
+          v-model="activeTab"
+          style="width: 160px;"
+          :disabled="loading"
+          @change="onStatusChange"
+        >
+          <option value="ALL">全部状态</option>
+          <option value="DRAFT">草稿</option>
+          <option value="PUBLISHED">已发布</option>
+          <option value="OFFLINE">已下线</option>
+        </select>
       </div>
     </div>
 
@@ -48,7 +50,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="notices_main">
           <thead>
             <tr>
               <th>标题</th>
@@ -180,18 +182,6 @@ const form = reactive({
   status: ''
 })
 
-const tabLabel = (t) => {
-  if (t === 'DRAFT') return '草稿'
-  if (t === 'PUBLISHED') return '已发布'
-  if (t === 'OFFLINE') return '已下线'
-  return '全部'
-}
-
-const setTab = (t) => {
-  activeTab.value = t
-  load()
-}
-
 const statusLabel = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
   if (s === 'DRAFT') return '草稿'
@@ -279,6 +269,11 @@ const handleSearch = () => {
   } else {
     pager.resetPage()
   }
+}
+
+const onStatusChange = () => {
+  if (!canManage.value) return
+  load()
 }
 
 const resetFilters = () => {

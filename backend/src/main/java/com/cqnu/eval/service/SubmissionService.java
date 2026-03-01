@@ -110,7 +110,8 @@ public class SubmissionService {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveCourses(Long submissionId, Long studentId, BatchCourseRequest request) {
-        checkSubmissionEditableByStudent(submissionId, studentId);
+        SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
+        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
 
         courseItemMapper.deleteBySubmissionId(submissionId);
         for (CourseItemInput item : request.getItems()) {
@@ -126,11 +127,15 @@ public class SubmissionService {
             entity.setReviewerComment(null);
             courseItemMapper.insert(entity);
         }
+        if (rolledBackToDraft) {
+            resetReviewStatusForAllItems(submissionId);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void saveActivities(Long submissionId, Long studentId, BatchActivityRequest request) {
-        checkSubmissionEditableByStudent(submissionId, studentId);
+        SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
+        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
 
         activityItemMapper.deleteBySubmissionId(submissionId);
         for (ActivityItemInput item : request.getItems()) {
@@ -146,18 +151,22 @@ public class SubmissionService {
             entity.setReviewerComment(null);
             activityItemMapper.insert(entity);
         }
+        if (rolledBackToDraft) {
+            resetReviewStatusForAllItems(submissionId);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void saveActivitiesByModule(Long submissionId, Long studentId, String moduleType, BatchActivityRequest request) {
-        checkSubmissionEditableByStudent(submissionId, studentId);
+        SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
+        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
 
         String module = normalizeModuleType(moduleType);
         if (module.isBlank()) {
             throw new BizException(40001, "moduleType cannot be blank");
         }
         if (!isAllowedModule(module)) {
-            throw new BizException(40001, "婵犵數鍋為崹鍫曞箰閸濄儳鐭撻柣銏㈩焾閺嬩焦銇勯弴妤€浜惧Δ鐘靛仦閸旀牠骞忛崨瀛樺€绘俊顖氬悑濞堝憡绻濈喊妯活潑闁割煈浜崺鈧い鎺戝暞閻濐亪鏌涚€ｃ劌鍔ょ紒杈ㄥ浮椤㈡洟濡烽鍏碱唲闂? " + moduleType);
+            throw new BizException(40001, "濠电姷鏁搁崑鐐哄垂閸洖绠伴柛婵勫劤閻捇鏌ｉ姀銏╃劸闁哄鐒﹂妵鍕即濡も偓娴滄儳螖閻橀潧浠﹂柛鏃€鐗犻獮蹇涘川鐎涙ê鈧粯淇婇姘倯婵炲牆鎲＄换婵堝枈濡椿娼戦梺鍓茬厛娴滎亪宕洪埀顒併亜閹烘垵鏆為柣婵愪邯閺屾稓鈧絻鍔岄崝銈囩磼鏉堛劌娴い銏℃礋婵＄兘顢欓崗纰卞敳闂? " + moduleType);
         }
 
         activityItemMapper.deleteBySubmissionIdAndModule(submissionId, module);
@@ -173,6 +182,9 @@ public class SubmissionService {
             entity.setReviewStatus("PENDING");
             entity.setReviewerComment(null);
             activityItemMapper.insert(entity);
+        }
+        if (rolledBackToDraft) {
+            resetReviewStatusForAllItems(submissionId);
         }
     }
 
@@ -194,7 +206,7 @@ public class SubmissionService {
             try {
                 id = Long.parseLong(trimmed);
             } catch (NumberFormatException e) {
-                throw new BizException(40001, "闂傚倸鍊搁崐鍝モ偓姘煎墰閳ь剚鍑规禍婊堝煝鎼淬劊鈧線鎮垮澶嬧拺闁告繂瀚倴闂佸憡顭嗛崨顕呮綗闂佹枼鏅涢崯浼村煝閺冨倵鍋撻獮鍨姎婵☆偒鍙冨畷婵嬪焵椤掑倻纾? " + trimmed);
+                throw new BizException(40001, "闂傚倸鍊搁崐鎼佸磹閸濄儮鍋撳鐓庡闁逞屽墯閸戣绂嶅鍫濈厺閹兼番鍔婇埀顑跨窔閹灝顓兼径瀣ф嫼闂佸憡绻傜€氼喛鍊撮梻浣告啞椤棝宕ㄩ鍛稐闂備焦鏋奸弲娑㈠疮娴兼潙鐓濋柡鍐ㄥ€甸崑鎾荤嵁閸喖濮庡┑鈽嗗亽閸欏啫鐣峰┑瀣劦妞ゆ帒鍊荤壕? " + trimmed);
             }
             if (id <= 0) {
                 throw new BizException(40001, "Attachment ID must be a positive integer");
@@ -212,7 +224,7 @@ public class SubmissionService {
         for (Long id : ids) {
             AttachmentEntity meta = attachmentMapper.findById(id);
             if (meta == null) {
-                throw new BizException(40401, "闂傚倸鍊搁崐鍝モ偓姘煎墰閳ь剚鍑规禍婊堝煝鎼淬劌顫呴柨娑樺閺嬫牠鎮楅獮鍨姎闁硅櫕鍔欓獮妤呮偐缂佹鍘? " + id);
+                throw new BizException(40401, "闂傚倸鍊搁崐鎼佸磹閸濄儮鍋撳鐓庡闁逞屽墯閸戣绂嶅鍫濈厺閹兼番鍔岄～鍛存煥濞戞ê顏ら柡瀣墵閹鐛崹顔煎闂佺娅曢崝娆撶嵁濡ゅ懏鍋愮紓浣诡焽閸? " + id);
             }
             if (meta.getUploaderId() == null || !meta.getUploaderId().equals(studentId)) {
                 throw new BizException(40301, "Only self-uploaded evidence images can be referenced");
@@ -261,9 +273,7 @@ public class SubmissionService {
 
     @Transactional(rollbackFor = Exception.class)
     public SubmissionEntity submit(Long submissionId, Long studentId) {
-        checkSubmissionEditableByStudent(submissionId, studentId);
-
-        SubmissionEntity entity = submissionMapper.findById(submissionId);
+        SubmissionEntity entity = checkSubmissionEditableByStudent(submissionId, studentId);
         ScoreResult score = calculateScore(submissionId);
         entity.setStatus("SUBMITTED");
         entity.setMoralRaw(score.getMoralRaw());
@@ -282,6 +292,9 @@ public class SubmissionService {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
             throw new BizException(40401, "Submission not found");
+        }
+        if (!"COUNSELOR_REVIEWED".equalsIgnoreCase(entity.getStatus())) {
+            throw new BizException(40003, "Only counselor-reviewed submissions can be finalized");
         }
 
         ScoreResult score = calculateScore(submissionId);
@@ -325,28 +338,36 @@ public class SubmissionService {
             throw new BizException(40301, "No permission to operate this submission");
         }
 
-        ScoreResult result = calculateScore(submissionId);
+        ScoreResult previewResult = calculateScore(submissionId, false);
+        ScoreResult reviewedResult = calculateScore(submissionId, true);
+        boolean reviewReady = isReviewReady(entity);
+
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("submissionId", submissionId);
         map.put("status", entity.getStatus());
-        map.put("moralRaw", result.getMoralRaw());
-        map.put("intelRaw", result.getIntelRaw());
-        map.put("sportRaw", result.getSportRaw());
-        map.put("artRaw", result.getArtRaw());
-        map.put("laborRaw", result.getLaborRaw());
-        map.put("moralScore", result.getMoralScore());
-        map.put("intelScore", result.getIntelScore());
-        map.put("sportScore", result.getSportScore());
-        map.put("artScore", result.getArtScore());
-        map.put("laborScore", result.getLaborScore());
-        map.put("totalScore", result.getTotalScore());
-        map.put("courseAvg", result.getCourseAvg());
-        map.put("intelCourseAvg", result.getIntelCourseAvg());
+        map.put("reviewReady", reviewReady);
+
+        putScore(map, "preview", previewResult);
+        putScore(map, "reviewed", reviewedResult);
+
+        // Backward-compatible fields: keep old keys available as preview scores.
+        map.put("moralRaw", previewResult.getMoralRaw());
+        map.put("intelRaw", previewResult.getIntelRaw());
+        map.put("sportRaw", previewResult.getSportRaw());
+        map.put("artRaw", previewResult.getArtRaw());
+        map.put("laborRaw", previewResult.getLaborRaw());
+        map.put("moralScore", previewResult.getMoralScore());
+        map.put("intelScore", previewResult.getIntelScore());
+        map.put("sportScore", previewResult.getSportScore());
+        map.put("artScore", previewResult.getArtScore());
+        map.put("laborScore", previewResult.getLaborScore());
+        map.put("totalScore", previewResult.getTotalScore());
+        map.put("courseAvg", previewResult.getCourseAvg());
+        map.put("intelCourseAvg", previewResult.getIntelCourseAvg());
         map.put("formula", "综合总分 = 德育原始分×15% + 智育原始分×60% + 体育原始分×10% + 美育原始分×7.5% + 劳育原始分×7.5%");
         map.put("intelFormula", "智育原始分 = 智育课程加权平均分×85% + min(智育活动总分,100)×15%；智育计入分 = 智育原始分×60%");
         return map;
     }
-
     public List<Map<String, Object>> getRanking(Long semesterId) {
         List<Map<String, Object>> all = submissionMapper.listForRanking(semesterId);
 
@@ -369,7 +390,11 @@ public class SubmissionService {
         return submissionMapper.listSubmittedTasks();
     }
 
-    private void checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
+    public List<Map<String, Object>> listCounselorReviewedTasks() {
+        return submissionMapper.listCounselorReviewedTasks();
+    }
+
+    private SubmissionEntity checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
             throw new BizException(40401, "Submission not found");
@@ -377,12 +402,71 @@ public class SubmissionService {
         if (submissionMapper.checkOwner(submissionId, studentId) == 0) {
             throw new BizException(40301, "No permission to operate this submission");
         }
-        if ("FINALIZED".equals(entity.getStatus()) || "PUBLISHED".equals(entity.getStatus())) {
-            throw new BizException(40003, "当前测评单状态不可编辑");
+        String status = entity.getStatus() == null ? "" : entity.getStatus().trim().toUpperCase(Locale.ROOT);
+        if ("COUNSELOR_REVIEWED".equals(status) || "FINALIZED".equals(status) || "PUBLISHED".equals(status)) {
+            throw new BizException(40003, "Current submission status is not editable");
         }
+        return entity;
+    }
+
+    private boolean rollbackToDraftIfSubmitted(SubmissionEntity entity) {
+        String status = entity.getStatus() == null ? "" : entity.getStatus().trim().toUpperCase(Locale.ROOT);
+        if (!"SUBMITTED".equals(status)) {
+            return false;
+        }
+        entity.setStatus("DRAFT");
+        entity.setSubmittedAt(null);
+        submissionMapper.updateScoresAndStatus(entity);
+        return true;
+    }
+
+    private void resetReviewStatusForAllItems(Long submissionId) {
+        courseItemMapper.resetReviewBySubmissionId(submissionId);
+        activityItemMapper.resetReviewBySubmissionId(submissionId);
+    }
+
+    private boolean isReviewReady(SubmissionEntity submission) {
+        if (submission == null) {
+            return false;
+        }
+        String status = submission.getStatus() == null ? "" : submission.getStatus().trim().toUpperCase(Locale.ROOT);
+        if (!"SUBMITTED".equals(status)
+                && !"COUNSELOR_REVIEWED".equals(status)
+                && !"FINALIZED".equals(status)
+                && !"PUBLISHED".equals(status)) {
+            return false;
+        }
+        int total = courseItemMapper.countBySubmissionId(submission.getId())
+                + activityItemMapper.countBySubmissionId(submission.getId());
+        int reviewed = courseItemMapper.countReviewedBySubmissionId(submission.getId())
+                + activityItemMapper.countReviewedBySubmissionId(submission.getId());
+        return reviewed >= total;
+    }
+
+    private void putScore(Map<String, Object> map, String prefix, ScoreResult result) {
+        if (map == null || result == null) {
+            return;
+        }
+        map.put(prefix + "MoralRaw", result.getMoralRaw());
+        map.put(prefix + "IntelRaw", result.getIntelRaw());
+        map.put(prefix + "SportRaw", result.getSportRaw());
+        map.put(prefix + "ArtRaw", result.getArtRaw());
+        map.put(prefix + "LaborRaw", result.getLaborRaw());
+        map.put(prefix + "MoralScore", result.getMoralScore());
+        map.put(prefix + "IntelScore", result.getIntelScore());
+        map.put(prefix + "SportScore", result.getSportScore());
+        map.put(prefix + "ArtScore", result.getArtScore());
+        map.put(prefix + "LaborScore", result.getLaborScore());
+        map.put(prefix + "TotalScore", result.getTotalScore());
+        map.put(prefix + "CourseAvg", result.getCourseAvg());
+        map.put(prefix + "IntelCourseAvg", result.getIntelCourseAvg());
     }
 
     public ScoreResult calculateScore(Long submissionId) {
+        return calculateScore(submissionId, true);
+    }
+
+    public ScoreResult calculateScore(Long submissionId, boolean useReviewedScore) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
             throw new BizException(40401, "Submission not found");
@@ -402,7 +486,9 @@ public class SubmissionService {
         BigDecimal sportCourseWeightedSum = BigDecimal.ZERO;
 
         for (CourseItemEntity course : courses) {
-            BigDecimal score = safe(course.getReviewerScore() == null ? course.getScore() : course.getReviewerScore());
+            BigDecimal score = useReviewedScore
+                    ? safe(course.getReviewerScore() == null ? course.getScore() : course.getReviewerScore())
+                    : safe(course.getScore());
             BigDecimal credit = safe(course.getCredit());
 
             if (isIntelAcademicCourse(course)) {
@@ -416,7 +502,7 @@ public class SubmissionService {
             }
         }
 
-        // 闂佸搫鎳樼紓姘跺磻濞戞碍瀚氶柛鎾椻偓閺屻倝鏌涜濞层倝宕规惔銊︽櫖婵﹩鍋嗙粔濂告煠閼艰泛钄兼い鏇熷▕濮婁粙濡堕崪浣光枎闂佹寧绋戞總鏃傜箔閺嶃劎顩烽柛娑卞灣閸╃娀鎮规担娴嬪亾瀹曞洨鐣辨繛?闂備焦褰冪粔鎶藉箞?闂佸憡鍔曠粔鎶藉箞閵娾晛违?
+        // 闂備礁鎼幊妯肩磽濮樿泛纾绘繛鎴炵鐎氭岸鏌涢幘妞诲亾闁哄被鍊濋弻娑滎槻婵炲眰鍊濆畷瑙勬償閵婏附娅栧┑顔斤供閸嬪棛绮旀總鍛婄厾闁艰壈娉涢拕鍏笺亜閺囩喎鈻曟慨濠佺矙婵″爼宕担鍏夋瀻闂備焦瀵х粙鎴炵附閺冨倻绠旈柡宥冨妿椤╃兘鏌涘☉鍗炵仯闁糕晝濞€閹鎷呭ù瀣壕鐎规洖娲ㄩ悾杈ㄧ箾?闂傚倷鐒﹁ぐ鍐矓閹惰棄绠?闂備礁鎲￠崝鏇犵矓閹惰棄绠為柕濞炬櫅杩?
         BigDecimal courseAvg = intelCreditSum.compareTo(BigDecimal.ZERO) == 0
                 ? BigDecimal.ZERO
                 : intelWeightedSum.divide(intelCreditSum, 4, RoundingMode.HALF_UP);
@@ -433,7 +519,9 @@ public class SubmissionService {
         BigDecimal labor = BigDecimal.ZERO;
 
         for (ActivityItemEntity activity : activities) {
-            BigDecimal score = safe(activity.getFinalScore() == null ? activity.getSelfScore() : activity.getFinalScore());
+            BigDecimal score = useReviewedScore
+                    ? safe(activity.getFinalScore() == null ? activity.getSelfScore() : activity.getFinalScore())
+                    : safe(activity.getSelfScore());
             String module = activity.getModuleType() == null
                     ? ""
                     : activity.getModuleType().trim().toUpperCase(Locale.ROOT);
@@ -563,4 +651,6 @@ public class SubmissionService {
         return cfg;
     }
 }
+
+
 

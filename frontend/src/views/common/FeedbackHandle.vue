@@ -29,7 +29,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="feedback_handle_list">
           <thead>
             <tr>
               <th>标题</th>
@@ -70,7 +70,7 @@
   </section>
 
   <div v-if="drawer.open" class="drawer-overlay" @click.self="closeDrawer">
-    <div class="drawer-panel drawer-wide">
+    <div class="drawer-panel drawer-wide drawer-review">
       <div class="drawer-header">
         <div>
           <div style="font-weight: 700; font-size: 16px;">反馈处理</div>

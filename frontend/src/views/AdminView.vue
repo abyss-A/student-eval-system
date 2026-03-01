@@ -20,8 +20,7 @@
         />
         <select v-model="statusFilter" style="width: 140px;" :disabled="loadingTasks || isFinalizing">
           <option value="ALL">全部状态</option>
-          <option value="DRAFT">草稿</option>
-          <option value="SUBMITTED">已提交</option>
+          <option value="COUNSELOR_REVIEWED">已提交管理员</option>
           <option value="FINALIZED">已终审</option>
           <option value="PUBLISHED">已公示</option>
         </select>
@@ -35,7 +34,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="admin_finalize_tasks">
           <thead>
             <tr>
               <th>学号</th>
@@ -111,6 +110,7 @@ const statusLabel = (raw) => {
   const code = (raw || '').trim().toUpperCase()
   if (code === 'DRAFT') return '草稿'
   if (code === 'SUBMITTED') return '已提交'
+  if (code === 'COUNSELOR_REVIEWED') return '已提交管理员'
   if (code === 'FINALIZED') return '已终审'
   if (code === 'PUBLISHED') return '已公示'
   return raw || '-'

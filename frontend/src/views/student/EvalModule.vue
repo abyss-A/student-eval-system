@@ -47,7 +47,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky">
+        <table class="table table-sticky" data-resize-key="student_eval_module">
           <thead>
             <tr>
               <th style="width: 180px;">活动标题</th>
@@ -161,9 +161,10 @@ const suppressDirty = ref(false)
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
+const reviewReady = computed(() => Boolean(store.state.score?.reviewReady))
 const canEdit = computed(() => {
   const code = String(status.value || '').trim().toUpperCase()
-  return code !== 'FINALIZED' && code !== 'PUBLISHED'
+  return code !== 'COUNSELOR_REVIEWED' && code !== 'FINALIZED' && code !== 'PUBLISHED'
 })
 
 const moduleFormulaText = computed(() => {
@@ -189,12 +190,14 @@ const statusLabel = (raw) => {
   const code = String(raw || '').trim().toUpperCase()
   if (code === 'DRAFT') return '草稿'
   if (code === 'SUBMITTED') return '已提交'
+  if (code === 'COUNSELOR_REVIEWED') return '已提交管理员'
   if (code === 'FINALIZED') return '已终审'
   if (code === 'PUBLISHED') return '已公示'
   return raw || '-'
 }
 
 const activityReviewResult = (a) => {
+  if (!reviewReady.value) return '-'
   const statusCode = String(a?.reviewStatus || '').trim().toUpperCase()
   if (statusCode === 'REJECTED') return '驳回'
   if (statusCode === 'APPROVED') return '通过'
@@ -213,6 +216,7 @@ const isAutoReason = (text) => {
 }
 
 const displayReviewerComment = (text) => {
+  if (!reviewReady.value) return '-'
   if (!text || isAutoReason(text)) return '-'
   return text
 }

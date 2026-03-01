@@ -1,8 +1,13 @@
-<template>
+﻿<template>
   <div class="reg-page">
     <div class="reg-shell">
       <button class="reg-back-btn" type="button" @click="goBack">
-        <span class="reg-back-icon" aria-hidden="true">‹</span>
+        <span class="reg-back-icon-wrap" aria-hidden="true">
+          <svg class="reg-back-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M20 12H7.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M12 7L7 12L12 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
         <span>返回登录</span>
       </button>
 
@@ -27,21 +32,6 @@
                 @input="clearFieldError('realName')"
               />
               <span id="reg-realname-error" class="reg-field-error">{{ errors.realName }}</span>
-            </label>
-
-            <label class="field">
-              <span class="field-label">用户名</span>
-              <input
-                v-model.trim="form.username"
-                :class="{ 'is-error': Boolean(errors.username) }"
-                placeholder="字母/数字/下划线，4-32位"
-                autocomplete="username"
-                :aria-invalid="Boolean(errors.username)"
-                aria-describedby="reg-username-error"
-                @blur="validateField('username')"
-                @input="clearFieldError('username')"
-              />
-              <span id="reg-username-error" class="reg-field-error">{{ errors.username }}</span>
             </label>
 
             <label class="field">
@@ -187,7 +177,6 @@ import '../styles/register.css'
 
 const router = useRouter()
 
-const usernamePattern = /^[A-Za-z0-9_]+$/
 const phonePattern = /^[0-9-]{7,20}$/
 
 const loading = ref(false)
@@ -195,7 +184,6 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
 const form = reactive({
-  username: '',
   password: '',
   confirmPassword: '',
   realName: '',
@@ -207,7 +195,6 @@ const form = reactive({
 })
 
 const errors = reactive({
-  username: '',
   password: '',
   confirmPassword: '',
   realName: '',
@@ -240,7 +227,6 @@ const clearFieldError = (field) => {
 }
 
 const validateField = (field) => {
-  const username = String(form.username || '').trim()
   const password = String(form.password || '')
   const confirmPassword = String(form.confirmPassword || '')
   const realName = String(form.realName || '').trim()
@@ -249,14 +235,6 @@ const validateField = (field) => {
   const gradeClass = String(form.gradeClass || '').trim()
   const phone = String(form.phone || '').trim()
   const majorName = String(form.majorName || '').trim()
-
-  if (field === 'username') {
-    if (!username) errors.username = '请输入用户名'
-    else if (username.length < 4 || username.length > 32) errors.username = '用户名长度需在4-32位之间'
-    else if (!usernamePattern.test(username)) errors.username = '用户名仅支持字母、数字、下划线'
-    else errors.username = ''
-    return
-  }
 
   if (field === 'password') {
     if (!password) errors.password = '请输入密码'
@@ -314,7 +292,6 @@ const validateField = (field) => {
 
 const validateForm = () => {
   validateField('realName')
-  validateField('username')
   validateField('password')
   validateField('confirmPassword')
   validateField('studentNo')
@@ -325,7 +302,6 @@ const validateForm = () => {
 
   return (
     !errors.realName &&
-    !errors.username &&
     !errors.password &&
     !errors.confirmPassword &&
     !errors.studentNo &&
@@ -341,7 +317,6 @@ const submitRegister = async () => {
   if (!validateForm()) return
 
   const payload = {
-    username: String(form.username || '').trim(),
     password: String(form.password || ''),
     realName: String(form.realName || '').trim(),
     gender: String(form.gender || '').trim(),
@@ -358,7 +333,7 @@ const submitRegister = async () => {
       path: '/login',
       query: {
         registered: '1',
-        username: payload.username
+        studentNo: payload.studentNo
       }
     })
   } catch (error) {

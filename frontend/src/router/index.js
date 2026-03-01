@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import RankingView from '../views/RankingView.vue'
@@ -17,6 +17,7 @@ import FeedbackCreate from '../views/common/FeedbackCreate.vue'
 import FeedbackMyList from '../views/common/FeedbackMyList.vue'
 import FeedbackDetail from '../views/common/FeedbackDetail.vue'
 import FeedbackHandle from '../views/common/FeedbackHandle.vue'
+import AccountProfile from '../views/common/AccountProfile.vue'
 
 import TeacherReviewTasks from '../views/TeacherView.vue'
 import AdminFinalizeTasks from '../views/AdminView.vue'
@@ -56,7 +57,8 @@ const routes = [
       { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈' } },
       { path: 'feedback/mine', component: FeedbackMyList, meta: { title: '我的反馈' } },
       { path: 'feedback/:id', component: FeedbackDetail, meta: { title: '反馈详情' } },
-      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } }
+      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } },
+      { path: 'me/profile', component: AccountProfile, meta: { title: '账号中心' } }
     ]
   },
   {
@@ -71,7 +73,8 @@ const routes = [
       { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈' } },
       { path: 'feedback/mine', component: FeedbackMyList, meta: { title: '我的反馈' } },
       { path: 'feedback/:id', component: FeedbackDetail, meta: { title: '反馈详情' } },
-      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } }
+      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } },
+      { path: 'me/profile', component: AccountProfile, meta: { title: '账号中心' } }
     ]
   },
   {
@@ -85,7 +88,8 @@ const routes = [
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },
       { path: 'feedback/:id', component: FeedbackDetail, meta: { title: '反馈详情' } },
-      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } }
+      { path: 'ranking', component: RankingView, meta: { title: '综合排名' } },
+      { path: 'me/profile', component: AccountProfile, meta: { title: '账号中心' } }
     ]
   },
   {
