@@ -26,6 +26,8 @@
         </select>
       </div>
       <div class="table-search-right">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <button class="btn secondary" @click="batchFinalize" :disabled="!canBatchFinalize">批量终审</button>
         <label>手动终审（输入测评单ID）</label>
         <input v-model.number="manualSubmissionId" type="number" min="1" placeholder="例如 1" style="max-width: 180px;" />
         <button class="btn" @click="finalize(manualSubmissionId)" :disabled="isFinalizing || !manualSubmissionId">立即终审</button>
@@ -37,6 +39,15 @@
         <table class="table table-sticky" data-resize-key="admin_finalize_tasks">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedTaskIds.length || loadingTasks || isFinalizing"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th>学号</th>
               <th>学生</th>
               <th>班级</th>
@@ -47,6 +58,14 @@
           </thead>
           <tbody>
             <tr v-for="task in pager.pagedRows.value" :key="task.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="selection.isSelected(task.id)"
+                  :disabled="loadingTasks || isFinalizing"
+                  @change="selection.toggle(task.id)"
+                />
+              </td>
               <td>{{ task.student_no || '-' }}</td>
               <td>{{ task.real_name }}</td>
               <td>{{ task.class_name }}</td>
@@ -57,7 +76,7 @@
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
-              <td colspan="6" class="empty">暂无符合条件的数据</td>
+              <td colspan="7" class="empty">暂无符合条件的数据</td>
             </tr>
           </tbody>
         </table>
@@ -66,8 +85,10 @@
         :page="pager.page.value"
         :total-pages="pager.totalPages.value"
         :total="pager.total.value"
+        :page-size="pager.pageSize.value"
         :disabled="loadingTasks || isFinalizing"
-        @change="pager.goPage"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
 
@@ -84,6 +105,7 @@ import SearchCapsule from '../components/SearchCapsule.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
+import useTableSelection from '../composables/useTableSelection'
 
 const tasks = ref([])
 const loadingTasks = ref(false)
@@ -105,6 +127,12 @@ const filteredTasks = computed(() => {
 })
 
 const pager = useTablePager(filteredTasks, 10)
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+const pagedTaskIds = computed(() => pager.pagedRows.value.map((item) => item.id))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedTaskIds.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedTaskIds.value))
+const canBatchFinalize = computed(() => selection.selectedCount.value > 0 && !loadingTasks.value && !isFinalizing.value)
 
 const statusLabel = (raw) => {
   const code = (raw || '').trim().toUpperCase()
@@ -121,12 +149,18 @@ const loadTasks = async ({ keepPage = false } = {}) => {
   try {
     const { data } = await http.get('/admin/tasks')
     tasks.value = data.data || []
+    selection.clear()
     if (!keepPage) {
       pager.resetPage()
     }
   } finally {
     loadingTasks.value = false
   }
+}
+
+const requestFinalize = async (submissionId) => {
+  const { data } = await http.post(`/admin/submissions/${submissionId}/finalize`)
+  return data.data
 }
 
 const finalize = async (submissionId) => {
@@ -137,27 +171,90 @@ const finalize = async (submissionId) => {
 
   isFinalizing.value = true
   try {
-    const { data } = await http.post(`/admin/submissions/${submissionId}/finalize`)
-    lastResult.value = data.data
+    lastResult.value = await requestFinalize(submissionId)
     alert(`终审成功：测评单 #${submissionId}`)
+    selection.clear()
     await loadTasks({ keepPage: true })
   } finally {
     isFinalizing.value = false
   }
 }
 
+const selectedRowsOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedTaskIds.value)
+}
+
+const onPageChange = (nextPage) => {
+  pager.goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  pager.setPageSize(nextSize)
+  selection.clear()
+}
+
+const batchFinalize = async () => {
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要处理的数据')
+    return
+  }
+  if (!confirm(`确认批量终审已选 ${selectedRows.length} 项吗？`)) return
+
+  isFinalizing.value = true
+  try {
+    let success = 0
+    let failed = 0
+    let skipped = 0
+
+    for (const row of selectedRows) {
+      const status = String(row.status || '').trim().toUpperCase()
+      if (status !== 'COUNSELOR_REVIEWED') {
+        skipped += 1
+        continue
+      }
+      try {
+        await requestFinalize(row.id)
+        success += 1
+      } catch (e) {
+        failed += 1
+      }
+    }
+
+    selection.clear()
+    await loadTasks({ keepPage: true })
+    alert(`批量终审完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`)
+  } finally {
+    isFinalizing.value = false
+  }
+}
+
 const onSearchSubmit = () => {
+  selection.clear()
   pager.resetPage()
 }
 
 const resetFilters = () => {
   keyword.value = ''
   statusFilter.value = 'ALL'
+  selection.clear()
   pager.resetPage()
 }
 
 watch([keyword, statusFilter], () => {
+  selection.clear()
   pager.resetPage()
+})
+
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
 })
 
 const busyRef = computed(() => loadingTasks.value || isFinalizing.value)

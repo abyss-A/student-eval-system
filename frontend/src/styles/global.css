@@ -364,6 +364,10 @@ textarea:focus {
   font-weight: 600;
 }
 
+.save-state-chip.inline {
+  margin-top: 0;
+}
+
 .save-state-chip.error {
   color: #991b1b;
   border-color: #fecaca;

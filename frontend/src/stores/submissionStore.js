@@ -72,33 +72,31 @@ async function loadScore() {
 
 async function saveCourses(items, options = {}) {
   const syncAfterSave = options.syncAfterSave !== false
+  const silent = options.silent === true
   await ensureSubmission()
-  await http.put(`/submissions/${state.submissionId}/courses/batch`, { items })
+  await http.put(
+    `/submissions/${state.submissionId}/courses/batch`,
+    { items },
+    { meta: { silent } }
+  )
   if (syncAfterSave) {
     await loadDetail()
     await loadScore()
-  } else if (String(state.status || '').trim().toUpperCase() === 'SUBMITTED') {
-    state.status = 'DRAFT'
-    if (state.detail?.submission) {
-      state.detail.submission.status = 'DRAFT'
-      state.detail.submission.submittedAt = null
-    }
   }
 }
 
 async function saveActivitiesModule(moduleType, items, options = {}) {
   const syncAfterSave = options.syncAfterSave !== false
+  const silent = options.silent === true
   await ensureSubmission()
-  await http.put(`/submissions/${state.submissionId}/activities/module/${moduleType}`, { items })
+  await http.put(
+    `/submissions/${state.submissionId}/activities/module/${moduleType}`,
+    { items },
+    { meta: { silent } }
+  )
   if (syncAfterSave) {
     await loadDetail()
     await loadScore()
-  } else if (String(state.status || '').trim().toUpperCase() === 'SUBMITTED') {
-    state.status = 'DRAFT'
-    if (state.detail?.submission) {
-      state.detail.submission.status = 'DRAFT'
-      state.detail.submission.submittedAt = null
-    }
   }
 }
 
@@ -109,11 +107,13 @@ async function submit() {
   await loadScore()
 }
 
-async function exportReport(format) {
+async function exportReport(format = 'DOCX') {
+  const normalized = String(format || 'DOCX').trim().toUpperCase()
+  const exportFormat = normalized === 'DOCX' ? 'DOCX' : 'DOCX'
   await ensureSubmission()
   const resp = await http.post(
     `/submissions/${state.submissionId}/report/export`,
-    { format },
+    { format: exportFormat },
     { responseType: 'blob' }
   )
 
@@ -121,7 +121,7 @@ async function exportReport(format) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = resolveDownloadName(resp, format, state.submissionId)
+  a.download = resolveDownloadName(resp, state.submissionId)
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -138,10 +138,8 @@ async function flushAutoSaveFlushers() {
   }
 }
 
-function resolveDownloadName(resp, format, submissionId) {
-  const fallback = format === 'PDF'
-    ? `综合奖学金申请表_${submissionId}.pdf`
-    : `综合奖学金申请表_${submissionId}.docx`
+function resolveDownloadName(resp, submissionId) {
+  const fallback = `综合奖学金申请表_${submissionId}.docx`
 
   const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
   if (!disposition) return fallback

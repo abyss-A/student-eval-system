@@ -3,31 +3,35 @@
     <div class="toolbar">
       <div>
         <h2 style="margin: 0;">课程成绩</h2>
-        <p class="muted" style="margin-top: 6px;">
-          测评单ID：<b>{{ submissionId || '-' }}</b>
-          <span style="margin: 0 6px; color: #cbd5e1;">|</span>
-          状态：<span class="badge">{{ statusLabel(status) }}</span>
+        <p class="muted" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span>
+            测评单ID：<b>{{ submissionId || '-' }}</b>
+            <span style="margin: 0 6px; color: #cbd5e1;">|</span>
+            状态：<span class="badge">{{ statusLabel(status) }}</span>
+          </span>
+          <span v-if="canEditAny" :class="['save-state-chip', 'inline', autoSave.error.value ? 'error' : '']">
+            <template v-if="autoSave.error.value">自动保存失败：{{ autoSave.error.value }}</template>
+            <template v-else-if="autoSave.saving.value">自动保存中...</template>
+            <template v-else-if="autoSave.dirty.value">有未保存变更</template>
+            <template v-else-if="autoSave.lastSavedAt.value">已自动保存 {{ autoSave.lastSavedAt.value }}</template>
+            <template v-else>编辑后将自动保存</template>
+          </span>
         </p>
       </div>
       <div class="toolbar-row">
-        <button class="btn" type="button" @click="save" :disabled="loading || !canEdit">保存</button>
+        <button class="btn" type="button" @click="save" :disabled="loading || !canEditAny">保存</button>
       </div>
     </div>
 
-    <p class="muted" style="margin-top: 10px;">
-      说明：辅导员审核后，可在本页查看每条课程的审核结论和审核理由。
+    <p v-if="isSubmittedReadOnly" class="muted" style="margin-top: 6px; color: #64748b;">
+      审核中，仅可查看，暂不可修改。
     </p>
-    <p v-if="!canEdit" class="muted" style="margin-top: 6px; color: #64748b;">
+    <p v-else-if="isRejectedOnlyEditable" class="muted" style="margin-top: 6px; color: #64748b;">
+      仅可修改被驳回条目，修改后请再次提交。
+    </p>
+    <p v-else-if="isFullyReadOnly" class="muted" style="margin-top: 6px; color: #64748b;">
       当前测评单状态不可编辑，如需修改请联系管理员。
     </p>
-
-    <div v-if="canEdit" :class="['save-state-chip', autoSave.error.value ? 'error' : '']">
-      <template v-if="autoSave.error.value">自动保存失败：{{ autoSave.error.value }}</template>
-      <template v-else-if="autoSave.saving.value">自动保存中...</template>
-      <template v-else-if="autoSave.dirty.value">有未保存变更</template>
-      <template v-else-if="autoSave.lastSavedAt.value">已自动保存 {{ autoSave.lastSavedAt.value }}</template>
-      <template v-else>编辑后将自动保存</template>
-    </div>
 
     <div class="table-search-bar">
       <div class="table-search-left">
@@ -53,6 +57,10 @@
           <option value="REJECTED">驳回</option>
         </select>
       </div>
+      <div class="table-search-right">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <button class="btn secondary" type="button" :disabled="!canBatchDeleteCourses" @click="batchDeleteCourses">批量删除</button>
+      </div>
     </div>
 
     <div class="table-shell">
@@ -60,6 +68,15 @@
         <table class="table table-sticky" data-resize-key="student_eval_courses">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedCourseKeys.length || loading || !canRemoveRows"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th style="width: 200px;">课程名称</th>
               <th style="width: 110px;">类型</th>
               <th style="width: 110px;">分数</th>
@@ -73,14 +90,22 @@
             <tr v-for="(c, idx) in pagedCourses" :key="c.id || c._rowKey || idx">
               <td>
                 <input
-                  v-model.trim="c.courseName"
-                  placeholder="例如：高等代数"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  type="checkbox"
+                  :checked="selection.isSelected(courseSelectionKey(c))"
+                  :disabled="loading || !canRemoveRows"
+                  @change="selection.toggle(courseSelectionKey(c))"
                 />
               </td>
               <td>
-                <select v-model="c.courseType" :disabled="loading || !canEdit" @blur="triggerImmediateSave">
+                <input
+                  v-model.trim="c.courseName"
+                  placeholder="例如：高等代数"
+                  :disabled="loading || !canEditCourseRow(c)"
+                  @blur="triggerImmediateSave(c)"
+                />
+              </td>
+              <td>
+                <select v-model="c.courseType" :disabled="loading || !canEditCourseRow(c)" @blur="triggerImmediateSave(c)">
                   <option value="REQUIRED">必修</option>
                   <option value="ELECTIVE">选修</option>
                   <option value="RETAKE">重修</option>
@@ -92,10 +117,11 @@
                   v-model.number="c.score"
                   type="number"
                   min="0"
+                  max="100"
                   step="0.5"
                   placeholder="0-100"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  :disabled="loading || !canEditCourseRow(c)"
+                  @blur="triggerImmediateSave(c)"
                 />
               </td>
               <td>
@@ -105,8 +131,8 @@
                   min="0"
                   step="0.5"
                   placeholder="例如：3"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  :disabled="loading || !canEditCourseRow(c)"
+                  @blur="triggerImmediateSave(c)"
                 />
               </td>
               <td>
@@ -122,14 +148,14 @@
                   class="btn secondary"
                   type="button"
                   @click="removeCourse(c)"
-                  :disabled="loading || !canEdit"
+                  :disabled="loading || !canRemoveRows"
                 >
                   删除
                 </button>
               </td>
             </tr>
             <tr v-if="!pagedCourses.length">
-              <td colspan="7" class="empty">暂无符合条件的课程</td>
+              <td colspan="8" class="empty">暂无符合条件的课程</td>
             </tr>
           </tbody>
         </table>
@@ -138,13 +164,15 @@
         :page="page"
         :total-pages="totalPages"
         :total="total"
+        :page-size="pageSize"
         :disabled="loading"
-        @change="goPage"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !canEdit">新增</button>
+      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !isDraftEditable">新增</button>
       <p class="muted">提示：保存时会自动忽略“完全空白”的行。</p>
     </div>
   </section>
@@ -157,6 +185,7 @@ import TablePager from '../../components/TablePager.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import useTablePager from '../../composables/useTablePager'
 import useAutoSaveDraft from '../../composables/useAutoSaveDraft'
+import useTableSelection from '../../composables/useTableSelection'
 
 const store = submissionStore
 const courses = ref([])
@@ -169,10 +198,30 @@ const reviewFilter = ref('ALL')
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
+const editableRejectedOnly = computed(() => Boolean(store.state.score?.editableRejectedOnly))
 const reviewReady = computed(() => Boolean(store.state.score?.reviewReady))
-const canEdit = computed(() => {
+const statusCode = computed(() => String(status.value || '').trim().toUpperCase())
+const isDraftEditable = computed(() => statusCode.value === 'DRAFT')
+const isRejectedOnlyEditable = computed(() => statusCode.value === 'SUBMITTED' && editableRejectedOnly.value)
+const isSubmittedReadOnly = computed(() => statusCode.value === 'SUBMITTED' && !editableRejectedOnly.value)
+const isFullyReadOnly = computed(() => (
+  statusCode.value === 'COUNSELOR_REVIEWED'
+  || statusCode.value === 'FINALIZED'
+  || statusCode.value === 'PUBLISHED'
+))
+const canEditAny = computed(() => isDraftEditable.value || isRejectedOnlyEditable.value)
+const canRemoveRows = computed(() => isDraftEditable.value)
+
+const canEditCourseRow = (row) => {
+  if (isDraftEditable.value) return true
+  if (!isRejectedOnlyEditable.value) return false
+  const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
+  return reviewStatus === 'REJECTED'
+}
+
+const isSubmitStage = computed(() => {
   const code = String(status.value || '').trim().toUpperCase()
-  return code !== 'COUNSELOR_REVIEWED' && code !== 'FINALIZED' && code !== 'PUBLISHED'
+  return code === 'SUBMITTED'
 })
 
 const statusLabel = (raw) => {
@@ -210,6 +259,20 @@ const displayReviewerComment = (text) => {
   return text
 }
 
+const isSportCourseEntry = (courseName, courseType) => {
+  const name = String(courseName || '').trim().toLowerCase().replace(/\s+/g, '')
+  const type = String(courseType || '').trim().toLowerCase()
+  if (!name && !type) return false
+  if (type.includes('体育') || type.includes('sport') || type.includes('physical') || type === 'pe') return true
+  return (
+    name.includes('体育')
+    || name.includes('体测')
+    || name.includes('体能')
+    || name.includes('sport')
+    || name.includes('physical')
+  )
+}
+
 const mapCourse = (c) => ({
   id: c?.id,
   courseName: c?.courseName || '',
@@ -235,15 +298,45 @@ const filteredCourses = computed(() => {
 
 const {
   page,
+  pageSize,
   total,
   totalPages,
   pagedRows: pagedCourses,
   goPage,
+  setPageSize,
   resetPage
 } = useTablePager(filteredCourses, 10)
 
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+
+const courseSelectionKey = (course) => {
+  if (!course) return ''
+  if (course.id != null) return `id_${course.id}`
+  return String(course._rowKey || '')
+}
+
+const pagedCourseKeys = computed(() => pagedCourses.value.map((item) => courseSelectionKey(item)).filter(Boolean))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedCourseKeys.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedCourseKeys.value))
+const canBatchDeleteCourses = computed(() => selection.selectedCount.value > 0 && canRemoveRows.value && !loading.value)
+
 const ensureEditable = () => {
-  if (canEdit.value) return true
+  if (canEditAny.value) return true
+  if (isSubmitStage.value) {
+    alert('当前审核阶段不可修改课程')
+    return false
+  }
+  alert('当前测评单状态不可编辑')
+  return false
+}
+
+const ensureDraftEditable = () => {
+  if (isDraftEditable.value) return true
+  if (isSubmitStage.value) {
+    alert('审核中不可新增或删除课程')
+    return false
+  }
   alert('当前测评单状态不可编辑')
   return false
 }
@@ -275,8 +368,13 @@ const buildCoursePayload = ({ silent }) => {
       if (!silent) alert(msg)
       return { ok: false, message: msg, items: [] }
     }
-    if (!Number.isFinite(score) || score < 0) {
-      const msg = '课程分数必须是大于等于 0 的数字'
+    if (isSportCourseEntry(name, type)) {
+      const msg = '体育课成绩请到体育页面填写，且活动标题必须为“大学体育”'
+      if (!silent) alert(msg)
+      return { ok: false, message: msg, items: [] }
+    }
+    if (!Number.isFinite(score) || score < 0 || score > 100) {
+      const msg = '课程分数必须在 0 到 100 之间'
       if (!silent) alert(msg)
       return { ok: false, message: msg, items: [] }
     }
@@ -287,6 +385,7 @@ const buildCoursePayload = ({ silent }) => {
     }
 
     out.push({
+      id: c.id,
       courseName: name,
       courseType: type,
       score,
@@ -301,16 +400,17 @@ const syncCoursesFromStore = () => {
   suppressDirty.value = true
   courses.value = (store.state.detail?.courses || []).map(mapCourse)
   ensureAtLeastOneRow()
+  selection.clear()
   suppressDirty.value = false
 }
 
 const autoSave = useAutoSaveDraft(async () => {
-  if (!canEdit.value) return
+  if (!canEditAny.value) return
   const payload = buildCoursePayload({ silent: true })
   if (!payload.ok) {
     throw new Error(payload.message || '当前填写内容未完成，暂未自动保存')
   }
-  await store.saveCourses(payload.items, { syncAfterSave: false })
+  await store.saveCourses(payload.items, { syncAfterSave: false, silent: true })
 }, { debounceMs: 1200 })
 
 const reload = async () => {
@@ -328,15 +428,17 @@ const reload = async () => {
 }
 
 const addRow = () => {
-  if (!ensureEditable()) return
+  if (!ensureDraftEditable()) return
   courses.value.push(mapCourse({}))
+  selection.clear()
   resetPage()
 }
 
 const removeRow = (idx) => {
-  if (!ensureEditable()) return
+  if (!ensureDraftEditable()) return
   courses.value.splice(idx, 1)
   ensureAtLeastOneRow()
+  selection.clear()
   resetPage()
 }
 
@@ -349,11 +451,50 @@ const clearFilters = () => {
   keyword.value = ''
   typeFilter.value = 'ALL'
   reviewFilter.value = 'ALL'
+  selection.clear()
   resetPage()
 }
 
 const onSearchSubmit = () => {
+  selection.clear()
   resetPage()
+}
+
+const onPageChange = (nextPage) => {
+  goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  setPageSize(nextSize)
+  selection.clear()
+}
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedCourseKeys.value)
+}
+
+const selectedCoursesOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pagedCourses.value.filter((item) => selected.has(courseSelectionKey(item)))
+})
+
+const batchDeleteCourses = () => {
+  if (!ensureDraftEditable()) return
+
+  const selectedRows = selectedCoursesOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要删除的课程')
+    return
+  }
+  if (!confirm(`确认批量删除已选 ${selectedRows.length} 条课程吗？`)) return
+
+  const keys = new Set(selectedRows.map((item) => courseSelectionKey(item)))
+  courses.value = courses.value.filter((item) => !keys.has(courseSelectionKey(item)))
+  ensureAtLeastOneRow()
+  selection.clear()
+  resetPage()
+  alert(`已删除 ${selectedRows.length} 条课程`)
 }
 
 const save = async () => {
@@ -372,19 +513,26 @@ const save = async () => {
   }
 }
 
-const triggerImmediateSave = () => {
-  if (!canEdit.value || suppressDirty.value || !autoSave.dirty.value) return
+const triggerImmediateSave = (row) => {
+  if (!canEditAny.value || suppressDirty.value || !autoSave.dirty.value) return
+  if (!canEditCourseRow(row)) return
   autoSave.saveNow().catch(() => {})
 }
 
 watch([keyword, typeFilter, reviewFilter], () => {
+  selection.clear()
   resetPage()
+})
+
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
 })
 
 watch(
   courses,
   () => {
-    if (suppressDirty.value || loading.value || !canEdit.value) return
+    if (suppressDirty.value || loading.value || !canEditAny.value) return
     autoSave.markDirty()
   },
   { deep: true }
@@ -395,6 +543,7 @@ store.registerAutoSaveFlusher('courses', autoSave.flushBeforeSubmit)
 onMounted(reload)
 
 onBeforeUnmount(() => {
+  if (!canEditAny.value) return
   autoSave.saveNow().catch(() => {})
 })
 </script>

@@ -51,6 +51,15 @@ public interface ActivityItemMapper {
     @Select("select count(1) from activity_item where submission_id = #{submissionId} and review_status <> 'PENDING'")
     int countReviewedBySubmissionId(@Param("submissionId") Long submissionId);
 
+    @Select("select count(1) from activity_item where submission_id = #{submissionId} and review_status = #{reviewStatus}")
+    int countBySubmissionIdAndStatus(@Param("submissionId") Long submissionId, @Param("reviewStatus") String reviewStatus);
+
+    @Update("update activity_item set title=#{title}, description=#{description}, self_score=#{selfScore}, evidence_file_ids=#{evidenceFileIds}, final_score=#{finalScore}, updated_at=now() where id=#{id} and submission_id=#{submissionId}")
+    int updateEditableFields(ActivityItemEntity entity);
+
+    @Update("update activity_item set review_status='PENDING', final_score=self_score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId} and review_status='REJECTED'")
+    int reopenRejectedBySubmissionId(@Param("submissionId") Long submissionId);
+
     @Update("update activity_item set review_status='PENDING', final_score=self_score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId}")
     int resetReviewBySubmissionId(@Param("submissionId") Long submissionId);
 }

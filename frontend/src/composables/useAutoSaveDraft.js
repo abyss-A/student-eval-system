@@ -51,9 +51,11 @@ export default function useAutoSaveDraft(saveFn, options = {}) {
       throw e
     } finally {
       saving.value = false
-      if (dirty.value || queued) {
+      if (queued) {
         queued = false
-        schedule(200)
+        if (dirty.value) {
+          schedule()
+        }
       }
     }
   }

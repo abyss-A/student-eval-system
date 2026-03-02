@@ -75,8 +75,10 @@
         :page="pager.page.value"
         :total-pages="pager.totalPages.value"
         :total="pager.total.value"
+        :page-size="pager.pageSize.value"
         :disabled="loading"
         @change="pager.goPage"
+        @page-size-change="pager.setPageSize"
       />
     </div>
   </section>

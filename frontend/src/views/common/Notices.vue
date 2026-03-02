@@ -34,6 +34,12 @@
           <option value="OFFLINE">已下线</option>
         </select>
       </div>
+      <div v-if="canManage" class="table-search-right">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <button class="btn secondary" type="button" :disabled="!canBatchOperate" @click="batchPublish">批量发布</button>
+        <button class="btn secondary" type="button" :disabled="!canBatchOperate" @click="batchOffline">批量下线</button>
+        <button class="btn danger" type="button" :disabled="!canBatchOperate" @click="batchDelete">批量删除</button>
+      </div>
     </div>
 
     <div
@@ -53,6 +59,15 @@
         <table class="table table-sticky" data-resize-key="notices_main">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedNoticeIds.length || loading"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th>标题</th>
               <th style="width: 110px;">状态</th>
               <th style="width: 140px;">发布人</th>
@@ -63,6 +78,14 @@
           </thead>
           <tbody>
             <tr v-for="n in pager.pagedRows.value" :key="n.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="selection.isSelected(n.id)"
+                  :disabled="loading"
+                  @change="selection.toggle(n.id)"
+                />
+              </td>
               <td>
                 <div style="font-weight: 700; color: #0f172a;">{{ n.title }}</div>
               </td>
@@ -83,7 +106,7 @@
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length && !errorMsg">
-              <td colspan="6" class="empty">暂无公告</td>
+              <td colspan="7" class="empty">暂无公告</td>
             </tr>
           </tbody>
         </table>
@@ -92,8 +115,10 @@
         :page="pager.page.value"
         :total-pages="pager.totalPages.value"
         :total="pager.total.value"
+        :page-size="pager.pageSize.value"
         :disabled="loading"
-        @change="pager.goPage"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
   </section>
@@ -142,6 +167,7 @@ import SearchCapsule from '../../components/SearchCapsule.vue'
 import TablePager from '../../components/TablePager.vue'
 import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
 import useTablePager from '../../composables/useTablePager'
+import useTableSelection from '../../composables/useTableSelection'
 import { getRole, getUserId } from '../../utils/auth'
 
 const router = useRouter()
@@ -168,12 +194,19 @@ const filteredRows = computed(() => {
 })
 
 const pager = useTablePager(filteredRows, 10)
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+
+const pagedNoticeIds = computed(() => pager.pagedRows.value.map((item) => item.id))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedNoticeIds.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedNoticeIds.value))
 
 const drawer = reactive({
   open: false,
   mode: 'create',
   saving: false
 })
+const canBatchOperate = computed(() => canManage.value && selection.selectedCount.value > 0 && !loading.value && !drawer.saving)
 
 const form = reactive({
   id: null,
@@ -249,12 +282,14 @@ const load = async ({ keepPage = false } = {}) => {
 
     const { data } = await http.get('/notices', { params, meta: { silent: true } })
     rows.value = data.data || []
+    selection.clear()
     if (!keepPage) {
       pager.resetPage()
     }
   } catch (e) {
     errorMsg.value = e?.userMessage || e?.message || '加载失败'
     rows.value = []
+    selection.clear()
     if (!keepPage) {
       pager.resetPage()
     }
@@ -286,8 +321,87 @@ const resetFilters = () => {
 }
 
 watch(keyword, () => {
+  selection.clear()
   pager.resetPage()
 })
+
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
+})
+
+const selectedRowsOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedNoticeIds.value)
+}
+
+const onPageChange = (nextPage) => {
+  pager.goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  pager.setPageSize(nextSize)
+  selection.clear()
+}
+
+const runBatchAction = async ({ label, canRun, run }) => {
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要处理的数据')
+    return
+  }
+  if (!confirm(`确认${label}已选 ${selectedRows.length} 项吗？`)) return
+
+  let success = 0
+  let failed = 0
+  let skipped = 0
+
+  for (const row of selectedRows) {
+    if (!canRun(row)) {
+      skipped += 1
+      continue
+    }
+    try {
+      await run(row)
+      success += 1
+    } catch (e) {
+      failed += 1
+    }
+  }
+
+  selection.clear()
+  await load({ keepPage: true })
+  alert(`${label}完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`)
+}
+
+const batchPublish = async () => {
+  await runBatchAction({
+    label: '批量发布',
+    canRun: canPublish,
+    run: (item) => http.post(`/notices/${item.id}/publish`)
+  })
+}
+
+const batchOffline = async () => {
+  await runBatchAction({
+    label: '批量下线',
+    canRun: canOffline,
+    run: (item) => http.post(`/notices/${item.id}/offline`)
+  })
+}
+
+const batchDelete = async () => {
+  await runBatchAction({
+    label: '批量删除',
+    canRun: canDelete,
+    run: (item) => http.delete(`/notices/${item.id}`)
+  })
+}
 
 const goDetail = (id) => {
   router.push(`${route.path}/${id}`)

@@ -28,13 +28,20 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class SubmissionService {
+
+    private static final String SPORT_MODULE = "SPORT_ACTIVITY";
+    private static final String UNIVERSITY_PE_TITLE = "大学体育";
+    private static final BigDecimal MAX_INPUT_SCORE = new BigDecimal("100");
 
     private final SemesterMapper semesterMapper;
     private final SubmissionMapper submissionMapper;
@@ -111,81 +118,62 @@ public class SubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public void saveCourses(Long submissionId, Long studentId, BatchCourseRequest request) {
         SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
-        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
+        String status = normalizeStatus(submission.getStatus());
+        validateNoSportCourseItems(request.getItems());
+        if (!"SUBMITTED".equals(status)) {
+            replaceAllCourses(submissionId, request);
+            return;
+        }
 
-        courseItemMapper.deleteBySubmissionId(submissionId);
-        for (CourseItemInput item : request.getItems()) {
-            CourseItemEntity entity = new CourseItemEntity();
-            entity.setSubmissionId(submissionId);
-            entity.setCourseName(item.getCourseName());
-            entity.setCourseType(item.getCourseType());
-            entity.setScore(item.getScore());
-            entity.setCredit(item.getCredit());
-            entity.setEvidenceFileId(item.getEvidenceFileId());
-            entity.setReviewStatus("PENDING");
-            entity.setReviewerScore(item.getScore());
-            entity.setReviewerComment(null);
-            courseItemMapper.insert(entity);
+        ReviewStats stats = getReviewStats(submissionId);
+        if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
+            throw new BizException(40003, "审核阶段不可修改课程");
         }
-        if (rolledBackToDraft) {
-            resetReviewStatusForAllItems(submissionId);
-        }
+        reviseRejectedCoursesOnly(submissionId, request);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void saveActivities(Long submissionId, Long studentId, BatchActivityRequest request) {
         SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
-        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
+        String status = normalizeStatus(submission.getStatus());
+        validateSportActivityRules(request.getItems(), null);
+        if (!"SUBMITTED".equals(status)) {
+            replaceAllActivities(submissionId, studentId, request);
+            return;
+        }
 
-        activityItemMapper.deleteBySubmissionId(submissionId);
-        for (ActivityItemInput item : request.getItems()) {
-            ActivityItemEntity entity = new ActivityItemEntity();
-            entity.setSubmissionId(submissionId);
-            entity.setModuleType(item.getModuleType());
-            entity.setTitle(item.getTitle());
-            entity.setDescription(item.getDescription());
-            entity.setSelfScore(item.getSelfScore());
-            entity.setFinalScore(item.getSelfScore());
-            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
-            entity.setReviewStatus("PENDING");
-            entity.setReviewerComment(null);
-            activityItemMapper.insert(entity);
+        ReviewStats stats = getReviewStats(submissionId);
+        if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
+            throw new BizException(40003, "审核阶段不可修改活动");
         }
-        if (rolledBackToDraft) {
-            resetReviewStatusForAllItems(submissionId);
-        }
+        reviseRejectedActivitiesOnly(submissionId, studentId, request, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void saveActivitiesByModule(Long submissionId, Long studentId, String moduleType, BatchActivityRequest request) {
         SubmissionEntity submission = checkSubmissionEditableByStudent(submissionId, studentId);
-        boolean rolledBackToDraft = rollbackToDraftIfSubmitted(submission);
 
         String module = normalizeModuleType(moduleType);
         if (module.isBlank()) {
             throw new BizException(40001, "moduleType cannot be blank");
         }
         if (!isAllowedModule(module)) {
-            throw new BizException(40001, "濠电姷鏁搁崑鐐哄垂閸洖绠伴柛婵勫劤閻捇鏌ｉ姀銏╃劸闁哄鐒﹂妵鍕即濡も偓娴滄儳螖閻橀潧浠﹂柛鏃€鐗犻獮蹇涘川鐎涙ê鈧粯淇婇姘倯婵炲牆鎲＄换婵堝枈濡椿娼戦梺鍓茬厛娴滎亪宕洪埀顒併亜閹烘垵鏆為柣婵愪邯閺屾稓鈧絻鍔岄崝銈囩磼鏉堛劌娴い銏℃礋婵＄兘顢欓崗纰卞敳闂? " + moduleType);
+            throw new BizException(40001, "Invalid moduleType: " + moduleType);
         }
 
-        activityItemMapper.deleteBySubmissionIdAndModule(submissionId, module);
-        for (ActivityItemInput item : request.getItems()) {
-            ActivityItemEntity entity = new ActivityItemEntity();
-            entity.setSubmissionId(submissionId);
-            entity.setModuleType(module);
-            entity.setTitle(item.getTitle());
-            entity.setDescription(item.getDescription());
-            entity.setSelfScore(item.getSelfScore());
-            entity.setFinalScore(item.getSelfScore());
-            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
-            entity.setReviewStatus("PENDING");
-            entity.setReviewerComment(null);
-            activityItemMapper.insert(entity);
+        validateSportActivityRules(request.getItems(), module);
+
+        String status = normalizeStatus(submission.getStatus());
+        if (!"SUBMITTED".equals(status)) {
+            replaceActivitiesByModule(submissionId, studentId, module, request);
+            return;
         }
-        if (rolledBackToDraft) {
-            resetReviewStatusForAllItems(submissionId);
+
+        ReviewStats stats = getReviewStats(submissionId);
+        if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
+            throw new BizException(40003, "审核阶段不可修改活动");
         }
+        reviseRejectedActivitiesOnly(submissionId, studentId, request, module);
     }
 
     private String sanitizeEvidenceFileIds(String raw, Long studentId) {
@@ -206,7 +194,7 @@ public class SubmissionService {
             try {
                 id = Long.parseLong(trimmed);
             } catch (NumberFormatException e) {
-                throw new BizException(40001, "闂傚倸鍊搁崐鎼佸磹閸濄儮鍋撳鐓庡闁逞屽墯閸戣绂嶅鍫濈厺閹兼番鍔婇埀顑跨窔閹灝顓兼径瀣ф嫼闂佸憡绻傜€氼喛鍊撮梻浣告啞椤棝宕ㄩ鍛稐闂備焦鏋奸弲娑㈠疮娴兼潙鐓濋柡鍐ㄥ€甸崑鎾荤嵁閸喖濮庡┑鈽嗗亽閸欏啫鐣峰┑瀣劦妞ゆ帒鍊荤壕? " + trimmed);
+                throw new BizException(40001, "Attachment ID must be numeric: " + trimmed);
             }
             if (id <= 0) {
                 throw new BizException(40001, "Attachment ID must be a positive integer");
@@ -224,7 +212,7 @@ public class SubmissionService {
         for (Long id : ids) {
             AttachmentEntity meta = attachmentMapper.findById(id);
             if (meta == null) {
-                throw new BizException(40401, "闂傚倸鍊搁崐鎼佸磹閸濄儮鍋撳鐓庡闁逞屽墯閸戣绂嶅鍫濈厺閹兼番鍔岄～鍛存煥濞戞ê顏ら柡瀣墵閹鐛崹顔煎闂佺娅曢崝娆撶嵁濡ゅ懏鍋愮紓浣诡焽閸? " + id);
+                throw new BizException(40401, "Attachment does not exist: " + id);
             }
             if (meta.getUploaderId() == null || !meta.getUploaderId().equals(studentId)) {
                 throw new BizException(40301, "Only self-uploaded evidence images can be referenced");
@@ -271,9 +259,288 @@ public class SubmissionService {
                 || "LABOR".equals(module);
     }
 
+    private String normalizeStatus(String raw) {
+        return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private boolean isUniversityPeTitle(String title) {
+        return UNIVERSITY_PE_TITLE.equals(trim(title));
+    }
+
+    private void validateNoSportCourseItems(List<CourseItemInput> items) {
+        if (items == null) {
+            return;
+        }
+        for (CourseItemInput item : items) {
+            if (item == null) {
+                continue;
+            }
+            if (isSportCourse(item.getCourseName(), item.getCourseType())) {
+                throw new BizException(40001, "课程成绩页不支持填写体育成绩，请到体育模块填写“大学体育”");
+            }
+        }
+    }
+
+    private void validateSportActivityRules(List<ActivityItemInput> items, String moduleScope) {
+        if (items == null) {
+            return;
+        }
+
+        int universityPeCount = 0;
+        for (ActivityItemInput item : items) {
+            if (item == null) {
+                continue;
+            }
+            String module = moduleScope == null
+                    ? normalizeModuleType(item.getModuleType())
+                    : normalizeModuleType(moduleScope);
+            if (!SPORT_MODULE.equals(module)) {
+                continue;
+            }
+            BigDecimal score = item.getSelfScore();
+            if (score != null && score.compareTo(MAX_INPUT_SCORE) > 0) {
+                throw new BizException(40001, "体育模块分数必须在 0 到 100 之间");
+            }
+            if (isUniversityPeTitle(item.getTitle())) {
+                universityPeCount++;
+            }
+        }
+
+        if (universityPeCount > 1) {
+            throw new BizException(40001, "体育模块中“大学体育”最多只能填写一条");
+        }
+    }
+
+    private void replaceAllCourses(Long submissionId, BatchCourseRequest request) {
+        courseItemMapper.deleteBySubmissionId(submissionId);
+        for (CourseItemInput item : request.getItems()) {
+            CourseItemEntity entity = new CourseItemEntity();
+            entity.setSubmissionId(submissionId);
+            entity.setCourseName(item.getCourseName());
+            entity.setCourseType(item.getCourseType());
+            entity.setScore(item.getScore());
+            entity.setCredit(item.getCredit());
+            entity.setEvidenceFileId(item.getEvidenceFileId());
+            entity.setReviewStatus("PENDING");
+            entity.setReviewerScore(item.getScore());
+            entity.setReviewerComment(null);
+            courseItemMapper.insert(entity);
+        }
+    }
+
+    private void replaceAllActivities(Long submissionId, Long studentId, BatchActivityRequest request) {
+        activityItemMapper.deleteBySubmissionId(submissionId);
+        for (ActivityItemInput item : request.getItems()) {
+            String module = normalizeModuleType(item.getModuleType());
+            if (module.isBlank() || !isAllowedModule(module)) {
+                throw new BizException(40001, "Invalid moduleType: " + item.getModuleType());
+            }
+            ActivityItemEntity entity = new ActivityItemEntity();
+            entity.setSubmissionId(submissionId);
+            entity.setModuleType(module);
+            entity.setTitle(item.getTitle());
+            entity.setDescription(item.getDescription());
+            entity.setSelfScore(item.getSelfScore());
+            entity.setFinalScore(item.getSelfScore());
+            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
+            entity.setReviewStatus("PENDING");
+            entity.setReviewerComment(null);
+            activityItemMapper.insert(entity);
+        }
+    }
+
+    private void replaceActivitiesByModule(Long submissionId, Long studentId, String module, BatchActivityRequest request) {
+        activityItemMapper.deleteBySubmissionIdAndModule(submissionId, module);
+        for (ActivityItemInput item : request.getItems()) {
+            ActivityItemEntity entity = new ActivityItemEntity();
+            entity.setSubmissionId(submissionId);
+            entity.setModuleType(module);
+            entity.setTitle(item.getTitle());
+            entity.setDescription(item.getDescription());
+            entity.setSelfScore(item.getSelfScore());
+            entity.setFinalScore(item.getSelfScore());
+            entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
+            entity.setReviewStatus("PENDING");
+            entity.setReviewerComment(null);
+            activityItemMapper.insert(entity);
+        }
+    }
+
+    private void reviseRejectedCoursesOnly(Long submissionId, BatchCourseRequest request) {
+        List<CourseItemEntity> existing = courseItemMapper.listBySubmissionId(submissionId);
+        Map<Long, CourseItemInput> incomingById = new HashMap<>();
+        for (CourseItemInput input : request.getItems()) {
+            Long id = input.getId();
+            if (id == null || id <= 0) {
+                throw new BizException(40001, "重提审核时必须携带原课程ID");
+            }
+            if (incomingById.put(id, input) != null) {
+                throw new BizException(40001, "课程ID重复");
+            }
+        }
+
+        Set<Long> existingIds = new HashSet<>();
+        for (CourseItemEntity entity : existing) {
+            existingIds.add(entity.getId());
+        }
+        if (incomingById.size() != existingIds.size() || !incomingById.keySet().equals(existingIds)) {
+            throw new BizException(40001, "课程条目数量或ID不匹配，禁止增删条目");
+        }
+
+        for (CourseItemEntity current : existing) {
+            CourseItemInput input = incomingById.get(current.getId());
+            if (input == null) {
+                throw new BizException(40001, "存在未知课程ID");
+            }
+            boolean changed = isCourseContentChanged(current, input);
+            String reviewStatus = normalizeStatus(current.getReviewStatus());
+            if (!"REJECTED".equals(reviewStatus)) {
+                if (changed) {
+                    throw new BizException(40001, "仅驳回课程允许修改，已通过/待审课程不可改");
+                }
+                continue;
+            }
+            if (!changed) {
+                continue;
+            }
+            CourseItemEntity update = new CourseItemEntity();
+            update.setId(current.getId());
+            update.setSubmissionId(submissionId);
+            update.setCourseName(input.getCourseName());
+            update.setCourseType(input.getCourseType());
+            update.setScore(input.getScore());
+            update.setCredit(input.getCredit());
+            update.setEvidenceFileId(input.getEvidenceFileId());
+            update.setReviewerScore(current.getReviewerScore());
+            int updated = courseItemMapper.updateEditableFields(update);
+            if (updated == 0) {
+                throw new BizException(40901, "状态已变化，请刷新后重试");
+            }
+        }
+    }
+
+    private void reviseRejectedActivitiesOnly(Long submissionId,
+                                              Long studentId,
+                                              BatchActivityRequest request,
+                                              String moduleScope) {
+        List<ActivityItemEntity> existing = moduleScope == null
+                ? activityItemMapper.listBySubmissionId(submissionId)
+                : activityItemMapper.listBySubmissionIdAndModule(submissionId, moduleScope);
+
+        Map<Long, ActivityItemInput> incomingById = new HashMap<>();
+        Map<Long, String> sanitizedEvidenceById = new HashMap<>();
+        for (ActivityItemInput input : request.getItems()) {
+            Long id = input.getId();
+            if (id == null || id <= 0) {
+                throw new BizException(40001, "重提审核时必须携带原活动ID");
+            }
+            if (incomingById.put(id, input) != null) {
+                throw new BizException(40001, "活动ID重复");
+            }
+            String evidence = sanitizeEvidenceFileIds(input.getEvidenceFileIds(), studentId);
+            sanitizedEvidenceById.put(id, evidence);
+        }
+
+        Set<Long> existingIds = new HashSet<>();
+        for (ActivityItemEntity entity : existing) {
+            existingIds.add(entity.getId());
+        }
+        if (incomingById.size() != existingIds.size() || !incomingById.keySet().equals(existingIds)) {
+            throw new BizException(40001, "活动条目数量或ID不匹配，禁止增删条目");
+        }
+
+        for (ActivityItemEntity current : existing) {
+            ActivityItemInput input = incomingById.get(current.getId());
+            if (input == null) {
+                throw new BizException(40001, "存在未知活动ID");
+            }
+            String evidence = sanitizedEvidenceById.getOrDefault(current.getId(), "");
+            boolean changed = isActivityContentChanged(current, input, evidence);
+            String reviewStatus = normalizeStatus(current.getReviewStatus());
+            if (!"REJECTED".equals(reviewStatus)) {
+                if (changed) {
+                    throw new BizException(40001, "仅驳回活动允许修改，已通过/待审活动不可改");
+                }
+                continue;
+            }
+            if (!changed) {
+                continue;
+            }
+            ActivityItemEntity update = new ActivityItemEntity();
+            update.setId(current.getId());
+            update.setSubmissionId(submissionId);
+            update.setTitle(input.getTitle());
+            update.setDescription(input.getDescription());
+            update.setSelfScore(input.getSelfScore());
+            update.setEvidenceFileIds(evidence);
+            update.setFinalScore(current.getFinalScore());
+            int updated = activityItemMapper.updateEditableFields(update);
+            if (updated == 0) {
+                throw new BizException(40901, "状态已变化，请刷新后重试");
+            }
+        }
+    }
+
+    private boolean isCourseContentChanged(CourseItemEntity current, CourseItemInput input) {
+        if (!Objects.equals(trim(current.getCourseName()), trim(input.getCourseName()))) {
+            return true;
+        }
+        if (!Objects.equals(normalizeStatus(current.getCourseType()), normalizeStatus(input.getCourseType()))) {
+            return true;
+        }
+        if (!decimalEquals(current.getScore(), input.getScore())) {
+            return true;
+        }
+        if (!decimalEquals(current.getCredit(), input.getCredit())) {
+            return true;
+        }
+        return !Objects.equals(current.getEvidenceFileId(), input.getEvidenceFileId());
+    }
+
+    private boolean isActivityContentChanged(ActivityItemEntity current, ActivityItemInput input, String sanitizedEvidence) {
+        if (!Objects.equals(trim(current.getTitle()), trim(input.getTitle()))) {
+            return true;
+        }
+        if (!Objects.equals(trim(current.getDescription()), trim(input.getDescription()))) {
+            return true;
+        }
+        if (!decimalEquals(current.getSelfScore(), input.getSelfScore())) {
+            return true;
+        }
+        return !Objects.equals(trim(current.getEvidenceFileIds()), trim(sanitizedEvidence));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public SubmissionEntity submit(Long submissionId, Long studentId) {
         SubmissionEntity entity = checkSubmissionEditableByStudent(submissionId, studentId);
+        String status = normalizeStatus(entity.getStatus());
+
+        if ("DRAFT".equals(status)) {
+            ScoreResult score = calculateScore(submissionId);
+            entity.setStatus("SUBMITTED");
+            entity.setMoralRaw(score.getMoralRaw());
+            entity.setIntelRaw(score.getIntelRaw());
+            entity.setSportRaw(score.getSportRaw());
+            entity.setArtRaw(score.getArtRaw());
+            entity.setLaborRaw(score.getLaborRaw());
+            entity.setTotalScore(score.getTotalScore());
+            entity.setSubmittedAt(LocalDateTime.now());
+            submissionMapper.updateScoresAndStatus(entity);
+            return entity;
+        }
+
+        if (!"SUBMITTED".equals(status)) {
+            throw new BizException(40003, "当前状态不可提交");
+        }
+
+        ReviewStats stats = getReviewStats(submissionId);
+        if ("DONE_ALL_PASS".equals(stats.getReviewPhase())) {
+            throw new BizException(40003, "已全部通过，无需再次提交");
+        }
+        if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
+            throw new BizException(40003, "审核中，暂不可再次提交");
+        }
+
         ScoreResult score = calculateScore(submissionId);
         entity.setStatus("SUBMITTED");
         entity.setMoralRaw(score.getMoralRaw());
@@ -340,12 +607,24 @@ public class SubmissionService {
 
         ScoreResult previewResult = calculateScore(submissionId, false);
         ScoreResult reviewedResult = calculateScore(submissionId, true);
-        boolean reviewReady = isReviewReady(entity);
+        ReviewStats stats = getReviewStats(submissionId);
+        boolean reviewReady = stats.getReviewPendingCount() == 0;
+        boolean canStudentResubmit = "SUBMITTED".equals(normalizeStatus(entity.getStatus()))
+                && "DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase());
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("submissionId", submissionId);
         map.put("status", entity.getStatus());
         map.put("reviewReady", reviewReady);
+        map.put("reviewPhase", stats.getReviewPhase());
+        map.put("canStudentResubmit", canStudentResubmit);
+        map.put("editableRejectedOnly", canStudentResubmit);
+        map.put("reviewTotalCount", stats.getReviewTotalCount());
+        map.put("reviewDoneCount", stats.getReviewDoneCount());
+        map.put("reviewPendingCount", stats.getReviewPendingCount());
+        map.put("reviewRejectedCount", stats.getReviewRejectedCount());
+        map.put("reviewApprovedCount", stats.getReviewApprovedCount());
+        map.put("rejectedItemIds", listRejectedItems(submissionId));
 
         putScore(map, "preview", previewResult);
         putScore(map, "reviewed", reviewedResult);
@@ -364,8 +643,9 @@ public class SubmissionService {
         map.put("totalScore", previewResult.getTotalScore());
         map.put("courseAvg", previewResult.getCourseAvg());
         map.put("intelCourseAvg", previewResult.getIntelCourseAvg());
-        map.put("formula", "综合总分 = 德育原始分×15% + 智育原始分×60% + 体育原始分×10% + 美育原始分×7.5% + 劳育原始分×7.5%");
-        map.put("intelFormula", "智育原始分 = 智育课程加权平均分×85% + min(智育活动总分,100)×15%；智育计入分 = 智育原始分×60%");
+        map.put("formula", "综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分");
+        map.put("intelFormula", "智育原始分 = 智育课程加权平均分 × 85% + min(智育活动总分, 100) × 15%；智育计入分 = 智育原始分 × 60%");
+        map.put("sportFormula", "体育原始分 = 大学体育分 × 85% + min(体育活动总分, 100) × 15%；体育计入分 = 体育原始分 × 10%");
         return map;
     }
     public List<Map<String, Object>> getRanking(Long semesterId) {
@@ -394,6 +674,38 @@ public class SubmissionService {
         return submissionMapper.listCounselorReviewedTasks();
     }
 
+    public ReviewStats getReviewStats(Long submissionId) {
+        int courseTotal = courseItemMapper.countBySubmissionId(submissionId);
+        int activityTotal = activityItemMapper.countBySubmissionId(submissionId);
+        int coursePending = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "PENDING");
+        int activityPending = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "PENDING");
+        int courseRejected = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
+        int activityRejected = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
+        int courseApproved = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "APPROVED");
+        int activityApproved = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "APPROVED");
+
+        int total = courseTotal + activityTotal;
+        int pending = coursePending + activityPending;
+        int rejected = courseRejected + activityRejected;
+        int approved = courseApproved + activityApproved;
+        int done = total - pending;
+
+        String phase;
+        if (total == 0) {
+            phase = "DONE_ALL_PASS";
+        } else if (pending == total) {
+            phase = "NOT_REVIEWED";
+        } else if (pending > 0) {
+            phase = "IN_PROGRESS";
+        } else if (rejected > 0) {
+            phase = "DONE_NEED_STUDENT_FIX";
+        } else {
+            phase = "DONE_ALL_PASS";
+        }
+
+        return new ReviewStats(total, done, pending, rejected, approved, phase);
+    }
+
     private SubmissionEntity checkSubmissionEditableByStudent(Long submissionId, Long studentId) {
         SubmissionEntity entity = submissionMapper.findById(submissionId);
         if (entity == null) {
@@ -407,40 +719,6 @@ public class SubmissionService {
             throw new BizException(40003, "Current submission status is not editable");
         }
         return entity;
-    }
-
-    private boolean rollbackToDraftIfSubmitted(SubmissionEntity entity) {
-        String status = entity.getStatus() == null ? "" : entity.getStatus().trim().toUpperCase(Locale.ROOT);
-        if (!"SUBMITTED".equals(status)) {
-            return false;
-        }
-        entity.setStatus("DRAFT");
-        entity.setSubmittedAt(null);
-        submissionMapper.updateScoresAndStatus(entity);
-        return true;
-    }
-
-    private void resetReviewStatusForAllItems(Long submissionId) {
-        courseItemMapper.resetReviewBySubmissionId(submissionId);
-        activityItemMapper.resetReviewBySubmissionId(submissionId);
-    }
-
-    private boolean isReviewReady(SubmissionEntity submission) {
-        if (submission == null) {
-            return false;
-        }
-        String status = submission.getStatus() == null ? "" : submission.getStatus().trim().toUpperCase(Locale.ROOT);
-        if (!"SUBMITTED".equals(status)
-                && !"COUNSELOR_REVIEWED".equals(status)
-                && !"FINALIZED".equals(status)
-                && !"PUBLISHED".equals(status)) {
-            return false;
-        }
-        int total = courseItemMapper.countBySubmissionId(submission.getId())
-                + activityItemMapper.countBySubmissionId(submission.getId());
-        int reviewed = courseItemMapper.countReviewedBySubmissionId(submission.getId())
-                + activityItemMapper.countReviewedBySubmissionId(submission.getId());
-        return reviewed >= total;
     }
 
     private void putScore(Map<String, Object> map, String prefix, ScoreResult result) {
@@ -460,6 +738,90 @@ public class SubmissionService {
         map.put(prefix + "TotalScore", result.getTotalScore());
         map.put(prefix + "CourseAvg", result.getCourseAvg());
         map.put(prefix + "IntelCourseAvg", result.getIntelCourseAvg());
+    }
+
+    private List<Map<String, Object>> listRejectedItems(Long submissionId) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (CourseItemEntity course : courseItemMapper.listBySubmissionId(submissionId)) {
+            if (!"REJECTED".equals(normalizeStatus(course.getReviewStatus()))) {
+                continue;
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("itemType", "COURSE");
+            row.put("itemId", course.getId());
+            out.add(row);
+        }
+        for (ActivityItemEntity activity : activityItemMapper.listBySubmissionId(submissionId)) {
+            if (!"REJECTED".equals(normalizeStatus(activity.getReviewStatus()))) {
+                continue;
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("itemType", "ACTIVITY");
+            row.put("itemId", activity.getId());
+            out.add(row);
+        }
+        return out;
+    }
+
+    private boolean decimalEquals(BigDecimal a, BigDecimal b) {
+        if (a == null && b == null) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.compareTo(b) == 0;
+    }
+
+    private String trim(String raw) {
+        return raw == null ? "" : raw.trim();
+    }
+
+    public static class ReviewStats {
+        private final int reviewTotalCount;
+        private final int reviewDoneCount;
+        private final int reviewPendingCount;
+        private final int reviewRejectedCount;
+        private final int reviewApprovedCount;
+        private final String reviewPhase;
+
+        public ReviewStats(int reviewTotalCount,
+                           int reviewDoneCount,
+                           int reviewPendingCount,
+                           int reviewRejectedCount,
+                           int reviewApprovedCount,
+                           String reviewPhase) {
+            this.reviewTotalCount = reviewTotalCount;
+            this.reviewDoneCount = reviewDoneCount;
+            this.reviewPendingCount = reviewPendingCount;
+            this.reviewRejectedCount = reviewRejectedCount;
+            this.reviewApprovedCount = reviewApprovedCount;
+            this.reviewPhase = reviewPhase;
+        }
+
+        public int getReviewTotalCount() {
+            return reviewTotalCount;
+        }
+
+        public int getReviewDoneCount() {
+            return reviewDoneCount;
+        }
+
+        public int getReviewPendingCount() {
+            return reviewPendingCount;
+        }
+
+        public int getReviewRejectedCount() {
+            return reviewRejectedCount;
+        }
+
+        public int getReviewApprovedCount() {
+            return reviewApprovedCount;
+        }
+
+        public String getReviewPhase() {
+            return reviewPhase;
+        }
     }
 
     public ScoreResult calculateScore(Long submissionId) {
@@ -482,8 +844,6 @@ public class SubmissionService {
 
         BigDecimal intelCreditSum = BigDecimal.ZERO;
         BigDecimal intelWeightedSum = BigDecimal.ZERO;
-        BigDecimal sportCourseCreditSum = BigDecimal.ZERO;
-        BigDecimal sportCourseWeightedSum = BigDecimal.ZERO;
 
         for (CourseItemEntity course : courses) {
             BigDecimal score = useReviewedScore
@@ -496,25 +856,18 @@ public class SubmissionService {
                 intelWeightedSum = intelWeightedSum.add(score.multiply(credit));
             }
 
-            if (isSportCourse(course)) {
-                sportCourseCreditSum = sportCourseCreditSum.add(credit);
-                sportCourseWeightedSum = sportCourseWeightedSum.add(score.multiply(credit));
-            }
         }
-
-        // 闂備礁鎼幊妯肩磽濮樿泛纾绘繛鎴炵鐎氭岸鏌涢幘妞诲亾闁哄被鍊濋弻娑滎槻婵炲眰鍊濆畷瑙勬償閵婏附娅栧┑顔斤供閸嬪棛绮旀總鍛婄厾闁艰壈娉涢拕鍏笺亜閺囩喎鈻曟慨濠佺矙婵″爼宕担鍏夋瀻闂備焦瀵х粙鎴炵附閺冨倻绠旈柡宥冨妿椤╃兘鏌涘☉鍗炵仯闁糕晝濞€閹鎷呭ù瀣壕鐎规洖娲ㄩ悾杈ㄧ箾?闂傚倷鐒﹁ぐ鍐矓閹惰棄绠?闂備礁鎲￠崝鏇犵矓閹惰棄绠為柕濞炬櫅杩?
+        // New sport rule:
+        // sportRaw = universityPeScore * 0.85 + min(sportActivityPool, capSport) * 0.15
         BigDecimal courseAvg = intelCreditSum.compareTo(BigDecimal.ZERO) == 0
                 ? BigDecimal.ZERO
                 : intelWeightedSum.divide(intelCreditSum, 4, RoundingMode.HALF_UP);
 
-        // If there is no sport course, sport course average should be 0 instead of a fixed baseline.
-        BigDecimal sportCourseAvg = sportCourseCreditSum.compareTo(BigDecimal.ZERO) == 0
-                ? BigDecimal.ZERO
-                : sportCourseWeightedSum.divide(sportCourseCreditSum, 4, RoundingMode.HALF_UP);
-
         BigDecimal moral = BigDecimal.ZERO;
         BigDecimal intelInnovation = BigDecimal.ZERO;
-        BigDecimal sportActivity = BigDecimal.ZERO;
+        BigDecimal sportActivityPool = BigDecimal.ZERO;
+        BigDecimal universityPeScore = BigDecimal.ZERO;
+        boolean universityPeFound = false;
         BigDecimal art = BigDecimal.ZERO;
         BigDecimal labor = BigDecimal.ZERO;
 
@@ -534,7 +887,12 @@ public class SubmissionService {
                     intelInnovation = intelInnovation.add(score);
                     break;
                 case "SPORT_ACTIVITY":
-                    sportActivity = sportActivity.add(score);
+                    if (isUniversityPeTitle(activity.getTitle()) && !universityPeFound) {
+                        universityPeScore = score;
+                        universityPeFound = true;
+                    } else {
+                        sportActivityPool = sportActivityPool.add(score);
+                    }
                     break;
                 case "ART":
                     art = art.add(score);
@@ -549,13 +907,13 @@ public class SubmissionService {
 
         BigDecimal moralRaw = min(moral, BigDecimal.valueOf(cfg.getCapMoral()));
         BigDecimal intelCap = min(intelInnovation, BigDecimal.valueOf(cfg.getCapIntel()));
-        BigDecimal sportCap = min(sportActivity, BigDecimal.valueOf(cfg.getCapSport()));
+        BigDecimal sportCap = min(sportActivityPool, BigDecimal.valueOf(cfg.getCapSport()));
         BigDecimal artRaw = min(art, BigDecimal.valueOf(cfg.getCapArt()));
         BigDecimal laborRaw = min(labor, BigDecimal.valueOf(cfg.getCapLabor()));
 
         BigDecimal intelRaw = courseAvg.multiply(new BigDecimal("0.85"))
                 .add(intelCap.multiply(new BigDecimal("0.15")));
-        BigDecimal sportRaw = sportCourseAvg.multiply(new BigDecimal("0.85"))
+        BigDecimal sportRaw = universityPeScore.multiply(new BigDecimal("0.85"))
                 .add(sportCap.multiply(new BigDecimal("0.15")));
 
         BigDecimal moralScore = moralRaw.multiply(BigDecimal.valueOf(cfg.getwMoral()));
@@ -574,7 +932,7 @@ public class SubmissionService {
         result.setCourseAvg(courseAvg.setScale(2, RoundingMode.HALF_UP));
         result.setIntelCourseAvg(courseAvg.setScale(2, RoundingMode.HALF_UP));
         result.setIntelInnovation(intelInnovation.setScale(2, RoundingMode.HALF_UP));
-        result.setSportActivity(sportActivity.setScale(2, RoundingMode.HALF_UP));
+        result.setSportActivity(sportActivityPool.setScale(2, RoundingMode.HALF_UP));
         result.setMoralRaw(moralRaw.setScale(2, RoundingMode.HALF_UP));
         result.setIntelRaw(intelRaw.setScale(2, RoundingMode.HALF_UP));
         result.setSportRaw(sportRaw.setScale(2, RoundingMode.HALF_UP));
@@ -613,15 +971,19 @@ public class SubmissionService {
         if (course == null) {
             return false;
         }
-        String name = course.getCourseName() == null ? "" : course.getCourseName().toUpperCase(Locale.ROOT);
-        String type = course.getCourseType() == null ? "" : course.getCourseType().toUpperCase(Locale.ROOT);
+        return isSportCourse(course.getCourseName(), course.getCourseType());
+    }
+
+    private boolean isSportCourse(String courseName, String courseType) {
+        String name = courseName == null ? "" : courseName.toUpperCase(Locale.ROOT);
+        String type = courseType == null ? "" : courseType.toUpperCase(Locale.ROOT);
         if (type.contains("SPORT") || type.contains("PE") || type.contains("PHYSICAL") || type.contains("\u4f53\u80b2")) {
             return true;
         }
         if (name.contains("SPORT") || name.contains("PE") || name.contains("PHYSICAL")) {
             return true;
         }
-        String rawName = course.getCourseName() == null ? "" : course.getCourseName().replace(" ", "");
+        String rawName = courseName == null ? "" : courseName.replace(" ", "");
         return rawName.contains("\u4f53\u80b2") || rawName.contains("\u4f53\u6d4b") || rawName.contains("\u4f53\u80fd");
     }
 
@@ -651,6 +1013,8 @@ public class SubmissionService {
         return cfg;
     }
 }
+
+
 
 
 

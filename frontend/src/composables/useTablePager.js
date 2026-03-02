@@ -1,12 +1,21 @@
 import { computed, ref, unref, watch } from 'vue'
 
-export default function useTablePager(rowsRef, pageSizeRef = 10) {
-  const page = ref(1)
+const normalizeSize = (value) => {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return 10
+  return Math.floor(size)
+}
 
-  const pageSize = computed(() => {
-    const size = Number(unref(pageSizeRef))
-    return Number.isFinite(size) && size > 0 ? Math.floor(size) : 10
-  })
+export default function useTablePager(rowsRef, initialPageSize = 10) {
+  const page = ref(1)
+  const pageSize = ref(normalizeSize(unref(initialPageSize)))
+
+  watch(
+    () => unref(initialPageSize),
+    (next) => {
+      pageSize.value = normalizeSize(next)
+    }
+  )
 
   const rows = computed(() => {
     const value = unref(rowsRef)
@@ -26,6 +35,17 @@ export default function useTablePager(rowsRef, pageSizeRef = 10) {
     page.value = clampPage(value)
   }
 
+  const jumpPage = (value) => {
+    goPage(value)
+  }
+
+  const setPageSize = (size) => {
+    const next = normalizeSize(size)
+    if (next === pageSize.value) return
+    pageSize.value = next
+    page.value = 1
+  }
+
   const goPrev = () => goPage(page.value - 1)
   const goNext = () => goPage(page.value + 1)
   const resetPage = () => goPage(1)
@@ -43,10 +63,13 @@ export default function useTablePager(rowsRef, pageSizeRef = 10) {
 
   return {
     page,
+    pageSize,
     total,
     totalPages,
     pagedRows,
     goPage,
+    jumpPage,
+    setPageSize,
     goPrev,
     goNext,
     resetPage

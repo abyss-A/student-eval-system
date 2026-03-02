@@ -25,6 +25,10 @@
           <option value="CLOSED">已关闭</option>
         </select>
       </div>
+      <div class="table-search-right">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <button class="btn secondary" type="button" :disabled="!canBatchClose" @click="batchClose">批量关闭</button>
+      </div>
     </div>
 
     <div class="table-shell">
@@ -32,6 +36,15 @@
         <table class="table table-sticky" data-resize-key="feedback_handle_list">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedFeedbackIds.length || loading"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th>标题</th>
               <th style="width: 110px;">状态</th>
               <th style="width: 160px;">提交人</th>
@@ -42,6 +55,14 @@
           </thead>
           <tbody>
             <tr v-for="f in pager.pagedRows.value" :key="f.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="selection.isSelected(f.id)"
+                  :disabled="loading"
+                  @change="selection.toggle(f.id)"
+                />
+              </td>
               <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
               <td>
                 <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
@@ -54,7 +75,7 @@
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
-              <td colspan="6" class="empty">暂无数据</td>
+              <td colspan="7" class="empty">暂无数据</td>
             </tr>
           </tbody>
         </table>
@@ -63,8 +84,10 @@
         :page="pager.page.value"
         :total-pages="pager.totalPages.value"
         :total="pager.total.value"
+        :page-size="pager.pageSize.value"
         :disabled="loading"
-        @change="pager.goPage"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
   </section>
@@ -152,13 +175,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import http from '../../api/http'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import TablePager from '../../components/TablePager.vue'
 import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
 import useTablePager from '../../composables/useTablePager'
+import useTableSelection from '../../composables/useTableSelection'
 
 const rows = ref([])
 const loading = ref(false)
@@ -166,6 +190,11 @@ const activeStatus = ref('NEW')
 const keyword = ref('')
 
 const pager = useTablePager(rows, 10)
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+const pagedFeedbackIds = computed(() => pager.pagedRows.value.map((item) => item.id))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedFeedbackIds.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedFeedbackIds.value))
 
 const drawer = reactive({
   open: false,
@@ -174,6 +203,7 @@ const drawer = reactive({
   detail: null,
   replyContent: ''
 })
+const canBatchClose = computed(() => selection.selectedCount.value > 0 && !loading.value && !drawer.loading && !drawer.handling)
 
 const statusLabel = (raw) => {
   const s = String(raw || '').trim().toUpperCase()
@@ -212,6 +242,7 @@ const load = async ({ keepPage = false } = {}) => {
 
     const { data } = await http.get('/feedbacks', { params })
     rows.value = data.data || []
+    selection.clear()
     if (!keepPage) {
       pager.resetPage()
     }
@@ -221,13 +252,70 @@ const load = async ({ keepPage = false } = {}) => {
 }
 
 const handleSearch = () => {
+  selection.clear()
   load()
 }
 
 const resetFilters = () => {
   activeStatus.value = 'NEW'
   keyword.value = ''
+  selection.clear()
   load()
+}
+
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
+})
+
+const selectedRowsOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedFeedbackIds.value)
+}
+
+const onPageChange = (nextPage) => {
+  pager.goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  pager.setPageSize(nextSize)
+  selection.clear()
+}
+
+const batchClose = async () => {
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要处理的数据')
+    return
+  }
+  if (!confirm(`确认批量关闭已选 ${selectedRows.length} 项吗？`)) return
+
+  let success = 0
+  let failed = 0
+  let skipped = 0
+
+  for (const row of selectedRows) {
+    const status = String(row.status || '').trim().toUpperCase()
+    if (status === 'CLOSED') {
+      skipped += 1
+      continue
+    }
+    try {
+      await http.post(`/feedbacks/${row.id}/handle`, { action: 'CLOSE', replyContent: '' })
+      success += 1
+    } catch (e) {
+      failed += 1
+    }
+  }
+
+  selection.clear()
+  await load({ keepPage: true })
+  alert(`批量关闭完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`)
 }
 
 const openDrawer = async (id) => {

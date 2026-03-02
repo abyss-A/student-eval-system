@@ -12,10 +12,10 @@
     </div>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn" type="button" @click="submitForm" :disabled="loading || !canSubmit">提交审核</button>
+      <button class="btn" type="button" @click="submitForm" :disabled="loading || !canSubmit">{{ submitButtonLabel }}</button>
       <button class="btn ghost" type="button" @click="exportFile('DOCX')" :disabled="loading">导出Word</button>
-      <button class="btn ghost" type="button" @click="exportFile('PDF')" :disabled="loading">导出PDF</button>
     </div>
+    <p v-if="submitDisabledHint" class="muted" style="margin-top: 8px; color: #64748b;">{{ submitDisabledHint }}</p>
 
     <div class="score-block" style="margin-top: 14px;">
       <h3 style="margin: 0;">预览分数</h3>
@@ -89,6 +89,8 @@
 
     <div class="formula-line">
       总分公式：综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分
+      <br />
+      体育口径：体育原始分 = 大学体育分 × 85% + min(体育活动总分, 100) × 15%
     </div>
   </section>
 </template>
@@ -103,9 +105,33 @@ const loading = ref(false)
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
 const score = computed(() => store.state.score)
+const statusCode = computed(() => String(status.value || '').trim().toUpperCase())
+const reviewPhase = computed(() => String(score.value?.reviewPhase || '').trim().toUpperCase())
+const canStudentResubmit = computed(() => Boolean(score.value?.canStudentResubmit))
 const canSubmit = computed(() => {
-  const code = String(status.value || '').trim().toUpperCase()
-  return code !== 'COUNSELOR_REVIEWED' && code !== 'FINALIZED' && code !== 'PUBLISHED'
+  if (statusCode.value === 'DRAFT') return true
+  if (statusCode.value === 'SUBMITTED') {
+    return canStudentResubmit.value || reviewPhase.value === 'DONE_NEED_STUDENT_FIX'
+  }
+  return false
+})
+const submitButtonLabel = computed(() => {
+  if (statusCode.value === 'SUBMITTED' && (canStudentResubmit.value || reviewPhase.value === 'DONE_NEED_STUDENT_FIX')) {
+    return '再次提交'
+  }
+  return '提交审核'
+})
+const submitDisabledHint = computed(() => {
+  if (canSubmit.value) return ''
+  if (statusCode.value === 'SUBMITTED') {
+    if (reviewPhase.value === 'DONE_ALL_PASS') return '已全部通过，无需再次提交。'
+    if (reviewPhase.value === 'NOT_REVIEWED' || reviewPhase.value === 'IN_PROGRESS') return '辅导员审核中，暂不可再次提交。'
+    return '当前阶段不可提交。'
+  }
+  if (statusCode.value === 'COUNSELOR_REVIEWED') return '测评单已提交管理员，当前不可提交。'
+  if (statusCode.value === 'FINALIZED') return '测评单已终审，当前不可提交。'
+  if (statusCode.value === 'PUBLISHED') return '测评单已公示，当前不可提交。'
+  return ''
 })
 const reviewReady = computed(() => Boolean(score.value?.reviewReady))
 
@@ -181,11 +207,17 @@ const reload = async () => {
 }
 
 const submitForm = async () => {
+  if (!canSubmit.value) return
+  const actionLabel = submitButtonLabel.value
   loading.value = true
   try {
     await store.flushAutoSaveFlushers()
     await store.submit()
-    alert('已提交审核')
+    if (actionLabel === '再次提交') {
+      alert('已再次提交')
+    } else {
+      alert('已提交审核')
+    }
   } catch (e) {
     const msg = e?.userMessage || e?.message || '保存失败，请点击保存后重试提交'
     alert(msg)

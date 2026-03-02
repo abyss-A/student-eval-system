@@ -63,7 +63,6 @@
         <button class="btn secondary" @click="saveActivities" :disabled="!submissionId">淇濆瓨</button>
         <button class="btn" @click="submitForm" :disabled="!submissionId">鎻愪氦瀹℃牳</button>
         <button class="btn ghost" @click="exportFile('DOCX')" :disabled="!submissionId">瀵煎嚭Word</button>
-        <button class="btn ghost" @click="exportFile('PDF')" :disabled="!submissionId">瀵煎嚭PDF</button>
       </div>
     </div>
 
@@ -246,9 +245,7 @@ const exportFile = async (format) => {
 }
 
 const resolveDownloadName = (resp, format, id) => {
-  const fallback = format === 'PDF'
-    ? `缁煎悎濂栧閲戠敵璇疯〃_${id}.pdf`
-    : `缁煎悎濂栧閲戠敵璇疯〃_${id}.docx`
+  const fallback = `缁煎悎濂栧閲戠敵璇疯〃_${id}.docx`
   const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
   if (!disposition) return fallback
 

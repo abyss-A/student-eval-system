@@ -19,6 +19,10 @@
           @clear="onTaskSearch"
         />
       </div>
+      <div class="table-search-right">
+        <span class="muted">已选 {{ taskSelection.selectedCount.value }} 项</span>
+        <button class="btn secondary" type="button" :disabled="!canBatchSubmitTasks" @click="batchSubmitTasksToAdmin">批量提交管理员</button>
+      </div>
     </div>
 
     <div class="table-shell">
@@ -26,6 +30,15 @@
         <table class="table table-sticky" data-resize-key="teacher_tasks">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="taskHeaderCheckboxRef"
+                  type="checkbox"
+                  :checked="taskAllCheckedOnPage"
+                  :disabled="!pagedTaskIds.length || loadingTasks || loadingDetail || !!submittingTaskId"
+                  @change="toggleAllTasksOnPage"
+                />
+              </th>
               <th>学号</th>
               <th>学生</th>
               <th>班级</th>
@@ -37,6 +50,14 @@
           </thead>
           <tbody>
             <tr v-for="task in taskPager.pagedRows.value" :key="task.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="taskSelection.isSelected(task.id)"
+                  :disabled="loadingTasks || loadingDetail || !!submittingTaskId"
+                  @change="taskSelection.toggle(task.id)"
+                />
+              </td>
               <td>{{ task.student_no || '-' }}</td>
               <td>{{ task.real_name }}</td>
               <td>{{ task.class_name }}</td>
@@ -62,7 +83,7 @@
               </td>
             </tr>
             <tr v-if="!taskPager.pagedRows.value.length">
-              <td colspan="7" class="empty">暂无符合条件的测评单</td>
+              <td colspan="8" class="empty">暂无符合条件的测评单</td>
             </tr>
           </tbody>
         </table>
@@ -71,8 +92,10 @@
         :page="taskPager.page.value"
         :total-pages="taskPager.totalPages.value"
         :total="taskPager.total.value"
+        :page-size="taskPager.pageSize.value"
         :disabled="loadingTasks"
-        @change="taskPager.goPage"
+        @change="onTaskPageChange"
+        @page-size-change="onTaskPageSizeChange"
       />
     </div>
   </section>
@@ -114,6 +137,17 @@
               <option value="RELEARN">再修</option>
             </select>
           </div>
+          <div class="table-search-right">
+            <span class="muted">已选 {{ courseSelection.selectedCount.value }} 项</span>
+            <input
+              v-model.trim="courseBatchRejectReason"
+              style="width: 220px;"
+              placeholder="批量驳回理由（可空）"
+              :disabled="isDeciding || loadingDetail || !canReviewCurrent"
+            />
+            <button class="btn secondary" type="button" :disabled="!canBatchCourseReview" @click="batchApproveCourses">批量通过</button>
+            <button class="btn danger" type="button" :disabled="!canBatchCourseReview" @click="batchRejectCourses">批量驳回</button>
+          </div>
         </div>
 
         <div class="table-shell">
@@ -121,6 +155,15 @@
             <table class="table table-sticky" data-resize-key="teacher_drawer_courses">
               <thead>
                 <tr>
+                  <th style="width: 44px;">
+                    <input
+                      ref="courseHeaderCheckboxRef"
+                      type="checkbox"
+                      :checked="courseAllCheckedOnPage"
+                      :disabled="!pagedCourseIds.length || isDeciding || loadingDetail || !canReviewCurrent"
+                      @change="toggleAllCoursesOnPage"
+                    />
+                  </th>
                   <th class="nowrap">课程</th>
                   <th class="nowrap">类型</th>
                   <th class="nowrap">分数</th>
@@ -130,6 +173,14 @@
               </thead>
               <tbody>
             <tr v-for="course in coursePager.pagedRows.value" :key="`course_${course.id}`">
+                  <td>
+                    <input
+                      type="checkbox"
+                      :checked="courseSelection.isSelected(course.id)"
+                      :disabled="isDeciding || loadingDetail || !canReviewCurrent"
+                      @change="courseSelection.toggle(course.id)"
+                    />
+                  </td>
                   <td class="nowrap">{{ course.courseName }}</td>
                   <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
                   <td class="nowrap">{{ course.score }}</td>
@@ -147,7 +198,7 @@
                   </td>
                 </tr>
                 <tr v-if="!coursePager.pagedRows.value.length">
-                  <td colspan="5" class="empty">暂无符合条件的课程</td>
+                  <td colspan="6" class="empty">暂无符合条件的课程</td>
                 </tr>
               </tbody>
             </table>
@@ -156,8 +207,10 @@
             :page="coursePager.page.value"
             :total-pages="coursePager.totalPages.value"
             :total="coursePager.total.value"
+            :page-size="coursePager.pageSize.value"
             :disabled="isDeciding || loadingDetail"
-            @change="coursePager.goPage"
+            @change="onCoursePageChange"
+            @page-size-change="onCoursePageSizeChange"
           />
         </div>
 
@@ -182,6 +235,17 @@
               <option value="LABOR">劳育</option>
             </select>
           </div>
+          <div class="table-search-right">
+            <span class="muted">已选 {{ activitySelection.selectedCount.value }} 项</span>
+            <input
+              v-model.trim="activityBatchRejectReason"
+              style="width: 220px;"
+              placeholder="批量驳回理由（可空）"
+              :disabled="isDeciding || loadingDetail || !canReviewCurrent"
+            />
+            <button class="btn secondary" type="button" :disabled="!canBatchActivityReview" @click="batchApproveActivities">批量通过</button>
+            <button class="btn danger" type="button" :disabled="!canBatchActivityReview" @click="batchRejectActivities">批量驳回</button>
+          </div>
         </div>
 
         <div class="table-shell">
@@ -189,6 +253,15 @@
             <table class="table table-sticky activity-table" data-resize-key="teacher_drawer_activities">
               <thead>
                 <tr>
+                  <th style="width: 44px;">
+                    <input
+                      ref="activityHeaderCheckboxRef"
+                      type="checkbox"
+                      :checked="activityAllCheckedOnPage"
+                      :disabled="!pagedActivityIds.length || isDeciding || loadingDetail || !canReviewCurrent"
+                      @change="toggleAllActivitiesOnPage"
+                    />
+                  </th>
                   <th class="nowrap col-module">模块</th>
                   <th class="nowrap col-title">标题</th>
                   <th class="nowrap col-score">分数</th>
@@ -199,6 +272,14 @@
               </thead>
               <tbody>
                 <tr v-for="activity in activityPager.pagedRows.value" :key="`act_${activity.id}`">
+                  <td>
+                    <input
+                      type="checkbox"
+                      :checked="activitySelection.isSelected(activity.id)"
+                      :disabled="isDeciding || loadingDetail || !canReviewCurrent"
+                      @change="activitySelection.toggle(activity.id)"
+                    />
+                  </td>
                   <td class="nowrap">{{ moduleLabel(activity.moduleType) }}</td>
                   <td class="nowrap">{{ activity.title }}</td>
                   <td class="nowrap">{{ activity.selfScore }}</td>
@@ -224,7 +305,7 @@
                   </td>
                 </tr>
                 <tr v-if="!activityPager.pagedRows.value.length">
-                  <td colspan="6" class="empty">暂无符合条件的活动</td>
+                  <td colspan="7" class="empty">暂无符合条件的活动</td>
                 </tr>
               </tbody>
             </table>
@@ -233,8 +314,10 @@
             :page="activityPager.page.value"
             :total-pages="activityPager.totalPages.value"
             :total="activityPager.total.value"
+            :page-size="activityPager.pageSize.value"
             :disabled="isDeciding || loadingDetail"
-            @change="activityPager.goPage"
+            @change="onActivityPageChange"
+            @page-size-change="onActivityPageSizeChange"
           />
         </div>
       </div>
@@ -254,6 +337,7 @@ import SearchCapsule from '../components/SearchCapsule.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
+import useTableSelection from '../composables/useTableSelection'
 
 const tasks = ref([])
 const current = ref(null)
@@ -273,6 +357,8 @@ const courseKeyword = ref('')
 const courseTypeFilter = ref('ALL')
 const activityKeyword = ref('')
 const activityModuleFilter = ref('ALL')
+const courseBatchRejectReason = ref('')
+const activityBatchRejectReason = ref('')
 
 const courseKey = (id) => `COURSE_${id}`
 const activityKey = (id) => `ACTIVITY_${id}`
@@ -312,6 +398,47 @@ const filteredActivities = computed(() => {
 })
 
 const activityPager = useTablePager(filteredActivities, 10)
+const taskSelection = useTableSelection()
+const courseSelection = useTableSelection()
+const activitySelection = useTableSelection()
+
+const taskHeaderCheckboxRef = ref(null)
+const courseHeaderCheckboxRef = ref(null)
+const activityHeaderCheckboxRef = ref(null)
+
+const pagedTaskIds = computed(() => taskPager.pagedRows.value.map((item) => item.id))
+const pagedCourseIds = computed(() => coursePager.pagedRows.value.map((item) => item.id))
+const pagedActivityIds = computed(() => activityPager.pagedRows.value.map((item) => item.id))
+
+const taskAllCheckedOnPage = computed(() => taskSelection.isAllCheckedOnPage(pagedTaskIds.value))
+const courseAllCheckedOnPage = computed(() => courseSelection.isAllCheckedOnPage(pagedCourseIds.value))
+const activityAllCheckedOnPage = computed(() => activitySelection.isAllCheckedOnPage(pagedActivityIds.value))
+
+const taskIndeterminateOnPage = computed(() => taskSelection.isIndeterminateOnPage(pagedTaskIds.value))
+const courseIndeterminateOnPage = computed(() => courseSelection.isIndeterminateOnPage(pagedCourseIds.value))
+const activityIndeterminateOnPage = computed(() => activitySelection.isIndeterminateOnPage(pagedActivityIds.value))
+
+const canBatchSubmitTasks = computed(() => (
+  taskSelection.selectedCount.value > 0
+  && !loadingTasks.value
+  && !loadingDetail.value
+  && !isDeciding.value
+  && !submittingTaskId.value
+))
+
+const canBatchCourseReview = computed(() => (
+  courseSelection.selectedCount.value > 0
+  && canReviewCurrent.value
+  && !loadingDetail.value
+  && !isDeciding.value
+))
+
+const canBatchActivityReview = computed(() => (
+  activitySelection.selectedCount.value > 0
+  && canReviewCurrent.value
+  && !loadingDetail.value
+  && !isDeciding.value
+))
 
 const courseTypeLabel = (raw) => {
   const code = (raw || '').trim().toUpperCase()
@@ -392,6 +519,7 @@ const loadTasks = async ({ keepPage = false } = {}) => {
   try {
     const { data } = await http.get('/reviews/tasks')
     tasks.value = data.data || []
+    taskSelection.clear()
     if (!keepPage) {
       taskPager.resetPage()
     }
@@ -405,8 +533,12 @@ const resetDrawerFilters = () => {
   courseTypeFilter.value = 'ALL'
   activityKeyword.value = ''
   activityModuleFilter.value = 'ALL'
+  courseBatchRejectReason.value = ''
+  activityBatchRejectReason.value = ''
   coursePager.resetPage()
   activityPager.resetPage()
+  courseSelection.clear()
+  activitySelection.clear()
 }
 
 const openTask = async (submissionId) => {
@@ -418,6 +550,8 @@ const openTask = async (submissionId) => {
     initDrafts(data.data)
     await hydrateEvidenceMetas()
     resetDrawerFilters()
+    courseSelection.clear()
+    activitySelection.clear()
     drawerOpen.value = true
   } finally {
     loadingDetail.value = false
@@ -426,6 +560,8 @@ const openTask = async (submissionId) => {
 
 const closeDrawer = () => {
   drawerOpen.value = false
+  courseSelection.clear()
+  activitySelection.clear()
 }
 
 const reloadCurrent = async () => {
@@ -538,41 +674,224 @@ const previewEvidence = async (fileId, metas = []) => {
   await previewImageById(http, fileId, '证明材料预览', galleryIds, fileNameMap)
 }
 
+const selectedTasksOnPage = computed(() => {
+  const selected = new Set(taskSelection.selectedList.value)
+  return taskPager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const selectedCoursesOnPage = computed(() => {
+  const selected = new Set(courseSelection.selectedList.value)
+  return coursePager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const selectedActivitiesOnPage = computed(() => {
+  const selected = new Set(activitySelection.selectedList.value)
+  return activityPager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const toggleAllTasksOnPage = () => {
+  taskSelection.toggleAll(pagedTaskIds.value)
+}
+
+const toggleAllCoursesOnPage = () => {
+  courseSelection.toggleAll(pagedCourseIds.value)
+}
+
+const toggleAllActivitiesOnPage = () => {
+  activitySelection.toggleAll(pagedActivityIds.value)
+}
+
+const onTaskPageChange = (nextPage) => {
+  taskPager.goPage(nextPage)
+  taskSelection.clear()
+}
+
+const onTaskPageSizeChange = (nextSize) => {
+  taskPager.setPageSize(nextSize)
+  taskSelection.clear()
+}
+
+const onCoursePageChange = (nextPage) => {
+  coursePager.goPage(nextPage)
+  courseSelection.clear()
+}
+
+const onCoursePageSizeChange = (nextSize) => {
+  coursePager.setPageSize(nextSize)
+  courseSelection.clear()
+}
+
+const onActivityPageChange = (nextPage) => {
+  activityPager.goPage(nextPage)
+  activitySelection.clear()
+}
+
+const onActivityPageSizeChange = (nextSize) => {
+  activityPager.setPageSize(nextSize)
+  activitySelection.clear()
+}
+
+const batchSubmitTasksToAdmin = async () => {
+  const selectedRows = selectedTasksOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要处理的数据')
+    return
+  }
+  if (!confirm(`确认批量提交管理员已选 ${selectedRows.length} 项吗？`)) return
+
+  let success = 0
+  let failed = 0
+  let skipped = 0
+  let shouldCloseDrawer = false
+
+  for (const task of selectedRows) {
+    if (!canSubmitTask(task)) {
+      skipped += 1
+      continue
+    }
+    try {
+      await http.post(`/reviews/submissions/${task.id}/submit`)
+      if (selectedSubmissionId.value === task.id) shouldCloseDrawer = true
+      success += 1
+    } catch (e) {
+      failed += 1
+    }
+  }
+
+  if (shouldCloseDrawer) {
+    closeDrawer()
+    current.value = null
+    selectedSubmissionId.value = null
+  }
+  taskSelection.clear()
+  await loadTasks({ keepPage: true })
+  alert(`批量提交完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`)
+}
+
+const runBatchDecision = async ({ itemType, action, reason }) => {
+  const selectedRows = itemType === 'COURSE' ? selectedCoursesOnPage.value : selectedActivitiesOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要处理的数据')
+    return
+  }
+
+  const actionLabel = action === 'APPROVE' ? '批量通过' : '批量驳回'
+  if (!confirm(`确认${actionLabel}已选 ${selectedRows.length} 项吗？`)) return
+
+  isDeciding.value = true
+  try {
+    let success = 0
+    let failed = 0
+    let skipped = 0
+
+    for (const row of selectedRows) {
+      if (!isPendingStatus(row.reviewStatus)) {
+        skipped += 1
+        continue
+      }
+      try {
+        await http.post(`/reviews/items/${itemType}/${row.id}/decision`, {
+          action,
+          reason: (reason || '').trim()
+        })
+        success += 1
+      } catch (e) {
+        failed += 1
+      }
+    }
+
+    courseSelection.clear()
+    activitySelection.clear()
+    await reloadCurrent()
+    await loadTasks({ keepPage: true })
+    alert(`${actionLabel}完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`)
+  } finally {
+    isDeciding.value = false
+  }
+}
+
+const batchApproveCourses = async () => {
+  await runBatchDecision({ itemType: 'COURSE', action: 'APPROVE', reason: '' })
+}
+
+const batchRejectCourses = async () => {
+  await runBatchDecision({
+    itemType: 'COURSE',
+    action: 'REJECT',
+    reason: courseBatchRejectReason.value
+  })
+}
+
+const batchApproveActivities = async () => {
+  await runBatchDecision({ itemType: 'ACTIVITY', action: 'APPROVE', reason: '' })
+}
+
+const batchRejectActivities = async () => {
+  await runBatchDecision({
+    itemType: 'ACTIVITY',
+    action: 'REJECT',
+    reason: activityBatchRejectReason.value
+  })
+}
+
 const onTaskSearch = () => {
+  taskSelection.clear()
   taskPager.resetPage()
 }
 
 const onCourseSearch = () => {
+  courseSelection.clear()
   coursePager.resetPage()
 }
 
 const onActivitySearch = () => {
+  activitySelection.clear()
   activityPager.resetPage()
 }
 
 const resetTaskFilter = () => {
   taskKeyword.value = ''
+  taskSelection.clear()
   taskPager.resetPage()
 }
 
 const resetCourseFilter = () => {
   courseKeyword.value = ''
   courseTypeFilter.value = 'ALL'
+  courseSelection.clear()
   coursePager.resetPage()
 }
 
 const resetActivityFilter = () => {
   activityKeyword.value = ''
   activityModuleFilter.value = 'ALL'
+  activitySelection.clear()
   activityPager.resetPage()
 }
 
 watch([courseKeyword, courseTypeFilter], () => {
+  courseSelection.clear()
   coursePager.resetPage()
 })
 
 watch([activityKeyword, activityModuleFilter], () => {
+  activitySelection.clear()
   activityPager.resetPage()
+})
+
+watch(taskIndeterminateOnPage, (value) => {
+  if (!taskHeaderCheckboxRef.value) return
+  taskHeaderCheckboxRef.value.indeterminate = value
+})
+
+watch(courseIndeterminateOnPage, (value) => {
+  if (!courseHeaderCheckboxRef.value) return
+  courseHeaderCheckboxRef.value.indeterminate = value
+})
+
+watch(activityIndeterminateOnPage, (value) => {
+  if (!activityHeaderCheckboxRef.value) return
+  activityHeaderCheckboxRef.value.indeterminate = value
 })
 
 const busyRef = computed(() => loadingTasks.value || loadingDetail.value || isDeciding.value || !!submittingTaskId.value)

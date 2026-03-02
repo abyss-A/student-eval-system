@@ -43,6 +43,15 @@ public interface CourseItemMapper {
     @Select("select count(1) from course_item where submission_id = #{submissionId} and review_status <> 'PENDING'")
     int countReviewedBySubmissionId(@Param("submissionId") Long submissionId);
 
+    @Select("select count(1) from course_item where submission_id = #{submissionId} and review_status = #{reviewStatus}")
+    int countBySubmissionIdAndStatus(@Param("submissionId") Long submissionId, @Param("reviewStatus") String reviewStatus);
+
+    @Update("update course_item set course_name=#{courseName}, course_type=#{courseType}, score=#{score}, credit=#{credit}, evidence_file_id=#{evidenceFileId}, reviewer_score=#{reviewerScore}, updated_at=now() where id=#{id} and submission_id=#{submissionId}")
+    int updateEditableFields(CourseItemEntity entity);
+
+    @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId} and review_status='REJECTED'")
+    int reopenRejectedBySubmissionId(@Param("submissionId") Long submissionId);
+
     @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId}")
     int resetReviewBySubmissionId(@Param("submissionId") Long submissionId);
 }

@@ -1,5 +1,6 @@
 package com.cqnu.eval.model.dto;
 
+import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -16,6 +17,7 @@ public class CourseItemInput {
 
     @NotNull(message = "成绩不能为空")
     @DecimalMin(value = "0", message = "成绩不能小于0")
+    @DecimalMax(value = "100", message = "成绩不能大于100")
     private BigDecimal score;
 
     @NotNull(message = "学分不能为空")

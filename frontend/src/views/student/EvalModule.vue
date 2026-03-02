@@ -3,28 +3,38 @@
     <div class="toolbar">
       <div>
         <h2 style="margin: 0;">{{ label }}</h2>
-        <p class="muted" style="margin-top: 6px;">
-          测评单ID：<b>{{ submissionId || '-' }}</b>
-          <span style="margin: 0 6px; color: #cbd5e1;">|</span>
-          状态：<span class="badge">{{ statusLabel(status) }}</span>
+        <p class="muted" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span>
+            测评单ID：<b>{{ submissionId || '-' }}</b>
+            <span style="margin: 0 6px; color: #cbd5e1;">|</span>
+            状态：<span class="badge">{{ statusLabel(status) }}</span>
+          </span>
+          <span v-if="canEditAny" :class="['save-state-chip', 'inline', autoSave.error.value ? 'error' : '']">
+            <template v-if="autoSave.error.value">自动保存失败：{{ autoSave.error.value }}</template>
+            <template v-else-if="autoSave.saving.value">自动保存中...</template>
+            <template v-else-if="autoSave.dirty.value">有未保存变更</template>
+            <template v-else-if="autoSave.lastSavedAt.value">已自动保存 {{ autoSave.lastSavedAt.value }}</template>
+            <template v-else>编辑后将自动保存</template>
+          </span>
         </p>
       </div>
       <div class="toolbar-row">
-        <button class="btn" type="button" @click="save" :disabled="loading || !canEdit">保存</button>
+        <button class="btn" type="button" @click="save" :disabled="loading || !canEditAny">保存</button>
       </div>
     </div>
 
-    <p v-if="!canEdit" class="muted" style="margin-top: 6px; color: #64748b;">
+    <p v-if="isSubmittedReadOnly" class="muted" style="margin-top: 6px; color: #64748b;">
+      审核中，仅可查看，暂不可修改。
+    </p>
+    <p v-else-if="isRejectedOnlyEditable" class="muted" style="margin-top: 6px; color: #64748b;">
+      仅可修改被驳回条目，修改后请再次提交。
+    </p>
+    <p v-else-if="isFullyReadOnly" class="muted" style="margin-top: 6px; color: #64748b;">
       当前测评单状态不可编辑，如需修改请联系管理员。
     </p>
-
-    <div v-if="canEdit" :class="['save-state-chip', autoSave.error.value ? 'error' : '']">
-      <template v-if="autoSave.error.value">自动保存失败：{{ autoSave.error.value }}</template>
-      <template v-else-if="autoSave.saving.value">自动保存中...</template>
-      <template v-else-if="autoSave.dirty.value">有未保存变更</template>
-      <template v-else-if="autoSave.lastSavedAt.value">已自动保存 {{ autoSave.lastSavedAt.value }}</template>
-      <template v-else>编辑后将自动保存</template>
-    </div>
+    <p v-if="isSportModule" class="muted" style="margin-top: 8px; color: #334155;">
+      请填写大学体育成绩，若没有则不填；仅标题为“大学体育”按体育课成绩计算，其余体育活动按 15% 计算。
+    </p>
 
     <div class="table-search-bar">
       <div class="table-search-left">
@@ -43,6 +53,10 @@
           <option value="REJECTED">驳回</option>
         </select>
       </div>
+      <div class="table-search-right">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <button class="btn secondary" type="button" :disabled="!canBatchDeleteRows" @click="batchDeleteRows">批量删除</button>
+      </div>
     </div>
 
     <div class="table-shell">
@@ -50,6 +64,15 @@
         <table class="table table-sticky" data-resize-key="student_eval_module">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedRowKeys.length || loading || !canRemoveRows"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th style="width: 180px;">活动标题</th>
               <th>说明</th>
               <th style="width: 110px;">分数</th>
@@ -63,18 +86,26 @@
             <tr v-for="(a, idx) in pagedRows" :key="a.id || a._rowKey || idx">
               <td>
                 <input
+                  type="checkbox"
+                  :checked="selection.isSelected(rowSelectionKey(a))"
+                  :disabled="loading || !canRemoveRows"
+                  @change="selection.toggle(rowSelectionKey(a))"
+                />
+              </td>
+              <td>
+                <input
                   v-model.trim="a.title"
                   placeholder="例如：主题团日"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  :disabled="loading || !canEditActivityRow(a)"
+                  @blur="triggerImmediateSave(a)"
                 />
               </td>
               <td>
                 <input
                   v-model.trim="a.description"
                   placeholder="可填写简要说明"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  :disabled="loading || !canEditActivityRow(a)"
+                  @blur="triggerImmediateSave(a)"
                 />
               </td>
               <td>
@@ -82,9 +113,10 @@
                   v-model.number="a.selfScore"
                   type="number"
                   min="0"
+                  :max="isSportModule ? 100 : null"
                   step="0.5"
-                  :disabled="loading || !canEdit"
-                  @blur="triggerImmediateSave"
+                  :disabled="loading || !canEditActivityRow(a)"
+                  @blur="triggerImmediateSave(a)"
                 />
               </td>
               <td>
@@ -92,7 +124,7 @@
                   v-model="a.evidenceFileIds"
                   :max="6"
                   :hint="''"
-                  :readonly="!canEdit"
+                  :readonly="!canEditActivityRow(a)"
                 />
               </td>
               <td>
@@ -108,14 +140,14 @@
                   class="btn secondary"
                   type="button"
                   @click="removeItem(a)"
-                  :disabled="loading || !canEdit"
+                  :disabled="loading || !canRemoveRows"
                 >
                   删除
                 </button>
               </td>
             </tr>
             <tr v-if="!pagedRows.length">
-              <td colspan="7" class="empty">暂无符合条件的活动</td>
+              <td colspan="8" class="empty">暂无符合条件的活动</td>
             </tr>
           </tbody>
         </table>
@@ -124,13 +156,15 @@
         :page="page"
         :total-pages="totalPages"
         :total="total"
+        :page-size="pageSize"
         :disabled="loading"
-        @change="goPage"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
 
     <div class="toolbar-row module-footer-row" style="margin-top: 10px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !canEdit">新增</button>
+      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !isDraftEditable">新增</button>
       <div class="formula-note">
         {{ moduleFormulaText }}
       </div>
@@ -146,6 +180,7 @@ import TablePager from '../../components/TablePager.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import useTablePager from '../../composables/useTablePager'
 import useAutoSaveDraft from '../../composables/useAutoSaveDraft'
+import useTableSelection from '../../composables/useTableSelection'
 
 const props = defineProps({
   moduleType: { type: String, required: true },
@@ -161,10 +196,32 @@ const suppressDirty = ref(false)
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
+const editableRejectedOnly = computed(() => Boolean(store.state.score?.editableRejectedOnly))
 const reviewReady = computed(() => Boolean(store.state.score?.reviewReady))
-const canEdit = computed(() => {
+const statusCode = computed(() => String(status.value || '').trim().toUpperCase())
+const isDraftEditable = computed(() => statusCode.value === 'DRAFT')
+const isRejectedOnlyEditable = computed(() => statusCode.value === 'SUBMITTED' && editableRejectedOnly.value)
+const isSubmittedReadOnly = computed(() => statusCode.value === 'SUBMITTED' && !editableRejectedOnly.value)
+const isFullyReadOnly = computed(() => (
+  statusCode.value === 'COUNSELOR_REVIEWED'
+  || statusCode.value === 'FINALIZED'
+  || statusCode.value === 'PUBLISHED'
+))
+const canEditAny = computed(() => isDraftEditable.value || isRejectedOnlyEditable.value)
+const canRemoveRows = computed(() => isDraftEditable.value)
+const isSportModule = computed(() => props.moduleType === 'SPORT_ACTIVITY')
+const UNIVERSITY_PE_TITLE = '大学体育'
+
+const canEditActivityRow = (row) => {
+  if (isDraftEditable.value) return true
+  if (!isRejectedOnlyEditable.value) return false
+  const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
+  return reviewStatus === 'REJECTED'
+}
+
+const isSubmitStage = computed(() => {
   const code = String(status.value || '').trim().toUpperCase()
-  return code !== 'COUNSELOR_REVIEWED' && code !== 'FINALIZED' && code !== 'PUBLISHED'
+  return code === 'SUBMITTED'
 })
 
 const moduleFormulaText = computed(() => {
@@ -175,7 +232,7 @@ const moduleFormulaText = computed(() => {
     return '智育计入分公式：智育原始分 = 智育课程加权平均分 × 85% + min(智育活动总分, 100) × 15%；智育计入分 = 智育原始分 × 60%'
   }
   if (props.moduleType === 'SPORT_ACTIVITY') {
-    return '体育计入分公式：体育原始分 = 体育课程加权平均分 × 85% + min(体育活动总分, 100) × 15%；体育计入分 = 体育原始分 × 10%'
+    return '体育计入分公式：体育原始分 = 大学体育分 × 85% + min(体育活动总分, 100) × 15%；体育计入分 = 体育原始分 × 10%'
   }
   if (props.moduleType === 'ART') {
     return '美育计入分公式：美育计入分 = min(美育活动总分, 100) × 7.5%'
@@ -221,6 +278,8 @@ const displayReviewerComment = (text) => {
   return text
 }
 
+const isUniversityPeTitle = (title) => String(title || '').trim() === UNIVERSITY_PE_TITLE
+
 const blankRow = () => ({
   moduleType: props.moduleType,
   title: '',
@@ -256,21 +315,52 @@ const filteredRows = computed(() => {
 
 const {
   page,
+  pageSize,
   total,
   totalPages,
   pagedRows,
   goPage,
+  setPageSize,
   resetPage
 } = useTablePager(filteredRows, 10)
 
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+
+const rowSelectionKey = (row) => {
+  if (!row) return ''
+  if (row.id != null) return `id_${row.id}`
+  return String(row._rowKey || '')
+}
+
+const pagedRowKeys = computed(() => pagedRows.value.map((item) => rowSelectionKey(item)).filter(Boolean))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedRowKeys.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedRowKeys.value))
+const canBatchDeleteRows = computed(() => selection.selectedCount.value > 0 && canRemoveRows.value && !loading.value)
+
 const ensureEditable = () => {
-  if (canEdit.value) return true
+  if (canEditAny.value) return true
+  if (isSubmitStage.value) {
+    alert('当前审核阶段不可修改活动')
+    return false
+  }
+  alert('当前测评单状态不可编辑')
+  return false
+}
+
+const ensureDraftEditable = () => {
+  if (isDraftEditable.value) return true
+  if (isSubmitStage.value) {
+    alert('审核中不可新增或删除活动')
+    return false
+  }
   alert('当前测评单状态不可编辑')
   return false
 }
 
 const buildActivityPayload = ({ silent }) => {
   const out = []
+  let universityPeCount = 0
   for (const a of rows.value) {
     const title = String(a.title || '').trim()
     const desc = String(a.description || '').trim()
@@ -285,10 +375,15 @@ const buildActivityPayload = ({ silent }) => {
       if (!silent) alert(msg)
       return { ok: false, message: msg, items: [] }
     }
-    if (!Number.isFinite(score) || score < 0) {
-      const msg = '活动分数必须是大于等于 0 的数字'
+    if (!Number.isFinite(score) || score < 0 || (isSportModule.value && score > 100)) {
+      const msg = isSportModule.value
+        ? '体育模块分数必须在 0 到 100 之间'
+        : '活动分数必须是大于等于 0 的数字'
       if (!silent) alert(msg)
       return { ok: false, message: msg, items: [] }
+    }
+    if (isSportModule.value && isUniversityPeTitle(title)) {
+      universityPeCount += 1
     }
 
     out.push({
@@ -300,16 +395,21 @@ const buildActivityPayload = ({ silent }) => {
       evidenceFileIds: ev
     })
   }
+  if (isSportModule.value && universityPeCount > 1) {
+    const msg = '体育模块中“大学体育”最多只能填写一条'
+    if (!silent) alert(msg)
+    return { ok: false, message: msg, items: [] }
+  }
   return { ok: true, message: '', items: out }
 }
 
 const autoSave = useAutoSaveDraft(async () => {
-  if (!canEdit.value) return
+  if (!canEditAny.value) return
   const payload = buildActivityPayload({ silent: true })
   if (!payload.ok) {
     throw new Error(payload.message || '当前填写内容未完成，暂未自动保存')
   }
-  await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: false })
+  await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: false, silent: true })
 }, { debounceMs: 1200 })
 
 const syncRowsFromStore = () => {
@@ -319,6 +419,7 @@ const syncRowsFromStore = () => {
     .filter((x) => String(x.moduleType || '').toUpperCase() === props.moduleType)
     .map(mapActivity)
   if (!rows.value.length) rows.value.push(blankRow())
+  selection.clear()
   suppressDirty.value = false
 }
 
@@ -337,15 +438,17 @@ const reload = async () => {
 }
 
 const addRow = () => {
-  if (!ensureEditable()) return
+  if (!ensureDraftEditable()) return
   rows.value.push(blankRow())
+  selection.clear()
   resetPage()
 }
 
 const removeRow = (idx) => {
-  if (!ensureEditable()) return
+  if (!ensureDraftEditable()) return
   rows.value.splice(idx, 1)
   if (!rows.value.length) rows.value.push(blankRow())
+  selection.clear()
   resetPage()
 }
 
@@ -357,11 +460,50 @@ const removeItem = (item) => {
 const clearFilters = () => {
   keyword.value = ''
   reviewFilter.value = 'ALL'
+  selection.clear()
   resetPage()
 }
 
 const onSearchSubmit = () => {
+  selection.clear()
   resetPage()
+}
+
+const onPageChange = (nextPage) => {
+  goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  setPageSize(nextSize)
+  selection.clear()
+}
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedRowKeys.value)
+}
+
+const selectedRowsOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pagedRows.value.filter((item) => selected.has(rowSelectionKey(item)))
+})
+
+const batchDeleteRows = () => {
+  if (!ensureDraftEditable()) return
+
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    alert('请先勾选要删除的活动')
+    return
+  }
+  if (!confirm(`确认批量删除已选 ${selectedRows.length} 条活动吗？`)) return
+
+  const keys = new Set(selectedRows.map((item) => rowSelectionKey(item)))
+  rows.value = rows.value.filter((item) => !keys.has(rowSelectionKey(item)))
+  if (!rows.value.length) rows.value.push(blankRow())
+  selection.clear()
+  resetPage()
+  alert(`已删除 ${selectedRows.length} 条活动`)
 }
 
 const save = async () => {
@@ -380,8 +522,9 @@ const save = async () => {
   }
 }
 
-const triggerImmediateSave = () => {
-  if (!canEdit.value || suppressDirty.value || !autoSave.dirty.value) return
+const triggerImmediateSave = (row) => {
+  if (!canEditAny.value || suppressDirty.value || !autoSave.dirty.value) return
+  if (!canEditActivityRow(row)) return
   autoSave.saveNow().catch(() => {})
 }
 
@@ -395,19 +538,26 @@ watch(
 )
 
 watch([keyword, reviewFilter], () => {
+  selection.clear()
   resetPage()
 })
 
 watch(
   rows,
   () => {
-    if (suppressDirty.value || loading.value || !canEdit.value) return
+    if (suppressDirty.value || loading.value || !canEditAny.value) return
     autoSave.markDirty()
   },
   { deep: true }
 )
 
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
+})
+
 onBeforeUnmount(() => {
+  if (!canEditAny.value) return
   autoSave.saveNow().catch(() => {})
 })
 </script>
