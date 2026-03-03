@@ -71,8 +71,7 @@ public interface SubmissionMapper {
     List<java.util.Map<String, Object>> listSubmittedTasks();
 
     @Select("select s.*, u.student_no, u.real_name, u.class_name, u.major_name, " +
-            "coalesce(s.counselor_ready_at, s.updated_at) as passTime, " +
-            "coalesce(s.counselor_ready_at, s.updated_at) as counselorSubmitTime " +
+            "coalesce(s.counselor_ready_at, s.updated_at) as passTime " +
             "from submission s " +
             "join sys_user u on s.student_id=u.id " +
             "where s.status='COUNSELOR_REVIEWED' " +

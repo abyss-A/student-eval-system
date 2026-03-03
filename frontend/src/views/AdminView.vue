@@ -43,7 +43,7 @@
               <td>{{ task.class_name }}</td>
               <td><span class="badge">{{ statusLabel(task.status) }}</span></td>
               <td>{{ task.total_score ?? '-' }}</td>
-              <td>{{ formatDate(task.passTime || task.counselorSubmitTime) }}</td>
+              <td>{{ formatDate(task.passTime) }}</td>
               <td>
                 <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail">
                   {{ selectedSubmissionId === task.id && drawerOpen ? '已打开' : '查看' }}
