@@ -70,6 +70,7 @@ CREATE TABLE submission (
   submitted_at DATETIME NULL,
   finalized_at DATETIME NULL,
   published_at DATETIME NULL,
+  counselor_ready_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_submission_semester_student (semester_id, student_id),

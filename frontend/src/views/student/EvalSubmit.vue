@@ -110,12 +110,12 @@ const canStudentResubmit = computed(() => Boolean(score.value?.canStudentResubmi
 const canSubmit = computed(() => {
   if (statusCode.value === 'DRAFT') return true
   if (statusCode.value === 'SUBMITTED') {
-    return canStudentResubmit.value || reviewPhase.value === 'DONE_NEED_STUDENT_FIX'
+    return canStudentResubmit.value
   }
   return false
 })
 const submitButtonLabel = computed(() => {
-  if (statusCode.value === 'SUBMITTED' && (canStudentResubmit.value || reviewPhase.value === 'DONE_NEED_STUDENT_FIX')) {
+  if (statusCode.value === 'SUBMITTED' && canStudentResubmit.value) {
     return '再次提交'
   }
   return '提交审核'

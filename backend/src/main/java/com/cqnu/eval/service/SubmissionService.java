@@ -541,6 +541,9 @@ public class SubmissionService {
             throw new BizException(40003, "审核中，暂不可再次提交");
         }
 
+        courseItemMapper.reopenRejectedBySubmissionId(submissionId);
+        activityItemMapper.reopenRejectedBySubmissionId(submissionId);
+
         ScoreResult score = calculateScore(submissionId);
         entity.setStatus("SUBMITTED");
         entity.setMoralRaw(score.getMoralRaw());
@@ -550,29 +553,6 @@ public class SubmissionService {
         entity.setLaborRaw(score.getLaborRaw());
         entity.setTotalScore(score.getTotalScore());
         entity.setSubmittedAt(LocalDateTime.now());
-        submissionMapper.updateScoresAndStatus(entity);
-        return entity;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public SubmissionEntity finalizeSubmission(Long submissionId) {
-        SubmissionEntity entity = submissionMapper.findById(submissionId);
-        if (entity == null) {
-            throw new BizException(40401, "Submission not found");
-        }
-        if (!"COUNSELOR_REVIEWED".equalsIgnoreCase(entity.getStatus())) {
-            throw new BizException(40003, "Only counselor-reviewed submissions can be finalized");
-        }
-
-        ScoreResult score = calculateScore(submissionId);
-        entity.setStatus("FINALIZED");
-        entity.setMoralRaw(score.getMoralRaw());
-        entity.setIntelRaw(score.getIntelRaw());
-        entity.setSportRaw(score.getSportRaw());
-        entity.setArtRaw(score.getArtRaw());
-        entity.setLaborRaw(score.getLaborRaw());
-        entity.setTotalScore(score.getTotalScore());
-        entity.setFinalizedAt(LocalDateTime.now());
         submissionMapper.updateScoresAndStatus(entity);
         return entity;
     }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -73,8 +74,12 @@ public class ReviewService {
 
         int total = countTotalItems(submissionId);
         int reviewed = countReviewedItems(submissionId);
+        int rejected = countRejectedItems(submissionId);
         if (reviewed < total) {
             throw new BizException(40001, "该测评单仍有未审核条目，请完成审核后再提交");
+        }
+        if (rejected > 0) {
+            throw new BizException(40001, "存在驳回条目，当前不能提交管理员");
         }
 
         submissionService.recalculate(submissionId);
@@ -115,6 +120,7 @@ public class ReviewService {
 
         log("COURSE", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
         submissionService.recalculate(item.getSubmissionId());
+        refreshCounselorReadyAt(item.getSubmissionId());
     }
 
     private void handleActivity(Long itemId, String action, ReviewDecisionRequest req, Long reviewerId) {
@@ -148,6 +154,7 @@ public class ReviewService {
 
         log("ACTIVITY", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
         submissionService.recalculate(item.getSubmissionId());
+        refreshCounselorReadyAt(item.getSubmissionId());
     }
 
     private void ensureSubmissionSubmitted(Long submissionId) {
@@ -168,6 +175,17 @@ public class ReviewService {
     private int countReviewedItems(Long submissionId) {
         return courseItemMapper.countReviewedBySubmissionId(submissionId)
                 + activityItemMapper.countReviewedBySubmissionId(submissionId);
+    }
+
+    private int countRejectedItems(Long submissionId) {
+        return courseItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED")
+                + activityItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
+    }
+
+    private void refreshCounselorReadyAt(Long submissionId) {
+        SubmissionService.ReviewStats stats = submissionService.getReviewStats(submissionId);
+        boolean readyToSubmit = stats.getReviewPendingCount() == 0 && stats.getReviewRejectedCount() == 0;
+        submissionMapper.updateCounselorReadyAt(submissionId, readyToSubmit ? LocalDateTime.now() : null);
     }
 
     private String normalizeAction(String raw) {

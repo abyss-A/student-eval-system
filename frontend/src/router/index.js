@@ -83,7 +83,7 @@ const routes = [
     meta: { roles: ['ADMIN'] },
     children: [
       { path: '', redirect: '/admin/finalize/tasks' },
-      { path: 'finalize/tasks', component: AdminFinalizeTasks, meta: { title: '待终审列表' } },
+      { path: 'finalize/tasks', component: AdminFinalizeTasks, meta: { title: '待处理测评单' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },

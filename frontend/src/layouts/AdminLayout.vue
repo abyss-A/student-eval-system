@@ -7,8 +7,8 @@ import BaseLayout from './BaseLayout.vue'
 
 const menuGroups = [
   {
-    title: '终审管理',
-    items: [{ label: '待终审列表', to: '/admin/finalize/tasks' }]
+    title: '测评查看',
+    items: [{ label: '待处理测评单', to: '/admin/finalize/tasks' }]
   },
   {
     title: '公告通知',
@@ -24,4 +24,3 @@ const menuGroups = [
   }
 ]
 </script>
-

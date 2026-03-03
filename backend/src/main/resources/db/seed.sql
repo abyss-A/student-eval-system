@@ -1,5 +1,8 @@
 USE student_eval;
 
+ALTER TABLE submission
+  ADD COLUMN IF NOT EXISTS counselor_ready_at DATETIME NULL AFTER published_at;
+
 -- Business-only reset: keep users, semester, scoring config, notices, feedbacks.
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE review_log;

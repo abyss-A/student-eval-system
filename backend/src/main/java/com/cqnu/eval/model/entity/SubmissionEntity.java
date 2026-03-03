@@ -17,6 +17,7 @@ public class SubmissionEntity {
     private LocalDateTime submittedAt;
     private LocalDateTime finalizedAt;
     private LocalDateTime publishedAt;
+    private LocalDateTime counselorReadyAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -122,6 +123,14 @@ public class SubmissionEntity {
 
     public void setPublishedAt(LocalDateTime publishedAt) {
         this.publishedAt = publishedAt;
+    }
+
+    public LocalDateTime getCounselorReadyAt() {
+        return counselorReadyAt;
+    }
+
+    public void setCounselorReadyAt(LocalDateTime counselorReadyAt) {
+        this.counselorReadyAt = counselorReadyAt;
     }
 
     public LocalDateTime getCreatedAt() {

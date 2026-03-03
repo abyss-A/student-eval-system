@@ -62,20 +62,20 @@
               <td>{{ task.total_score ?? '-' }}</td>
               <td>{{ formatDate(task.submitted_at) }}</td>
               <td>
-                <span class="badge" :class="taskProgressBadge(task.review_progress)">{{ taskProgressLabel(task.review_progress) }}</span>
-                <span class="muted" style="margin-left: 6px;">{{ task.review_done_count ?? 0 }}/{{ task.review_total_count ?? 0 }}</span>
+                <span class="badge" :class="taskProgressBadge(task)">{{ taskProgressLabel(task) }}</span>
+                <span class="muted" style="margin-left: 6px;">{{ pickTaskDoneCount(task) }}/{{ pickTaskTotalCount(task) }}</span>
               </td>
               <td>
                 <div class="action-row inline-actions">
                   <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail || submittingTaskId === task.id">
-                    {{ selectedSubmissionId === task.id ? '已打开' : '打开审核' }}
+                    {{ taskOpenActionLabel(task) }}
                   </button>
                   <button
                     class="btn"
                     @click="submitTaskToAdmin(task)"
                     :disabled="!canSubmitTask(task) || submittingTaskId === task.id"
                   >
-                    {{ submittingTaskId === task.id ? '提交中...' : '提交管理员' }}
+                    {{ submitTaskButtonLabel(task) }}
                   </button>
                 </div>
               </td>
@@ -457,25 +457,72 @@ const moduleLabel = (raw) => {
 
 const isPendingStatus = (raw) => String(raw || '').trim().toUpperCase() === 'PENDING'
 
-const taskProgressLabel = (raw) => {
-  const code = String(raw || '').trim().toUpperCase()
-  if (code === 'DONE') return '审核完毕'
-  if (code === 'IN_PROGRESS') return '正在审核'
+const pickTaskDoneCount = (task) => {
+  const raw = task?.reviewDoneCount ?? task?.review_done_count ?? 0
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+const pickTaskTotalCount = (task) => {
+  const raw = task?.reviewTotalCount ?? task?.review_total_count ?? 0
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+const pickTaskRejectedCount = (task) => {
+  const raw = task?.reviewRejectedCount ?? task?.review_rejected_count ?? 0
+  const value = Number(raw)
+  return Number.isFinite(value) ? value : 0
+}
+
+const pickTaskPhase = (task) => {
+  const raw = String(task?.reviewPhase || task?.review_phase || task?.review_progress || '').trim().toUpperCase()
+  if (raw === 'DONE') {
+    return pickTaskRejectedCount(task) > 0 ? 'REVIEWED' : 'READY_TO_SUBMIT'
+  }
+  return raw
+}
+
+const isSubmittedToAdminTask = (task) => String(task?.status || '').trim().toUpperCase() === 'COUNSELOR_REVIEWED'
+
+const taskProgressLabel = (task) => {
+  if (isSubmittedToAdminTask(task)) return '已提交'
+  const phase = pickTaskPhase(task)
+  if (phase === 'READY_TO_SUBMIT') return '待提交'
+  if (phase === 'REVIEWED') return '待复审'
+  if (phase === 'IN_PROGRESS') return '正在审核'
   return '未审核'
 }
 
-const taskProgressBadge = (raw) => {
-  const code = String(raw || '').trim().toUpperCase()
-  if (code === 'DONE') return 'success'
-  if (code === 'IN_PROGRESS') return ''
+const taskProgressBadge = (task) => {
+  if (isSubmittedToAdminTask(task)) return 'success'
+  const phase = pickTaskPhase(task)
+  if (phase === 'READY_TO_SUBMIT') return 'success'
+  if (phase === 'REVIEWED') return 'warning'
+  if (phase === 'IN_PROGRESS') return ''
   return 'danger'
 }
 
 const canSubmitTask = (task) => {
   if (!task) return false
-  const progress = String(task.review_progress || '').trim().toUpperCase()
+  if (isSubmittedToAdminTask(task)) return false
+  const progress = pickTaskPhase(task)
   const status = String(task.status || '').trim().toUpperCase()
-  return progress === 'DONE' && status === 'SUBMITTED'
+  return progress === 'READY_TO_SUBMIT' && status === 'SUBMITTED'
+}
+
+const taskOpenActionLabel = (task) => {
+  const opened = selectedSubmissionId.value === task?.id
+  if (isSubmittedToAdminTask(task)) {
+    return opened ? '已查看' : '查看'
+  }
+  return opened ? '已打开' : '打开审核'
+}
+
+const submitTaskButtonLabel = (task) => {
+  if (submittingTaskId.value === task?.id) return '提交中...'
+  if (isSubmittedToAdminTask(task)) return '已提交'
+  return '提交管理员'
 }
 
 const isAutoReason = (text) => {
@@ -592,7 +639,7 @@ const decide = async (itemType, itemId, action) => {
 const submitTaskToAdmin = async (task) => {
   if (!task?.id) return
   if (!canSubmitTask(task)) {
-    alert('当前测评单还未审核完毕，不能提交管理员')
+    alert('仅“待提交”状态可提交管理员（需全条目已通过）')
     return
   }
 

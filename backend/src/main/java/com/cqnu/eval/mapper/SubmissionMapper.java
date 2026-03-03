@@ -3,7 +3,6 @@ package com.cqnu.eval.mapper;
 import com.cqnu.eval.model.entity.SubmissionEntity;
 import org.apache.ibatis.annotations.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,6 +30,16 @@ public interface SubmissionMapper {
             "s.*, u.student_no, u.real_name, u.class_name, u.major_name, " +
             "(coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) as review_total_count, " +
             "(coalesce(ci.done_count,0) + coalesce(ai.done_count,0)) as review_done_count, " +
+            "(coalesce(ci.pending_count,0) + coalesce(ai.pending_count,0)) as review_pending_count, " +
+            "(coalesce(ci.rejected_count,0) + coalesce(ai.rejected_count,0)) as review_rejected_count, " +
+            "(coalesce(ci.approved_count,0) + coalesce(ai.approved_count,0)) as review_approved_count, " +
+            "case " +
+            "  when (coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) = 0 then 'READY_TO_SUBMIT' " +
+            "  when (coalesce(ci.done_count,0) + coalesce(ai.done_count,0)) = 0 then 'NOT_REVIEWED' " +
+            "  when (coalesce(ci.done_count,0) + coalesce(ai.done_count,0)) < (coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) then 'IN_PROGRESS' " +
+            "  when (coalesce(ci.rejected_count,0) + coalesce(ai.rejected_count,0)) > 0 then 'REVIEWED' " +
+            "  else 'READY_TO_SUBMIT' " +
+            "end as review_phase, " +
             "case " +
             "  when (coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) = 0 then 'DONE' " +
             "  when (coalesce(ci.done_count,0) + coalesce(ai.done_count,0)) = 0 then 'NOT_REVIEWED' " +
@@ -40,18 +49,30 @@ public interface SubmissionMapper {
             "from submission s " +
             "join sys_user u on s.student_id = u.id " +
             "left join (" +
-            "  select submission_id, count(1) as total_count, sum(case when review_status <> 'PENDING' then 1 else 0 end) as done_count " +
+            "  select submission_id, " +
+            "         count(1) as total_count, " +
+            "         sum(case when review_status <> 'PENDING' then 1 else 0 end) as done_count, " +
+            "         sum(case when review_status = 'PENDING' then 1 else 0 end) as pending_count, " +
+            "         sum(case when review_status = 'REJECTED' then 1 else 0 end) as rejected_count, " +
+            "         sum(case when review_status = 'APPROVED' then 1 else 0 end) as approved_count " +
             "  from course_item group by submission_id" +
             ") ci on ci.submission_id = s.id " +
             "left join (" +
-            "  select submission_id, count(1) as total_count, sum(case when review_status <> 'PENDING' then 1 else 0 end) as done_count " +
+            "  select submission_id, " +
+            "         count(1) as total_count, " +
+            "         sum(case when review_status <> 'PENDING' then 1 else 0 end) as done_count, " +
+            "         sum(case when review_status = 'PENDING' then 1 else 0 end) as pending_count, " +
+            "         sum(case when review_status = 'REJECTED' then 1 else 0 end) as rejected_count, " +
+            "         sum(case when review_status = 'APPROVED' then 1 else 0 end) as approved_count " +
             "  from activity_item group by submission_id" +
             ") ai on ai.submission_id = s.id " +
-            "where s.status='SUBMITTED' " +
-            "order by s.submitted_at desc")
+            "where s.status in ('SUBMITTED','COUNSELOR_REVIEWED') " +
+            "order by case when s.status='SUBMITTED' then 0 else 1 end asc, coalesce(s.submitted_at, s.updated_at) desc")
     List<java.util.Map<String, Object>> listSubmittedTasks();
 
-    @Select("select s.*, u.student_no, u.real_name, u.class_name, u.major_name " +
+    @Select("select s.*, u.student_no, u.real_name, u.class_name, u.major_name, " +
+            "coalesce(s.counselor_ready_at, s.updated_at) as passTime, " +
+            "coalesce(s.counselor_ready_at, s.updated_at) as counselorSubmitTime " +
             "from submission s " +
             "join sys_user u on s.student_id=u.id " +
             "where s.status='COUNSELOR_REVIEWED' " +
@@ -65,4 +86,7 @@ public interface SubmissionMapper {
     int updateStatusIfCurrent(@Param("id") Long id,
                               @Param("currentStatus") String currentStatus,
                               @Param("targetStatus") String targetStatus);
+
+    @Update("update submission set counselor_ready_at=#{counselorReadyAt}, updated_at=now() where id=#{id}")
+    int updateCounselorReadyAt(@Param("id") Long id, @Param("counselorReadyAt") LocalDateTime counselorReadyAt);
 }
