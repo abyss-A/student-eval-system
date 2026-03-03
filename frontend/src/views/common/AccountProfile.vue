@@ -18,8 +18,8 @@
 
     <article class="card" style="box-shadow: none; background: #fbfdff;">
       <h3 style="margin: 0 0 10px; font-size: 16px;">联系电话</h3>
-      <div class="grid two" style="align-items: end;">
-        <label class="field">
+      <div class="account-phone-row">
+        <label class="field account-phone-field">
           <span class="field-label">电话</span>
           <input
             v-model.trim="phoneDraft"
@@ -27,14 +27,14 @@
             placeholder="请输入联系电话"
             @input="phoneError = ''"
           />
-          <span class="muted" style="color: #b42318; min-height: 20px;">{{ phoneError }}</span>
         </label>
-        <div class="toolbar-row" style="justify-content: flex-start;">
+        <div class="toolbar-row account-phone-actions">
           <button class="btn" type="button" :disabled="savingPhone" @click="savePhone">
             {{ savingPhone ? '保存中...' : '保存电话' }}
           </button>
         </div>
       </div>
+      <span class="muted account-inline-error">{{ phoneError }}</span>
     </article>
 
     <article class="card" style="box-shadow: none; background: #fbfdff;">
@@ -178,4 +178,30 @@ onMounted(() => {
   loadProfile()
 })
 </script>
+
+<style scoped>
+.account-phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.account-phone-actions {
+  justify-content: flex-start;
+}
+
+.account-inline-error {
+  display: block;
+  color: #b42318;
+  min-height: 20px;
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  .account-phone-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 
