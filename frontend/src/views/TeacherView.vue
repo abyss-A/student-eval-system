@@ -2,14 +2,12 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">辅导员审核</h2>
         <p class="muted" style="margin-top: 6px;">先选择待审核测评单，再逐项审核课程和活动。</p>
       </div>
     </div>
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetTaskFilter">&lt;</button>
         <SearchCapsule
           v-model="taskKeyword"
           width="320px"
@@ -120,7 +118,6 @@
         <h4 class="section-title">课程审核</h4>
         <div class="table-search-bar" style="margin-top: 0;">
           <div class="table-search-left">
-            <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetCourseFilter">&lt;</button>
             <SearchCapsule
               v-model="courseKeyword"
               width="300px"
@@ -217,7 +214,6 @@
         <h4 class="section-title">活动审核</h4>
         <div class="table-search-bar" style="margin-top: 0;">
           <div class="table-search-left">
-            <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetActivityFilter">&lt;</button>
             <SearchCapsule
               v-model="activityKeyword"
               width="300px"
@@ -930,3 +926,4 @@ onMounted(() => {
   white-space: nowrap;
 }
 </style>
+

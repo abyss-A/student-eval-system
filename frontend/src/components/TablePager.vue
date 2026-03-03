@@ -10,11 +10,7 @@
           aria-label="首页"
           title="首页"
           @click="emit('change', 1)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6l-6 6 6 6M12 6l-6 6 6 6" />
-          </svg>
-        </button>
+        >«</button>
 
         <button
           class="pager-btn pager-icon"
@@ -23,11 +19,7 @@
           aria-label="上一页"
           title="上一页"
           @click="emit('change', page - 1)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6" />
-          </svg>
-        </button>
+        >‹</button>
 
         <button
           v-for="p in displayPages"
@@ -48,11 +40,7 @@
           aria-label="下一页"
           title="下一页"
           @click="emit('change', page + 1)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
+        >›</button>
 
         <button
           v-if="showBoundaryButtons"
@@ -62,11 +50,7 @@
           aria-label="末页"
           title="末页"
           @click="emit('change', totalPages)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6l6 6-6 6M12 6l6 6-6 6" />
-          </svg>
-        </button>
+        >»</button>
       </div>
 
       <div v-if="showQuickJumper" class="table-pager-jumper">
@@ -157,178 +141,192 @@ const onPageSizeChange = (event) => {
 }
 
 const displayPages = computed(() => {
-  const pages = []
   const total = Math.max(1, Number(props.totalPages) || 1)
   const current = Math.min(Math.max(Number(props.page) || 1, 1), total)
-
-  const pushPage = (value) => {
-    pages.push({ key: `p_${value}`, value, label: String(value), ellipsis: false })
-  }
-  const pushEllipsis = (key) => {
-    pages.push({ key: `e_${key}`, value: -1, label: '...', ellipsis: true })
-  }
-
-  if (total <= 7) {
-    for (let i = 1; i <= total; i += 1) pushPage(i)
-    return pages
-  }
-
-  pushPage(1)
-  if (current > 4) pushEllipsis('l')
-
-  const start = Math.max(2, current - 1)
-  const end = Math.min(total - 1, current + 1)
-  for (let i = start; i <= end; i += 1) pushPage(i)
-
-  if (current < total - 3) pushEllipsis('r')
-  pushPage(total)
-  return pages
+  return [{ key: `p_${current}`, value: current, label: String(current), ellipsis: false }]
 })
 </script>
 
 <style scoped>
 .pager-skin {
-  background: #f6f7f9;
+  background: #edf0f4;
 }
 
 .table-pager-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 1px 0;
 }
 
 .table-pager-actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
 .pager-btn {
-  height: 38px;
-  min-width: 38px;
-  padding: 0 12px;
-  border: 1px solid #d2d8e1;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #4a5568;
+  height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  border: 1px solid #d2d9e3;
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #99a3b4;
   cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: none;
 }
 
 .pager-btn:hover:not(:disabled) {
-  border-color: #bac4d2;
-  background: #fdfefe;
+  border-color: #bec8d8;
+  background: #f3f6fa;
+  color: #5f6c82;
 }
 
 .pager-btn:disabled {
-  opacity: 0.55;
+  opacity: 1;
   cursor: not-allowed;
+  color: #c1c8d4;
+  background: #f4f6f9;
 }
 
 .pager-btn.pager-icon {
-  width: 38px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
   padding: 0;
-}
-
-.pager-btn.pager-icon svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .pager-btn.pager-page {
-  min-width: 42px;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 600;
+  min-width: 38px;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .pager-btn.pager-page.active {
-  background: #6f8fb6;
-  border-color: #6f8fb6;
+  background: #7395c0;
+  border-color: #7395c0;
   color: #ffffff;
   opacity: 1;
+  box-shadow: none;
 }
 
 .table-pager-jumper {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  flex: 0 0 auto;
 }
 
 .pager-label {
-  color: #4b5563;
-  font-size: 14px;
+  color: #606a7a;
+  font-size: 12px;
 }
 
 .pager-input {
-  width: 72px;
-  height: 38px;
-  padding: 0 10px;
-  border: 1px solid #d2d8e1;
-  border-radius: 6px;
+  width: 56px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #d2d9e3;
+  border-radius: 4px;
   background: #fff;
-  font-size: 14px;
+  font-size: 12px;
+  color: #111827;
+  vertical-align: middle;
 }
 
 .pager-input:focus {
   outline: none;
-  border-color: #9db3d4;
-  box-shadow: 0 0 0 3px rgba(111, 143, 182, 0.15);
+  border-color: #b6c2d4;
+  box-shadow: none;
 }
 
 .pager-confirm {
-  height: 38px;
-  min-width: 66px;
-  padding: 0 16px;
-  border: 1px solid #d2d8e1;
-  border-radius: 6px;
+  height: 30px;
+  min-width: 56px;
+  padding: 0 12px;
+  border: 1px solid #d2d9e3;
+  border-radius: 4px;
   background: #fff;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 700;
+  color: #0f172a;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 400;
   cursor: pointer;
+  flex: 0 0 auto;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.pager-confirm:hover:not(:disabled) {
+  border-color: #bec8d8;
+  background: #f8fafe;
 }
 
 .pager-confirm:disabled {
-  opacity: 0.55;
+  opacity: 1;
+  color: #9ca3af;
+  background: #f3f5f8;
   cursor: not-allowed;
 }
 
 .pager-total {
-  color: #111827;
-  font-size: 14px;
+  color: #1f2937;
+  font-size: 12px;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .table-pager-size {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
 }
 
 .table-pager-size select {
-  width: 160px;
-  height: 38px;
-  padding: 0 34px 0 12px;
-  border: 1px solid #d2d8e1;
-  border-radius: 10px;
+  width: 112px;
+  height: 30px;
+  padding: 0 26px 0 8px;
+  border: 1px solid #d2d9e3;
+  border-radius: 5px;
   background: #fff;
-  font-size: 14px;
+  font-size: 12px;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.table-pager-size select:focus {
+  outline: none;
+  border-color: #b6c2d4;
+  box-shadow: none;
 }
 
 @media (max-width: 900px) {
   .table-pager-wrap {
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .table-pager-actions,
@@ -340,17 +338,17 @@ const displayPages = computed(() => {
   .pager-confirm,
   .pager-input,
   .table-pager-size select {
-    height: 34px;
-    font-size: 13px;
+    height: 30px;
+    font-size: 12px;
   }
 
   .pager-label,
   .pager-total {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .table-pager-size select {
-    width: 128px;
+    width: 112px;
   }
 }
 </style>

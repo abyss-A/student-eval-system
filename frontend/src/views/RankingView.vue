@@ -2,7 +2,6 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">排名查询</h2>
         <p class="muted" style="margin-top: 6px;">按学期查看综合排名，并支持关键词筛选。</p>
       </div>
     </div>
@@ -17,7 +16,6 @@
           style="width: 120px;"
           @keyup.enter="load()"
         />
-        <button class="search-back-icon" type="button" aria-label="清空关键词" @click="resetKeyword">&lt;</button>
         <SearchCapsule
           v-model="keyword"
           width="320px"
@@ -172,3 +170,5 @@ onMounted(() => {
   load({ silent: true })
 })
 </script>
+
+

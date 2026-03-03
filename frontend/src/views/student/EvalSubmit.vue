@@ -2,7 +2,6 @@
   <section class="card submit-panel">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">综合成绩与提交</h2>
         <p class="muted" style="margin-top: 6px;">
           测评单ID：<b>{{ submissionId || '-' }}</b>
           <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -301,3 +300,4 @@ onMounted(reload)
   }
 }
 </style>
+

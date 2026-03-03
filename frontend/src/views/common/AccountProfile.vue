@@ -1,7 +1,6 @@
 ﻿<template>
   <section class="card stack">
     <div>
-      <h2 style="margin: 0;">账号中心</h2>
       <p class="muted" style="margin-top: 6px;">查看个人资料，修改联系电话与登录密码。</p>
     </div>
 
@@ -179,3 +178,4 @@ onMounted(() => {
   loadProfile()
 })
 </script>
+

@@ -1,68 +1,67 @@
-<template>
+﻿<template>
   <section class="grid two">
     <article class="card">
-      <h2>瀛︾敓绔～鎶?/h2>
-      <p>褰撳墠鐢ㄦ埛锛歿{ realName }}锛坽{ role }}锛?/p>
+      <p>瑜版挸澧犻悽銊﹀煕閿涙{ realName }}閿涘澖{ role }}閿?/p>
       <div class="grid two">
-        <button class="btn" @click="initSubmission">鍒涘缓/鍔犺浇鎴戠殑娴嬭瘎鍗?/button>
-        <button class="btn secondary" @click="loadScore" :disabled="!submissionId">鍒锋柊璁″垎</button>
+        <button class="btn" @click="initSubmission">閸掓稑缂?閸旂姾娴囬幋鎴犳畱濞村鐦庨崡?/button>
+        <button class="btn secondary" @click="loadScore" :disabled="!submissionId">閸掗攱鏌婄拋鈥冲瀻</button>
       </div>
-      <p v-if="submissionId">娴嬭瘎鍗旾D锛歿{ submissionId }}锛岀姸鎬侊細{{ status }}</p>
+      <p v-if="submissionId">濞村鐦庨崡鏃綝閿涙{ submissionId }}閿涘瞼濮搁幀渚婄窗{{ status }}</p>
     </article>
 
     <article class="card">
-      <h3>鍒嗘暟棰勮</h3>
+      <h3>閸掑棙鏆熸０鍕潔</h3>
       <div class="grid two" v-if="score">
-        <div>寰疯偛锛歿{ score.moralRaw }}</div>
-        <div>鏅鸿偛锛歿{ score.intelRaw }}</div>
-        <div>浣撹偛锛歿{ score.sportRaw }}</div>
-        <div>缇庤偛锛歿{ score.artRaw }}</div>
-        <div>鍔宠偛锛歿{ score.laborRaw }}</div>
-        <div>鎬诲垎锛歿{ score.totalScore }}</div>
+        <div>瀵扮柉鍋涢敍姝縶 score.moralRaw }}</div>
+        <div>閺呴缚鍋涢敍姝縶 score.intelRaw }}</div>
+        <div>娴ｆ捁鍋涢敍姝縶 score.sportRaw }}</div>
+        <div>缂囧氦鍋涢敍姝縶 score.artRaw }}</div>
+        <div>閸斿疇鍋涢敍姝縶 score.laborRaw }}</div>
+        <div>閹鍨庨敍姝縶 score.totalScore }}</div>
       </div>
-      <p v-else>鏆傛棤鍒嗘暟</p>
+      <p v-else>閺嗗倹妫ら崚鍡樻殶</p>
     </article>
   </section>
 
   <section class="card" style="margin-top:16px;">
-    <h3>璇剧▼鎴愮哗锛堝彲缂栬緫锛?/h3>
+    <h3>鐠囧墽鈻奸幋鎰摋閿涘牆褰茬紓鏍帆閿?/h3>
     <table class="table">
       <thead>
-        <tr><th>璇剧▼鍚?/th><th>绫诲瀷</th><th>鎴愮哗</th><th>瀛﹀垎</th><th>鎿嶄綔</th></tr>
+        <tr><th>鐠囧墽鈻奸崥?/th><th>缁鐎?/th><th>閹存劗鍝?/th><th>鐎涳箑鍨?/th><th>閹垮秳缍?/th></tr>
       </thead>
       <tbody>
         <tr v-for="(c, idx) in courses" :key="idx">
           <td><input v-model="c.courseName" /></td>
           <td>
             <select v-model="c.courseType">
-              <option value="REQUIRED">蹇呬慨</option>
-              <option value="ELECTIVE">閫変慨</option>
-              <option value="RETAKE">閲嶄慨</option>
-              <option value="RELEARN">鍐嶄慨</option>
+              <option value="REQUIRED">韫囧懍鎱?/option>
+              <option value="ELECTIVE">闁鎱?/option>
+              <option value="RETAKE">闁插秳鎱?/option>
+              <option value="RELEARN">閸愬秳鎱?/option>
             </select>
           </td>
           <td><input type="number" v-model.number="c.score" /></td>
           <td><input type="number" v-model.number="c.credit" step="0.5" /></td>
-          <td><button class="btn secondary" @click="courses.splice(idx,1)">鍒?/button></td>
+          <td><button class="btn secondary" @click="courses.splice(idx,1)">閸?/button></td>
         </tr>
       </tbody>
     </table>
     <div style="display:flex;gap:10px;margin-top:10px;">
-      <button class="btn secondary" @click="addCourse">鏂板</button>
-      <button class="btn" @click="saveCourses" :disabled="!submissionId">淇濆瓨</button>
+      <button class="btn secondary" @click="addCourse">閺傛澘顤?/button>
+      <button class="btn" @click="saveCourses" :disabled="!submissionId">娣囨繂鐡?/button>
     </div>
   </section>
 
   <section class="card" style="margin-top:16px;">
     <div class="toolbar">
       <div>
-        <h3>娲诲姩鏉＄洰锛堟寜妯″潡鍒嗗尯濉啓锛?/h3>
-        <p class="muted">姣忎釜娲诲姩鏈€澶氫笂浼?6 寮?JPG/PNG 璇佹槑鍥剧墖銆備笂浼犲悗璁板緱鐐瑰嚮鈥滀繚瀛樷€濄€?/p>
+        <h3>濞茶濮╅弶锛勬窗閿涘牊瀵滃Ο鈥虫健閸掑棗灏繅顐㈠晸閿?/h3>
+        <p class="muted">濮ｅ繋閲滃ú璇插З閺堚偓婢舵矮绗傛导?6 瀵?JPG/PNG 鐠囦焦妲戦崶鍓у閵嗗倷绗傛导鐘叉倵鐠佹澘绶遍悙鐟板毊閳ユ粈绻氱€涙ǚ鈧縿鈧?/p>
       </div>
       <div class="toolbar-row">
-        <button class="btn secondary" @click="saveActivities" :disabled="!submissionId">淇濆瓨</button>
-        <button class="btn" @click="submitForm" :disabled="!submissionId">鎻愪氦瀹℃牳</button>
-        <button class="btn ghost" @click="exportFile('DOCX')" :disabled="!submissionId">瀵煎嚭Word</button>
+        <button class="btn secondary" @click="saveActivities" :disabled="!submissionId">娣囨繂鐡?/button>
+        <button class="btn" @click="submitForm" :disabled="!submissionId">閹绘劒姘︾€光剝鐗?/button>
+        <button class="btn ghost" @click="exportFile('DOCX')" :disabled="!submissionId">鐎电厧鍤璚ord</button>
       </div>
     </div>
 
@@ -73,43 +72,43 @@
         <table class="table table-compact">
           <thead>
             <tr>
-              <th style="width:160px;">鏍囬</th>
-              <th>璇存槑</th>
-              <th style="width:100px;">鑷瘎鍒?/th>
-              <th style="width:260px;">璇佹槑鍥剧墖</th>
-              <th style="width:70px;">鎿嶄綔</th>
+              <th style="width:160px;">閺嶅洭顣?/th>
+              <th>鐠囧瓨妲?/th>
+              <th style="width:100px;">閼奉亣鐦庨崚?/th>
+              <th style="width:260px;">鐠囦焦妲戦崶鍓у</th>
+              <th style="width:70px;">閹垮秳缍?/th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(a, idx) in activitiesByModule[b.module]" :key="a._rowKey || idx">
-              <td><input v-model="a.title" placeholder="璇疯緭鍏ユ爣棰? /></td>
-              <td><input v-model="a.description" placeholder="鍙～鍐欒鏄? /></td>
+              <td><input v-model="a.title" placeholder="鐠囩柉绶崗銉︾垼妫? /></td>
+              <td><input v-model="a.description" placeholder="閸欘垰锝為崘娆掝嚛閺? /></td>
               <td><input type="number" v-model.number="a.selfScore" step="0.5" min="0" /></td>
               <td>
                 <div class="evidence-cell">
                   <div class="toolbar-row" style="gap:8px;">
-                    <button class="btn ghost" @click="uploadEvidenceImages(a)" :disabled="!submissionId">涓婁紶鍥剧墖</button>
+                    <button class="btn ghost" @click="uploadEvidenceImages(a)" :disabled="!submissionId">娑撳﹣绱堕崶鍓у</button>
                     <span class="muted" style="font-size:12px;">{{ evidenceCount(a) }}/6</span>
                   </div>
 
                   <div v-if="a._evidenceMetas && a._evidenceMetas.length" class="chip-list">
                     <span v-for="m in a._evidenceMetas" :key="m.id" class="chip">
-                      <button class="link" @click="previewEvidence(m.id, a._evidenceMetas)">{{ m.fileName || ('闄勪欢#' + m.id) }}</button>
-                      <button class="link danger" @click="removeEvidence(a, m.id)">绉婚櫎</button>
+                      <button class="link" @click="previewEvidence(m.id, a._evidenceMetas)">{{ m.fileName || ('闂勫嫪娆?' + m.id) }}</button>
+                      <button class="link danger" @click="removeEvidence(a, m.id)">缁夊娅?/button>
                     </span>
                   </div>
-                  <div v-else class="muted" style="font-size:12px;margin-top:6px;">鏈笂浼?/div>
+                  <div v-else class="muted" style="font-size:12px;margin-top:6px;">閺堫亙绗傛导?/div>
                 </div>
               </td>
-              <td><button class="btn danger" @click="removeActivity(b.module, idx)">鍒?/button></td>
+              <td><button class="btn danger" @click="removeActivity(b.module, idx)">閸?/button></td>
             </tr>
             <tr v-if="!activitiesByModule[b.module].length">
-              <td colspan="5" class="empty">鏆傛棤鏉＄洰</td>
+              <td colspan="5" class="empty">閺嗗倹妫ら弶锛勬窗</td>
             </tr>
           </tbody>
         </table>
         <div style="display:flex;gap:10px;margin-top:10px;">
-          <button class="btn secondary" @click="addActivity(b.module)" :disabled="!submissionId">鏂板</button>
+          <button class="btn secondary" @click="addActivity(b.module)" :disabled="!submissionId">閺傛澘顤?/button>
         </div>
       </div>
     </div>
@@ -122,23 +121,23 @@ import http from '../api/http'
 import { previewImageById } from '../utils/imagePreview'
 
 const role = localStorage.getItem('role') || 'UNKNOWN'
-const realName = localStorage.getItem('realName') || '鏈櫥褰?
+const realName = localStorage.getItem('realName') || '閺堫亞娅ヨぐ?
 
 const submissionId = ref(null)
 const status = ref('DRAFT')
 const score = ref(null)
 
 const courses = ref([
-  { courseName: '楂樼瓑浠ｆ暟', courseType: 'REQUIRED', score: 88, credit: 4 },
-  { courseName: '澶у浣撹偛', courseType: 'REQUIRED', score: 80, credit: 2 }
+  { courseName: '妤傛鐡戞禒锝嗘殶', courseType: 'REQUIRED', score: 88, credit: 4 },
+  { courseName: '婢堆冾劅娴ｆ捁鍋?, courseType: 'REQUIRED', score: 80, credit: 2 }
 ])
 
 const blocks = [
-  { module: 'MORAL', label: '寰疯偛' },
-  { module: 'INTEL_PRO_INNOV', label: '鏅鸿偛' },
-  { module: 'SPORT_ACTIVITY', label: '浣撹偛' },
-  { module: 'ART', label: '缇庤偛' },
-  { module: 'LABOR', label: '鍔宠偛' }
+  { module: 'MORAL', label: '瀵扮柉鍋? },
+  { module: 'INTEL_PRO_INNOV', label: '閺呴缚鍋? },
+  { module: 'SPORT_ACTIVITY', label: '娴ｆ捁鍋? },
+  { module: 'ART', label: '缂囧氦鍋? },
+  { module: 'LABOR', label: '閸斿疇鍋? }
 ]
 
 const activitiesByModule = reactive({
@@ -203,7 +202,7 @@ const removeActivity = (module, idx) => {
 
 const saveCourses = async () => {
   await http.put(`/submissions/${submissionId.value}/courses/batch`, { items: courses.value })
-  alert('璇剧▼宸蹭繚瀛?)
+  alert('鐠囧墽鈻煎韫箽鐎?)
 }
 
 const saveActivities = async () => {
@@ -222,13 +221,13 @@ const saveActivities = async () => {
     }
   }
   await http.put(`/submissions/${submissionId.value}/activities/batch`, { items })
-  alert('娲诲姩宸蹭繚瀛?)
+  alert('濞茶濮╁韫箽鐎?)
   await loadDetail()
 }
 
 const submitForm = async () => {
   await http.post(`/submissions/${submissionId.value}/submit`)
-  alert('宸叉彁浜ゅ鏍?)
+  alert('瀹稿弶褰佹禍銈咁吀閺?)
   await loadDetail()
   await loadScore()
 }
@@ -245,7 +244,7 @@ const exportFile = async (format) => {
 }
 
 const resolveDownloadName = (resp, format, id) => {
-  const fallback = `缁煎悎濂栧閲戠敵璇疯〃_${id}.docx`
+  const fallback = `缂佺厧鎮庢總鏍ь劅闁叉垹鏁电拠鐤€僟${id}.docx`
   const disposition = resp?.headers?.['content-disposition'] || resp?.headers?.['Content-Disposition']
   if (!disposition) return fallback
 
@@ -327,7 +326,7 @@ const hydrateEvidenceMetas = async () => {
   for (const b of blocks) {
     for (const a of activitiesByModule[b.module] || []) {
       const aIds = parseEvidenceIds(a.evidenceFileIds)
-      a._evidenceMetas = aIds.map((id) => map[id] || evidenceMetaCache[id] || { id, fileName: `闄勪欢#${id}` })
+      a._evidenceMetas = aIds.map((id) => map[id] || evidenceMetaCache[id] || { id, fileName: `闂勫嫪娆?${id}` })
     }
   }
 }
@@ -353,7 +352,7 @@ const isAllowedImage = (file) => {
 
 const uploadEvidenceImages = async (activity) => {
   if (!submissionId.value) {
-    alert('璇峰厛鍒涘缓/鍔犺浇娴嬭瘎鍗?)
+    alert('鐠囧嘲鍘涢崚娑樼紦/閸旂姾娴囧ù瀣槑閸?)
     return
   }
 
@@ -363,11 +362,11 @@ const uploadEvidenceImages = async (activity) => {
 
   const validFiles = files.filter(isAllowedImage)
   if (validFiles.length !== files.length) {
-    alert('浠呮敮鎸佷笂浼?JPG/PNG 鍥剧墖')
+    alert('娴犲懏鏁幐浣风瑐娴?JPG/PNG 閸ュ墽澧?)
   }
 
   if (existing.length + validFiles.length > 6) {
-    alert('姣忎釜娲诲姩鏈€澶氫笂浼?寮犺瘉鏄庡浘鐗?)
+    alert('濮ｅ繋閲滃ú璇插З閺堚偓婢舵矮绗傛导?瀵姾鐦夐弰搴℃禈閻?)
     return
   }
 
@@ -384,7 +383,7 @@ const uploadEvidenceImages = async (activity) => {
 
   activity.evidenceFileIds = existing.join(',')
   await hydrateEvidenceMetas()
-  alert('鍥剧墖宸蹭笂浼狅紝璇疯寰椾繚瀛樻椿鍔?)
+  alert('閸ュ墽澧栧韫瑐娴肩媴绱濈拠鐤唶瀵版ぞ绻氱€涙ɑ妞块崝?)
 }
 
 const removeEvidence = async (activity, fileId) => {
@@ -401,8 +400,8 @@ const previewEvidence = async (fileId, metas = []) => {
   for (const m of metas || []) {
     const id = Number(m?.id)
     if (!Number.isFinite(id) || id <= 0) continue
-    fileNameMap[id] = m.fileName || `附件#${id}`
+    fileNameMap[id] = m.fileName || `闄勪欢#${id}`
   }
-  await previewImageById(http, fileId, '证明材料预览', galleryIds, fileNameMap)
+  await previewImageById(http, fileId, '璇佹槑鏉愭枡棰勮', galleryIds, fileNameMap)
 }
 </script>

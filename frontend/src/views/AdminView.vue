@@ -2,14 +2,12 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">管理员终审</h2>
         <p class="muted" style="margin-top: 6px;">管理员可对已提交且已审核的测评单执行终审。</p>
       </div>
     </div>
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
         <SearchCapsule
           v-model="keyword"
           width="320px"
@@ -270,3 +268,4 @@ onMounted(() => {
   loadTasks()
 })
 </script>
+

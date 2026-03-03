@@ -2,14 +2,12 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">我的反馈</h2>
         <p class="muted" style="margin-top: 6px;">查看我提交的反馈与处理结果。</p>
       </div>
     </div>
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="resetFilters">&lt;</button>
         <SearchCapsule
           v-model="keyword"
           width="320px"
@@ -196,3 +194,4 @@ onMounted(() => {
   load()
 })
 </script>
+

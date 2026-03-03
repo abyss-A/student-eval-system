@@ -1,8 +1,7 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">我要反馈</h2>
         <p class="muted" style="margin-top: 6px;">用于提交系统问题与建议。截图仅支持 JPG/PNG，最多 6 张。</p>
       </div>
       <div class="toolbar-row">
@@ -33,8 +32,8 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, reactive, ref } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import http from '../../api/http'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 
@@ -48,6 +47,14 @@ const form = reactive({
   screenshotFileIds: ''
 })
 
+const isDirty = computed(() => {
+  return Boolean(
+    String(form.title || '').trim()
+    || String(form.content || '').trim()
+    || String(form.screenshotFileIds || '').trim()
+  )
+})
+
 const reset = () => {
   form.title = ''
   form.content = ''
@@ -59,6 +66,7 @@ const submit = async () => {
     alert('标题和内容不能为空')
     return
   }
+
   submitting.value = true
   try {
     const { data } = await http.post('/feedbacks', {
@@ -66,7 +74,9 @@ const submit = async () => {
       content: form.content,
       screenshotFileIds: form.screenshotFileIds || ''
     })
+
     alert('反馈已提交')
+    reset()
 
     const seg = String(route.path || '').split('/')[1] || 'student'
     const id = data.data?.id
@@ -81,4 +91,12 @@ const submit = async () => {
     submitting.value = false
   }
 }
+
+onBeforeRouteLeave((to, from) => {
+  if (String(from.meta?.unsavedGuard || '') !== 'feedbackCreate') return true
+  if (submitting.value) return false
+  if (!isDirty.value) return true
+  return confirm('当前反馈内容尚未提交，确认离开吗？')
+})
 </script>
+

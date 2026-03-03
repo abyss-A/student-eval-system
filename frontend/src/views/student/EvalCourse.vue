@@ -2,7 +2,6 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">课程成绩</h2>
         <p class="muted" style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span>
             测评单ID：<b>{{ submissionId || '-' }}</b>
@@ -35,7 +34,6 @@
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <button class="search-back-icon" type="button" aria-label="恢复默认筛选" @click="clearFilters">&lt;</button>
         <SearchCapsule
           v-model="keyword"
           width="300px"
@@ -547,3 +545,5 @@ onBeforeUnmount(() => {
   autoSave.saveNow().catch(() => {})
 })
 </script>
+
+

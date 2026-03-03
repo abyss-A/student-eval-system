@@ -2,7 +2,6 @@
   <section class="card">
     <div class="toolbar">
       <div>
-        <h2 style="margin: 0;">反馈详情</h2>
         <p class="muted" style="margin-top: 6px;">
           状态：<span class="badge" :class="statusBadge(detail?.status)">{{ statusLabel(detail?.status) }}</span>
           <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -119,3 +118,4 @@ watch(
   font-size: 14px;
 }
 </style>
+
