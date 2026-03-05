@@ -4,7 +4,8 @@ param(
   [string]$UserName = "root",
   [string]$Password = "123456",
   [switch]$RecreateSchema,
-  [switch]$ApplyAccountMigration
+  [switch]$ApplyAccountMigration,
+  [switch]$ApplyAcademyScopeMigration
 )
 
 $mysql = "D:\LenovoSoftstore\Install\MySQL\MySQL Server 8.0\bin\mysql.exe"
@@ -15,6 +16,7 @@ if (!(Test-Path $mysql)) {
 
 $seedSql = Resolve-Path "./src/main/resources/db/seed.sql"
 $migrationSql = Resolve-Path "./src/main/resources/db/migrations/20260303_account_no_and_cleanup_2026_1.sql"
+$academyScopeMigrationSql = Resolve-Path "./src/main/resources/db/migrations/20260306_counselor_scope_and_notice_audience.sql"
 
 if ($RecreateSchema) {
   $initSql = Resolve-Path "./src/main/resources/db/init.sql"
@@ -26,6 +28,12 @@ if ($RecreateSchema) {
 if ($ApplyAccountMigration) {
   $cmdM = "`"$mysql`" -h $HostName -P $Port -u $UserName -p$Password < `"$migrationSql`""
   cmd /c $cmdM
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+if ($ApplyAcademyScopeMigration) {
+  $cmdAcademy = "`"$mysql`" -h $HostName -P $Port -u $UserName -p$Password < `"$academyScopeMigrationSql`""
+  cmd /c $cmdAcademy
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

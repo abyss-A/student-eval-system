@@ -26,7 +26,7 @@ public class ReviewController {
     public ApiResponse<List<Map<String, Object>>> tasks() {
         CurrentUser user = UserContext.get();
         RoleGuard.requireRole(user, "COUNSELOR");
-        return ApiResponse.ok(reviewService.listTasks());
+        return ApiResponse.ok(reviewService.listTasks(user.getId()));
     }
 
     @PostMapping("/items/{itemType}/{itemId}/decision")
@@ -43,7 +43,7 @@ public class ReviewController {
     public ApiResponse<Void> submitToAdmin(@PathVariable Long submissionId) {
         CurrentUser user = UserContext.get();
         RoleGuard.requireRole(user, "COUNSELOR");
-        reviewService.submitToAdmin(submissionId);
+        reviewService.submitToAdmin(submissionId, user.getId());
         return ApiResponse.ok(null);
     }
 }

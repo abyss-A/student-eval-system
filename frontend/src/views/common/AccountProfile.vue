@@ -12,7 +12,6 @@
         <div class="field"><span class="field-label">角色</span><input :value="roleText" disabled /></div>
         <div class="field"><span class="field-label">性别</span><input :value="profile.gender || '-'" disabled /></div>
         <div class="field"><span class="field-label">班级</span><input :value="profile.className || '-'" disabled /></div>
-        <div class="field"><span class="field-label">专业</span><input :value="profile.majorName || '-'" disabled /></div>
       </div>
     </article>
 
@@ -79,8 +78,7 @@ const profile = reactive({
   realName: '',
   gender: '',
   phone: '',
-  className: '',
-  majorName: ''
+  className: ''
 })
 
 const phoneDraft = ref('')
@@ -101,7 +99,6 @@ const applyProfile = (data) => {
   profile.gender = data?.gender || ''
   profile.phone = data?.phone || ''
   profile.className = data?.className || ''
-  profile.majorName = data?.majorName || ''
   phoneDraft.value = profile.phone
 }
 

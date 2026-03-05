@@ -109,7 +109,6 @@ public class MeController {
         map.put("gender", user.getGender());
         map.put("phone", user.getPhone());
         map.put("className", user.getClassName());
-        map.put("majorName", user.getMajorName());
         return map;
     }
 }

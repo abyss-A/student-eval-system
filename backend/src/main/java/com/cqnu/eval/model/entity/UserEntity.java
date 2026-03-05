@@ -9,7 +9,6 @@ public class UserEntity {
     private String gender;
     private String phone;
     private String className;
-    private String majorName;
     private Integer enabled;
 
     public Long getId() {
@@ -74,14 +73,6 @@ public class UserEntity {
 
     public void setClassName(String className) {
         this.className = className;
-    }
-
-    public String getMajorName() {
-        return majorName;
-    }
-
-    public void setMajorName(String majorName) {
-        this.majorName = majorName;
     }
 
     public Integer getEnabled() {

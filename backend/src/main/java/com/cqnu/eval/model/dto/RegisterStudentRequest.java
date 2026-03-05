@@ -29,9 +29,6 @@ public class RegisterStudentRequest {
     @Pattern(regexp = "^[0-9\\-]{7,20}$", message = "Phone format is invalid")
     private String phone;
 
-    @Size(max = 64, message = "Major length cannot exceed 64")
-    private String majorName;
-
     public String getPassword() {
         return password;
     }
@@ -80,11 +77,4 @@ public class RegisterStudentRequest {
         this.phone = phone;
     }
 
-    public String getMajorName() {
-        return majorName;
-    }
-
-    public void setMajorName(String majorName) {
-        this.majorName = majorName;
-    }
 }

@@ -3,6 +3,7 @@ package com.cqnu.eval.service;
 import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.mapper.ActivityItemMapper;
 import com.cqnu.eval.mapper.AttachmentMapper;
+import com.cqnu.eval.mapper.CounselorClassScopeMapper;
 import com.cqnu.eval.mapper.CourseItemMapper;
 import com.cqnu.eval.mapper.ScoringConfigMapper;
 import com.cqnu.eval.mapper.SemesterMapper;
@@ -51,6 +52,7 @@ public class SubmissionService {
     private final CourseItemMapper courseItemMapper;
     private final ActivityItemMapper activityItemMapper;
     private final UserMapper userMapper;
+    private final CounselorClassScopeMapper counselorClassScopeMapper;
     private final ScoringConfigMapper scoringConfigMapper;
     private final AttachmentMapper attachmentMapper;
 
@@ -59,6 +61,7 @@ public class SubmissionService {
                              CourseItemMapper courseItemMapper,
                              ActivityItemMapper activityItemMapper,
                              UserMapper userMapper,
+                             CounselorClassScopeMapper counselorClassScopeMapper,
                              ScoringConfigMapper scoringConfigMapper,
                              AttachmentMapper attachmentMapper) {
         this.semesterMapper = semesterMapper;
@@ -66,6 +69,7 @@ public class SubmissionService {
         this.courseItemMapper = courseItemMapper;
         this.activityItemMapper = activityItemMapper;
         this.userMapper = userMapper;
+        this.counselorClassScopeMapper = counselorClassScopeMapper;
         this.scoringConfigMapper = scoringConfigMapper;
         this.attachmentMapper = attachmentMapper;
     }
@@ -103,6 +107,10 @@ public class SubmissionService {
         }
         if ("STUDENT".equalsIgnoreCase(currentUser.getRole())
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
+            throw new BizException(40301, "No permission to access this submission");
+        }
+        if ("COUNSELOR".equalsIgnoreCase(currentUser.getRole())
+                && submissionMapper.countCounselorScopeForSubmission(submissionId, currentUser.getId()) == 0) {
             throw new BizException(40301, "No permission to access this submission");
         }
 
@@ -565,6 +573,7 @@ public class SubmissionService {
     public SubmissionEntity submit(Long submissionId, Long studentId) {
         SubmissionEntity entity = checkSubmissionEditableByStudent(submissionId, studentId);
         String status = normalizeStatus(entity.getStatus());
+        ensureStudentClassAssigned(studentId);
 
         if ("DRAFT".equals(status)) {
             ScoreResult score = calculateScore(submissionId);
@@ -635,6 +644,10 @@ public class SubmissionService {
                 && submissionMapper.checkOwner(submissionId, currentUser.getId()) == 0) {
             throw new BizException(40301, "No permission to operate this submission");
         }
+        if ("COUNSELOR".equalsIgnoreCase(currentUser.getRole())
+                && submissionMapper.countCounselorScopeForSubmission(submissionId, currentUser.getId()) == 0) {
+            throw new BizException(40301, "No permission to operate this submission");
+        }
 
         ScoreResult previewResult = calculateScore(submissionId, false);
         ScoreResult reviewedResult = calculateScore(submissionId, true);
@@ -683,22 +696,13 @@ public class SubmissionService {
         List<Map<String, Object>> all = submissionMapper.listForRanking(semesterId);
 
         Map<String, Integer> classCounter = new HashMap<>();
-        Map<String, Integer> majorCounter = new HashMap<>();
         for (Map<String, Object> row : all) {
             String className = String.valueOf(row.get("class_name"));
-            String majorName = String.valueOf(row.get("major_name"));
             int classRank = classCounter.getOrDefault(className, 0) + 1;
-            int majorRank = majorCounter.getOrDefault(majorName, 0) + 1;
             classCounter.put(className, classRank);
-            majorCounter.put(majorName, majorRank);
             row.put("rankClass", classRank);
-            row.put("rankMajor", majorRank);
         }
         return all;
-    }
-
-    public List<Map<String, Object>> listSubmittedTasks() {
-        return submissionMapper.listSubmittedTasks();
     }
 
     public List<Map<String, Object>> listCounselorReviewedTasks() {
@@ -787,6 +791,20 @@ public class SubmissionService {
             throw new BizException(40003, "Current submission status is not editable");
         }
         return entity;
+    }
+
+    private void ensureStudentClassAssigned(Long studentId) {
+        UserEntity student = userMapper.findById(studentId);
+        if (student == null) {
+            throw new BizException(40401, "Student not found");
+        }
+        String className = trim(student.getClassName());
+        if (className.isEmpty()) {
+            throw new BizException(40001, "当前账号未填写班级信息，请先完善资料");
+        }
+        if (counselorClassScopeMapper.countByClassName(className) <= 0) {
+            throw new BizException(40001, "当前班级未分配辅导员，请联系管理员");
+        }
     }
 
     private void putScore(Map<String, Object> map, String prefix, ScoreResult result) {

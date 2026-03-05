@@ -11,6 +11,10 @@ const menuGroups = [
     items: [{ label: '待处理测评单', to: '/admin/finalize/tasks' }]
   },
   {
+    title: '权限管理',
+    items: [{ label: '班级权限管理', to: '/admin/counselor/scopes' }]
+  },
+  {
     title: '公告通知',
     items: [{ label: '公告管理', to: '/admin/notices' }]
   },

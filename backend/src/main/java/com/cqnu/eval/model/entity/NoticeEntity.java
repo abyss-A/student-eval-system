@@ -7,6 +7,7 @@ public class NoticeEntity {
     private String title;
     private String content;
     private String status;
+    private String audienceScope;
     private Long publisherId;
     private LocalDateTime publishedAt;
     private LocalDateTime offlineAt;
@@ -43,6 +44,14 @@ public class NoticeEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAudienceScope() {
+        return audienceScope;
+    }
+
+    public void setAudienceScope(String audienceScope) {
+        this.audienceScope = audienceScope;
     }
 
     public Long getPublisherId() {
@@ -85,4 +94,3 @@ public class NoticeEntity {
         this.updatedAt = updatedAt;
     }
 }
-

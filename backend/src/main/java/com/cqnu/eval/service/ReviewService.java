@@ -40,8 +40,8 @@ public class ReviewService {
         this.submissionService = submissionService;
     }
 
-    public List<Map<String, Object>> listTasks() {
-        return submissionMapper.listSubmittedTasks();
+    public List<Map<String, Object>> listTasks(Long counselorId) {
+        return submissionMapper.listSubmittedTasks(counselorId);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -71,11 +71,12 @@ public class ReviewService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void submitToAdmin(Long submissionId) {
+    public void submitToAdmin(Long submissionId, Long counselorId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
             throw new BizException(40401, "Submission not found");
         }
+        ensureCounselorScope(submissionId, counselorId);
         if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
             throw new BizException(40003, "Current submission status cannot be submitted to admin");
         }
@@ -100,6 +101,7 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "Course item not found");
         }
+        ensureCounselorScope(item.getSubmissionId(), reviewerId);
         ensureSubmissionSubmitted(item.getSubmissionId());
 
         BigDecimal before = item.getReviewerScore() == null ? item.getScore() : item.getReviewerScore();
@@ -134,6 +136,7 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "Activity item not found");
         }
+        ensureCounselorScope(item.getSubmissionId(), reviewerId);
         ensureSubmissionSubmitted(item.getSubmissionId());
 
         BigDecimal before = item.getFinalScore() == null ? item.getSelfScore() : item.getFinalScore();
@@ -168,6 +171,7 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "Course item not found");
         }
+        ensureCounselorScope(item.getSubmissionId(), reviewerId);
         ensureSubmissionSubmitted(item.getSubmissionId());
 
         BigDecimal before = item.getReviewerScore() == null ? item.getScore() : item.getReviewerScore();
@@ -202,6 +206,7 @@ public class ReviewService {
         if (item == null) {
             throw new BizException(40401, "Activity item not found");
         }
+        ensureCounselorScope(item.getSubmissionId(), reviewerId);
         ensureSubmissionSubmitted(item.getSubmissionId());
 
         BigDecimal before = item.getFinalScore() == null ? item.getSelfScore() : item.getFinalScore();
@@ -239,6 +244,13 @@ public class ReviewService {
         if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
             throw new BizException(40003, "Current submission is not in reviewable status");
         }
+    }
+
+    private void ensureCounselorScope(Long submissionId, Long counselorId) {
+        if (submissionMapper.countCounselorScopeForSubmission(submissionId, counselorId) > 0) {
+            return;
+        }
+        throw new BizException(40301, "No permission to review this submission");
     }
 
     private void refreshCounselorReadyAt(Long submissionId) {

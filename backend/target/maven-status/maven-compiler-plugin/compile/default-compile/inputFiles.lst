@@ -1,4 +1,5 @@
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\MeController.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\CounselorClassScopeEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\config\SecurityConfig.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\NoticeService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\ActivityItemInput.java
@@ -7,6 +8,7 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\secu
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\FileController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\AdminController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\SubmissionService.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\AdminCounselorScopeController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\ScoringConfigEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\AttachmentEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\common\BizException.java
@@ -18,8 +20,10 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\serv
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\MeProfileUpdateRequest.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\CourseItemMapper.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\ScoringConfigMapper.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\CounselorScopeUpdateRequest.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\SemesterEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\security\JwtAuthFilter.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\NoticeTargetClassMapper.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\UserEntity.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\common\ApiResponse.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\NoticeMapper.java
@@ -40,6 +44,7 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\cont
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\dto\RegisterStudentRequest.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\common\RoleGuard.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\SemesterController.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\CounselorScopeService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\FeedbackService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\ScoreResult.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\model\entity\CourseItemEntity.java
@@ -54,6 +59,7 @@ D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapp
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\FeedbackController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\service\FileService.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\ReviewController.java
+D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\CounselorClassScopeMapper.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\controller\ReportController.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\FeedbackMapper.java
 D:\桌面\毕设程序\大学生综合测评管理系统\backend\src\main\java\com\cqnu\eval\mapper\SemesterMapper.java

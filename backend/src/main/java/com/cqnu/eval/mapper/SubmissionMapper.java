@@ -23,11 +23,11 @@ public interface SubmissionMapper {
     @Update("update submission set status=#{status}, moral_raw=#{moralRaw}, intel_raw=#{intelRaw}, sport_raw=#{sportRaw}, art_raw=#{artRaw}, labor_raw=#{laborRaw}, total_score=#{totalScore}, submitted_at=#{submittedAt}, finalized_at=#{finalizedAt}, published_at=#{publishedAt}, updated_at=now() where id=#{id}")
     int updateScoresAndStatus(SubmissionEntity entity);
 
-    @Select("select s.*, u.account_no, u.real_name, u.class_name, u.major_name from submission s join sys_user u on s.student_id=u.id where s.semester_id=#{semesterId} and s.status in ('SUBMITTED','COUNSELOR_REVIEWED','FINALIZED','PUBLISHED') order by s.total_score desc")
+    @Select("select s.*, u.account_no, u.real_name, u.class_name from submission s join sys_user u on s.student_id=u.id where s.semester_id=#{semesterId} and s.status in ('SUBMITTED','COUNSELOR_REVIEWED','FINALIZED','PUBLISHED') order by s.total_score desc")
     List<java.util.Map<String, Object>> listForRanking(@Param("semesterId") Long semesterId);
 
     @Select("select " +
-            "s.*, u.account_no, u.real_name, u.class_name, u.major_name, " +
+            "s.*, u.account_no, u.real_name, u.class_name, " +
             "(coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) as review_total_count, " +
             "(coalesce(ci.done_count,0) + coalesce(ai.done_count,0)) as review_done_count, " +
             "(coalesce(ci.pending_count,0) + coalesce(ai.pending_count,0)) as review_pending_count, " +
@@ -81,17 +81,28 @@ public interface SubmissionMapper {
             "         sum(case when coalesce(delete_state,'NONE') = 'DELETE_REQUESTED' then 1 else 0 end) as delete_requested_count " +
             "  from activity_item group by submission_id" +
             ") ai on ai.submission_id = s.id " +
+            "join counselor_class_scope ccs on trim(ccs.class_name) = trim(u.class_name) and ccs.counselor_id = #{counselorId} " +
             "where s.status in ('SUBMITTED','COUNSELOR_REVIEWED') " +
             "order by case when s.status='SUBMITTED' then 0 else 1 end asc, coalesce(s.submitted_at, s.updated_at) desc")
-    List<java.util.Map<String, Object>> listSubmittedTasks();
+    List<java.util.Map<String, Object>> listSubmittedTasks(@Param("counselorId") Long counselorId);
 
-    @Select("select s.*, u.account_no, u.real_name, u.class_name, u.major_name, " +
+    @Select("select s.*, u.account_no, u.real_name, u.class_name, " +
             "coalesce(s.counselor_ready_at, s.updated_at) as passTime " +
             "from submission s " +
             "join sys_user u on s.student_id=u.id " +
             "where s.status='COUNSELOR_REVIEWED' " +
             "order by s.updated_at desc")
     List<java.util.Map<String, Object>> listCounselorReviewedTasks();
+
+    @Select("select trim(u.class_name) from submission s join sys_user u on s.student_id=u.id where s.id=#{submissionId} limit 1")
+    String findStudentClassNameBySubmissionId(@Param("submissionId") Long submissionId);
+
+    @Select("select count(1) from submission s " +
+            "join sys_user u on s.student_id=u.id " +
+            "join counselor_class_scope ccs on trim(ccs.class_name)=trim(u.class_name) and ccs.counselor_id=#{counselorId} " +
+            "where s.id=#{submissionId}")
+    int countCounselorScopeForSubmission(@Param("submissionId") Long submissionId,
+                                         @Param("counselorId") Long counselorId);
 
     @Select("select count(1) from submission where id=#{id} and student_id=#{studentId}")
     int checkOwner(@Param("id") Long id, @Param("studentId") Long studentId);

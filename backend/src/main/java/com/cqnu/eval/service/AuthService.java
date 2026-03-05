@@ -43,7 +43,6 @@ public class AuthService {
         String accountNo = request.getAccountNo().trim();
         String gradeClass = request.getGradeClass().trim();
         String phone = request.getPhone().trim();
-        String majorName = request.getMajorName() == null ? "" : request.getMajorName().trim();
 
         String normalizedGender = normalizeGender(gender);
         if (normalizedGender.isEmpty()) {
@@ -62,7 +61,6 @@ public class AuthService {
         user.setGender(normalizedGender);
         user.setPhone(phone);
         user.setClassName(gradeClass);
-        user.setMajorName(majorName.isEmpty() ? null : majorName);
         user.setEnabled(1);
         userMapper.insert(user);
 

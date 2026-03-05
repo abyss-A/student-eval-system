@@ -19,7 +19,7 @@
         <SearchCapsule
           v-model="keyword"
           width="320px"
-          placeholder="搜索学号/姓名/班级/专业"
+          placeholder="搜索学号/姓名/班级"
           :disabled="loading"
           @submit="onKeywordSearch"
           @clear="onKeywordSearch"
@@ -47,10 +47,8 @@
               <th>学号</th>
               <th>学生</th>
               <th>班级</th>
-              <th>专业</th>
               <th>总分</th>
               <th>班级排名</th>
-              <th>专业排名</th>
             </tr>
           </thead>
           <tbody>
@@ -58,13 +56,11 @@
               <td>{{ r.account_no || r.accountNo || '-' }}</td>
               <td>{{ r.real_name }}</td>
               <td>{{ r.class_name }}</td>
-              <td>{{ r.major_name }}</td>
               <td>{{ r.total_score }}</td>
               <td>{{ r.rankClass }}</td>
-              <td>{{ r.rankMajor }}</td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
-              <td colspan="7" class="empty">暂无排名数据</td>
+              <td colspan="5" class="empty">暂无排名数据</td>
             </tr>
           </tbody>
         </table>
@@ -100,7 +96,7 @@ const filteredRows = computed(() => {
   const kw = String(keyword.value || '').trim().toLowerCase()
   if (!kw) return rows.value
   return rows.value.filter((item) => {
-    const source = `${item.account_no || item.accountNo || ''} ${item.real_name || ''} ${item.class_name || ''} ${item.major_name || ''}`.toLowerCase()
+    const source = `${item.account_no || item.accountNo || ''} ${item.real_name || ''} ${item.class_name || ''}`.toLowerCase()
     return source.includes(kw)
   })
 })

@@ -21,6 +21,7 @@ import AccountProfile from '../views/common/AccountProfile.vue'
 
 import TeacherReviewTasks from '../views/TeacherView.vue'
 import AdminFinalizeTasks from '../views/AdminView.vue'
+import CounselorScopeView from '../views/admin/CounselorScopeView.vue'
 
 import { canAccessRoute, getHomeByRole, getRole, getToken, isLoggedIn } from '../utils/auth'
 
@@ -84,6 +85,7 @@ const routes = [
     children: [
       { path: '', redirect: '/admin/finalize/tasks' },
       { path: 'finalize/tasks', component: AdminFinalizeTasks, meta: { title: '待处理测评单' } },
+      { path: 'counselor/scopes', component: CounselorScopeView, meta: { title: '班级权限管理' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },

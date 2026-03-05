@@ -38,7 +38,6 @@ com\cqnu\eval\controller\ReviewController.class
 com\cqnu\eval\model\dto\MeProfileUpdateRequest.class
 com\cqnu\eval\model\entity\SemesterEntity.class
 com\cqnu\eval\service\AuthService.class
-com\cqnu\eval\controller\NoticeController.class
 com\cqnu\eval\security\JwtUtils.class
 com\cqnu\eval\model\dto\ChangePasswordRequest.class
 com\cqnu\eval\service\SubmissionService.class
@@ -50,9 +49,7 @@ com\cqnu\eval\model\dto\RegisterStudentRequest.class
 com\cqnu\eval\model\dto\LoginResponse.class
 com\cqnu\eval\mapper\CourseItemMapper.class
 com\cqnu\eval\model\dto\ActivityItemInput.class
-com\cqnu\eval\mapper\NoticeMapper.class
 com\cqnu\eval\model\entity\UserEntity.class
-com\cqnu\eval\service\NoticeService.class
 com\cqnu\eval\mapper\ReviewLogMapper.class
 com\cqnu\eval\service\FeedbackService.class
 com\cqnu\eval\controller\FileController.class

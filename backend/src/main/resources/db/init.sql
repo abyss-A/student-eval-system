@@ -7,7 +7,9 @@ DROP TABLE IF EXISTS course_item;
 DROP TABLE IF EXISTS attachment;
 DROP TABLE IF EXISTS submission;
 DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS notice_target_class;
 DROP TABLE IF EXISTS notice;
+DROP TABLE IF EXISTS counselor_class_scope;
 DROP TABLE IF EXISTS scoring_config;
 DROP TABLE IF EXISTS semester;
 DROP TABLE IF EXISTS sys_user;
@@ -21,7 +23,6 @@ CREATE TABLE sys_user (
   gender VARCHAR(16) DEFAULT NULL,
   phone VARCHAR(32) DEFAULT NULL,
   class_name VARCHAR(64) DEFAULT NULL,
-  major_name VARCHAR(64) DEFAULT NULL,
   enabled TINYINT NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uk_sys_user_account_no (account_no)
@@ -143,6 +144,7 @@ CREATE TABLE notice (
   title VARCHAR(200) NOT NULL,
   content TEXT NOT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+  audience_scope VARCHAR(32) NOT NULL DEFAULT 'ALL_COLLEGE',
   publisher_id BIGINT NOT NULL,
   published_at DATETIME NULL,
   offline_at DATETIME NULL,
@@ -151,6 +153,29 @@ CREATE TABLE notice (
   CONSTRAINT fk_notice_publisher FOREIGN KEY (publisher_id) REFERENCES sys_user(id),
   INDEX idx_notice_status (status),
   INDEX idx_notice_published_at (published_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE counselor_class_scope (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  counselor_id BIGINT NOT NULL,
+  class_name VARCHAR(64) NOT NULL,
+  assigned_by BIGINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_scope_counselor FOREIGN KEY (counselor_id) REFERENCES sys_user(id),
+  CONSTRAINT fk_scope_assigned_by FOREIGN KEY (assigned_by) REFERENCES sys_user(id),
+  UNIQUE KEY uk_scope_class_name (class_name),
+  INDEX idx_scope_counselor_id (counselor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE notice_target_class (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  notice_id BIGINT NOT NULL,
+  class_name VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notice_target_notice FOREIGN KEY (notice_id) REFERENCES notice(id),
+  UNIQUE KEY uk_notice_class (notice_id, class_name),
+  INDEX idx_notice_target_class_name (class_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE feedback (

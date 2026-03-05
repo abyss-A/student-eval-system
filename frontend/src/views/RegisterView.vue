@@ -128,20 +128,6 @@
               <span id="reg-phone-error" class="reg-field-error">{{ errors.phone }}</span>
             </label>
 
-            <label class="field">
-              <span class="field-label">专业（选填）</span>
-              <input
-                v-model.trim="form.majorName"
-                :class="{ 'is-error': Boolean(errors.majorName) }"
-                placeholder="例如：数学与应用数学"
-                :aria-invalid="Boolean(errors.majorName)"
-                aria-describedby="reg-major-error"
-                @blur="validateField('majorName')"
-                @input="clearFieldError('majorName')"
-              />
-              <span id="reg-major-error" class="reg-field-error">{{ errors.majorName }}</span>
-            </label>
-
             <fieldset class="reg-gender-field">
               <legend class="field-label">性别</legend>
               <div class="reg-gender-grid">
@@ -190,8 +176,7 @@ const form = reactive({
   gender: '男',
   accountNo: '',
   gradeClass: '',
-  phone: '',
-  majorName: ''
+  phone: ''
 })
 
 const errors = reactive({
@@ -201,8 +186,7 @@ const errors = reactive({
   gender: '',
   accountNo: '',
   gradeClass: '',
-  phone: '',
-  majorName: ''
+  phone: ''
 })
 
 const state = reactive({
@@ -234,7 +218,6 @@ const validateField = (field) => {
   const accountNo = String(form.accountNo || '').trim()
   const gradeClass = String(form.gradeClass || '').trim()
   const phone = String(form.phone || '').trim()
-  const majorName = String(form.majorName || '').trim()
 
   if (field === 'password') {
     if (!password) errors.password = '请输入密码'
@@ -284,10 +267,6 @@ const validateField = (field) => {
     return
   }
 
-  if (field === 'majorName') {
-    if (majorName && majorName.length > 64) errors.majorName = '专业长度不能超过64位'
-    else errors.majorName = ''
-  }
 }
 
 const validateForm = () => {
@@ -297,7 +276,6 @@ const validateForm = () => {
   validateField('accountNo')
   validateField('gradeClass')
   validateField('phone')
-  validateField('majorName')
   validateField('gender')
 
   return (
@@ -307,7 +285,6 @@ const validateForm = () => {
     !errors.accountNo &&
     !errors.gradeClass &&
     !errors.phone &&
-    !errors.majorName &&
     !errors.gender
   )
 }
@@ -322,8 +299,7 @@ const submitRegister = async () => {
     gender: String(form.gender || '').trim(),
     accountNo: String(form.accountNo || '').trim(),
     gradeClass: String(form.gradeClass || '').trim(),
-    phone: String(form.phone || '').trim(),
-    majorName: String(form.majorName || '').trim()
+    phone: String(form.phone || '').trim()
   }
 
   loading.value = true
