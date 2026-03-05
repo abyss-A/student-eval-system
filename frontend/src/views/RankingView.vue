@@ -54,8 +54,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in pager.pagedRows.value" :key="r.id || `${r.student_no || r.studentNo || '-'}_${r.real_name || ''}`">
-              <td>{{ r.student_no || r.studentNo || '-' }}</td>
+            <tr v-for="r in pager.pagedRows.value" :key="r.id || `${r.account_no || r.accountNo || '-'}_${r.real_name || ''}`">
+              <td>{{ r.account_no || r.accountNo || '-' }}</td>
               <td>{{ r.real_name }}</td>
               <td>{{ r.class_name }}</td>
               <td>{{ r.major_name }}</td>
@@ -100,7 +100,7 @@ const filteredRows = computed(() => {
   const kw = String(keyword.value || '').trim().toLowerCase()
   if (!kw) return rows.value
   return rows.value.filter((item) => {
-    const source = `${item.student_no || item.studentNo || ''} ${item.real_name || ''} ${item.class_name || ''} ${item.major_name || ''}`.toLowerCase()
+    const source = `${item.account_no || item.accountNo || ''} ${item.real_name || ''} ${item.class_name || ''} ${item.major_name || ''}`.toLowerCase()
     return source.includes(kw)
   })
 })

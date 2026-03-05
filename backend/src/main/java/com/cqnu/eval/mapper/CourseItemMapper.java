@@ -37,6 +37,22 @@ public interface CourseItemMapper {
             "where id=#{id} and review_status in ('APPROVED','REJECTED')")
     int undoIfReviewed(@Param("id") Long id);
 
+    @Update("update course_item set delete_state='DELETE_REQUESTED', updated_at=now() " +
+            "where id=#{id} and review_status='REJECTED' and coalesce(delete_state,'NONE')='NONE'")
+    int requestDeleteIfRejected(@Param("id") Long id);
+
+    @Update("update course_item set delete_state='DELETED', updated_at=now() " +
+            "where id=#{id} and review_status='REJECTED' and delete_state='DELETE_REQUESTED'")
+    int approveDeleteIfRequested(@Param("id") Long id);
+
+    @Update("update course_item set delete_state='NONE', updated_at=now() " +
+            "where id=#{id} and review_status='REJECTED' and delete_state='DELETE_REQUESTED'")
+    int rejectDeleteIfRequested(@Param("id") Long id);
+
+    @Update("update course_item set delete_state='NONE', review_status='REJECTED', updated_at=now() " +
+            "where id=#{id} and delete_state='DELETED'")
+    int undoDeletedToRejected(@Param("id") Long id);
+
     @Select("select count(1) from course_item where submission_id = #{submissionId}")
     int countBySubmissionId(@Param("submissionId") Long submissionId);
 
@@ -49,9 +65,11 @@ public interface CourseItemMapper {
     @Update("update course_item set course_name=#{courseName}, course_type=#{courseType}, score=#{score}, credit=#{credit}, evidence_file_id=#{evidenceFileId}, reviewer_score=#{reviewerScore}, updated_at=now() where id=#{id} and submission_id=#{submissionId}")
     int updateEditableFields(CourseItemEntity entity);
 
-    @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId} and review_status='REJECTED'")
+    @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() " +
+            "where submission_id=#{submissionId} and review_status='REJECTED' and coalesce(delete_state,'NONE')='NONE'")
     int reopenRejectedBySubmissionId(@Param("submissionId") Long submissionId);
 
-    @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() where submission_id=#{submissionId}")
+    @Update("update course_item set review_status='PENDING', reviewer_score=score, reviewer_comment=null, updated_at=now() " +
+            "where submission_id=#{submissionId} and coalesce(delete_state,'NONE')='NONE'")
     int resetReviewBySubmissionId(@Param("submissionId") Long submissionId);
 }

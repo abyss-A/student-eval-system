@@ -40,8 +40,11 @@ import java.util.Set;
 public class SubmissionService {
 
     private static final String SPORT_MODULE = "SPORT_ACTIVITY";
-    private static final String UNIVERSITY_PE_TITLE = "大学体育";
+    private static final String UNIVERSITY_PE_TITLE = "\u5927\u5b66\u4f53\u80b2";
     private static final BigDecimal MAX_INPUT_SCORE = new BigDecimal("100");
+    private static final String DELETE_NONE = "NONE";
+    private static final String DELETE_REQUESTED = "DELETE_REQUESTED";
+    private static final String DELETE_DELETED = "DELETED";
 
     private final SemesterMapper semesterMapper;
     private final SubmissionMapper submissionMapper;
@@ -127,7 +130,7 @@ public class SubmissionService {
 
         ReviewStats stats = getReviewStats(submissionId);
         if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
-            throw new BizException(40003, "审核阶段不可修改课程");
+            throw new BizException(40003, "Current review phase is read-only for courses");
         }
         reviseRejectedCoursesOnly(submissionId, request);
     }
@@ -144,7 +147,7 @@ public class SubmissionService {
 
         ReviewStats stats = getReviewStats(submissionId);
         if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
-            throw new BizException(40003, "审核阶段不可修改活动");
+            throw new BizException(40003, "Current review phase is read-only for activities");
         }
         reviseRejectedActivitiesOnly(submissionId, studentId, request, null);
     }
@@ -171,7 +174,7 @@ public class SubmissionService {
 
         ReviewStats stats = getReviewStats(submissionId);
         if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
-            throw new BizException(40003, "审核阶段不可修改活动");
+            throw new BizException(40003, "Current review phase is read-only for activities");
         }
         reviseRejectedActivitiesOnly(submissionId, studentId, request, module);
     }
@@ -263,6 +266,11 @@ public class SubmissionService {
         return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
     }
 
+    private String normalizeDeleteState(String raw) {
+        String state = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        return state.isEmpty() ? DELETE_NONE : state;
+    }
+
     private boolean isUniversityPeTitle(String title) {
         return UNIVERSITY_PE_TITLE.equals(trim(title));
     }
@@ -276,7 +284,7 @@ public class SubmissionService {
                 continue;
             }
             if (isSportCourse(item.getCourseName(), item.getCourseType())) {
-                throw new BizException(40001, "课程成绩页不支持填写体育成绩，请到体育模块填写“大学体育”");
+                throw new BizException(40001, "Course page does not accept PE course score. Please fill it in SPORT module with title University PE.");
             }
         }
     }
@@ -299,7 +307,7 @@ public class SubmissionService {
             }
             BigDecimal score = item.getSelfScore();
             if (score != null && score.compareTo(MAX_INPUT_SCORE) > 0) {
-                throw new BizException(40001, "体育模块分数必须在 0 到 100 之间");
+                throw new BizException(40001, "Sport module score must be between 0 and 100");
             }
             if (isUniversityPeTitle(item.getTitle())) {
                 universityPeCount++;
@@ -307,7 +315,7 @@ public class SubmissionService {
         }
 
         if (universityPeCount > 1) {
-            throw new BizException(40001, "体育模块中“大学体育”最多只能填写一条");
+            throw new BizException(40001, "Only one \"University PE\" row is allowed in SPORT module");
         }
     }
 
@@ -322,6 +330,7 @@ public class SubmissionService {
             entity.setCredit(item.getCredit());
             entity.setEvidenceFileId(item.getEvidenceFileId());
             entity.setReviewStatus("PENDING");
+            entity.setDeleteState(DELETE_NONE);
             entity.setReviewerScore(item.getScore());
             entity.setReviewerComment(null);
             courseItemMapper.insert(entity);
@@ -344,6 +353,7 @@ public class SubmissionService {
             entity.setFinalScore(item.getSelfScore());
             entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
             entity.setReviewStatus("PENDING");
+            entity.setDeleteState(DELETE_NONE);
             entity.setReviewerComment(null);
             activityItemMapper.insert(entity);
         }
@@ -361,6 +371,7 @@ public class SubmissionService {
             entity.setFinalScore(item.getSelfScore());
             entity.setEvidenceFileIds(sanitizeEvidenceFileIds(item.getEvidenceFileIds(), studentId));
             entity.setReviewStatus("PENDING");
+            entity.setDeleteState(DELETE_NONE);
             entity.setReviewerComment(null);
             activityItemMapper.insert(entity);
         }
@@ -372,10 +383,10 @@ public class SubmissionService {
         for (CourseItemInput input : request.getItems()) {
             Long id = input.getId();
             if (id == null || id <= 0) {
-                throw new BizException(40001, "重提审核时必须携带原课程ID");
+                throw new BizException(40001, "Resubmission requires original course item IDs");
             }
             if (incomingById.put(id, input) != null) {
-                throw new BizException(40001, "课程ID重复");
+                throw new BizException(40001, "Duplicate course ID");
             }
         }
 
@@ -384,25 +395,45 @@ public class SubmissionService {
             existingIds.add(entity.getId());
         }
         if (incomingById.size() != existingIds.size() || !incomingById.keySet().equals(existingIds)) {
-            throw new BizException(40001, "课程条目数量或ID不匹配，禁止增删条目");
+            throw new BizException(40001, "Course item IDs do not match, add/remove is not allowed");
         }
 
         for (CourseItemEntity current : existing) {
             CourseItemInput input = incomingById.get(current.getId());
             if (input == null) {
-                throw new BizException(40001, "存在未知课程ID");
+                throw new BizException(40001, "Unknown course ID");
             }
+
+            boolean requestDelete = Boolean.TRUE.equals(input.getDeleteRequested());
             boolean changed = isCourseContentChanged(current, input);
             String reviewStatus = normalizeStatus(current.getReviewStatus());
-            if (!"REJECTED".equals(reviewStatus)) {
+            String deleteState = normalizeDeleteState(current.getDeleteState());
+
+            if (requestDelete) {
+                if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                    throw new BizException(40001, "Only rejected items can request delete review");
+                }
                 if (changed) {
-                    throw new BizException(40001, "仅驳回课程允许修改，已通过/待审课程不可改");
+                    throw new BizException(40001, "Cannot edit content while requesting deletion");
+                }
+                int marked = courseItemMapper.requestDeleteIfRejected(current.getId());
+                if (marked == 0) {
+                    throw new BizException(40901, "Status changed, please refresh and retry");
                 }
                 continue;
             }
+
+            if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                if (changed) {
+                    throw new BizException(40001, "Only rejected items are editable in this stage");
+                }
+                continue;
+            }
+
             if (!changed) {
                 continue;
             }
+
             CourseItemEntity update = new CourseItemEntity();
             update.setId(current.getId());
             update.setSubmissionId(submissionId);
@@ -414,7 +445,7 @@ public class SubmissionService {
             update.setReviewerScore(current.getReviewerScore());
             int updated = courseItemMapper.updateEditableFields(update);
             if (updated == 0) {
-                throw new BizException(40901, "状态已变化，请刷新后重试");
+                throw new BizException(40901, "Status changed, please refresh and retry");
             }
         }
     }
@@ -432,10 +463,10 @@ public class SubmissionService {
         for (ActivityItemInput input : request.getItems()) {
             Long id = input.getId();
             if (id == null || id <= 0) {
-                throw new BizException(40001, "重提审核时必须携带原活动ID");
+                throw new BizException(40001, "Resubmission requires original activity item IDs");
             }
             if (incomingById.put(id, input) != null) {
-                throw new BizException(40001, "活动ID重复");
+                throw new BizException(40001, "Duplicate activity ID");
             }
             String evidence = sanitizeEvidenceFileIds(input.getEvidenceFileIds(), studentId);
             sanitizedEvidenceById.put(id, evidence);
@@ -446,26 +477,46 @@ public class SubmissionService {
             existingIds.add(entity.getId());
         }
         if (incomingById.size() != existingIds.size() || !incomingById.keySet().equals(existingIds)) {
-            throw new BizException(40001, "活动条目数量或ID不匹配，禁止增删条目");
+            throw new BizException(40001, "Activity item IDs do not match, add/remove is not allowed");
         }
 
         for (ActivityItemEntity current : existing) {
             ActivityItemInput input = incomingById.get(current.getId());
             if (input == null) {
-                throw new BizException(40001, "存在未知活动ID");
+                throw new BizException(40001, "Unknown activity ID");
             }
+
             String evidence = sanitizedEvidenceById.getOrDefault(current.getId(), "");
+            boolean requestDelete = Boolean.TRUE.equals(input.getDeleteRequested());
             boolean changed = isActivityContentChanged(current, input, evidence);
             String reviewStatus = normalizeStatus(current.getReviewStatus());
-            if (!"REJECTED".equals(reviewStatus)) {
+            String deleteState = normalizeDeleteState(current.getDeleteState());
+
+            if (requestDelete) {
+                if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                    throw new BizException(40001, "Only rejected items can request delete review");
+                }
                 if (changed) {
-                    throw new BizException(40001, "仅驳回活动允许修改，已通过/待审活动不可改");
+                    throw new BizException(40001, "Cannot edit content while requesting deletion");
+                }
+                int marked = activityItemMapper.requestDeleteIfRejected(current.getId());
+                if (marked == 0) {
+                    throw new BizException(40901, "Status changed, please refresh and retry");
                 }
                 continue;
             }
+
+            if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                if (changed) {
+                    throw new BizException(40001, "Only rejected items are editable in this stage");
+                }
+                continue;
+            }
+
             if (!changed) {
                 continue;
             }
+
             ActivityItemEntity update = new ActivityItemEntity();
             update.setId(current.getId());
             update.setSubmissionId(submissionId);
@@ -476,7 +527,7 @@ public class SubmissionService {
             update.setFinalScore(current.getFinalScore());
             int updated = activityItemMapper.updateEditableFields(update);
             if (updated == 0) {
-                throw new BizException(40901, "状态已变化，请刷新后重试");
+                throw new BizException(40901, "Status changed, please refresh and retry");
             }
         }
     }
@@ -530,15 +581,15 @@ public class SubmissionService {
         }
 
         if (!"SUBMITTED".equals(status)) {
-            throw new BizException(40003, "当前状态不可提交");
+            throw new BizException(40003, "Current status cannot submit");
         }
 
         ReviewStats stats = getReviewStats(submissionId);
         if ("DONE_ALL_PASS".equals(stats.getReviewPhase())) {
-            throw new BizException(40003, "已全部通过，无需再次提交");
+            throw new BizException(40003, "All items approved, no resubmission needed");
         }
         if (!"DONE_NEED_STUDENT_FIX".equals(stats.getReviewPhase())) {
-            throw new BizException(40003, "审核中，暂不可再次提交");
+            throw new BizException(40003, "Still under review, cannot resubmit now");
         }
 
         courseItemMapper.reopenRejectedBySubmissionId(submissionId);
@@ -623,9 +674,9 @@ public class SubmissionService {
         map.put("totalScore", previewResult.getTotalScore());
         map.put("courseAvg", previewResult.getCourseAvg());
         map.put("intelCourseAvg", previewResult.getIntelCourseAvg());
-        map.put("formula", "综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分");
-        map.put("intelFormula", "智育原始分 = 智育课程加权平均分 × 85% + min(智育活动总分, 100) × 15%；智育计入分 = 智育原始分 × 60%");
-        map.put("sportFormula", "体育原始分 = 大学体育分 × 85% + min(体育活动总分, 100) × 15%；体育计入分 = 体育原始分 × 10%");
+        map.put("formula", "Total = Moral + Intel + Sport + Art + Labor");
+        map.put("intelFormula", "intelRaw = intelCourseAvg * 0.85 + min(intelActivityTotal, 100) * 0.15; intelScore = intelRaw * 0.60");
+        map.put("sportFormula", "sportRaw = universityPeScore * 0.85 + min(sportActivityTotal, 100) * 0.15; sportScore = sportRaw * 0.10");
         return map;
     }
     public List<Map<String, Object>> getRanking(Long semesterId) {
@@ -655,25 +706,62 @@ public class SubmissionService {
     }
 
     public ReviewStats getReviewStats(Long submissionId) {
-        int courseTotal = courseItemMapper.countBySubmissionId(submissionId);
-        int activityTotal = activityItemMapper.countBySubmissionId(submissionId);
-        int coursePending = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "PENDING");
-        int activityPending = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "PENDING");
-        int courseRejected = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
-        int activityRejected = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
-        int courseApproved = courseItemMapper.countBySubmissionIdAndStatus(submissionId, "APPROVED");
-        int activityApproved = activityItemMapper.countBySubmissionIdAndStatus(submissionId, "APPROVED");
+        int total = 0;
+        int pending = 0;
+        int rejected = 0;
+        int approved = 0;
+        int deleteRequested = 0;
 
-        int total = courseTotal + activityTotal;
-        int pending = coursePending + activityPending;
-        int rejected = courseRejected + activityRejected;
-        int approved = courseApproved + activityApproved;
+        List<CourseItemEntity> courses = courseItemMapper.listBySubmissionId(submissionId);
+        for (CourseItemEntity course : courses) {
+            String deleteState = normalizeDeleteState(course.getDeleteState());
+            if (DELETE_DELETED.equals(deleteState)) {
+                continue;
+            }
+            total += 1;
+            if (DELETE_REQUESTED.equals(deleteState)) {
+                pending += 1;
+                deleteRequested += 1;
+                continue;
+            }
+            String reviewStatus = normalizeStatus(course.getReviewStatus());
+            if ("APPROVED".equals(reviewStatus)) {
+                approved += 1;
+            } else if ("REJECTED".equals(reviewStatus)) {
+                rejected += 1;
+            } else {
+                pending += 1;
+            }
+        }
+
+        List<ActivityItemEntity> activities = activityItemMapper.listBySubmissionId(submissionId);
+        for (ActivityItemEntity activity : activities) {
+            String deleteState = normalizeDeleteState(activity.getDeleteState());
+            if (DELETE_DELETED.equals(deleteState)) {
+                continue;
+            }
+            total += 1;
+            if (DELETE_REQUESTED.equals(deleteState)) {
+                pending += 1;
+                deleteRequested += 1;
+                continue;
+            }
+            String reviewStatus = normalizeStatus(activity.getReviewStatus());
+            if ("APPROVED".equals(reviewStatus)) {
+                approved += 1;
+            } else if ("REJECTED".equals(reviewStatus)) {
+                rejected += 1;
+            } else {
+                pending += 1;
+            }
+        }
+
         int done = total - pending;
 
         String phase;
         if (total == 0) {
             phase = "DONE_ALL_PASS";
-        } else if (pending == total) {
+        } else if (pending == total && deleteRequested == 0) {
             phase = "NOT_REVIEWED";
         } else if (pending > 0) {
             phase = "IN_PROGRESS";
@@ -726,6 +814,9 @@ public class SubmissionService {
             if (!"REJECTED".equals(normalizeStatus(course.getReviewStatus()))) {
                 continue;
             }
+            if (!DELETE_NONE.equals(normalizeDeleteState(course.getDeleteState()))) {
+                continue;
+            }
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("itemType", "COURSE");
             row.put("itemId", course.getId());
@@ -733,6 +824,9 @@ public class SubmissionService {
         }
         for (ActivityItemEntity activity : activityItemMapper.listBySubmissionId(submissionId)) {
             if (!"REJECTED".equals(normalizeStatus(activity.getReviewStatus()))) {
+                continue;
+            }
+            if (!DELETE_NONE.equals(normalizeDeleteState(activity.getDeleteState()))) {
                 continue;
             }
             Map<String, Object> row = new LinkedHashMap<>();
@@ -826,6 +920,9 @@ public class SubmissionService {
         BigDecimal intelWeightedSum = BigDecimal.ZERO;
 
         for (CourseItemEntity course : courses) {
+            if (DELETE_DELETED.equals(normalizeDeleteState(course.getDeleteState()))) {
+                continue;
+            }
             BigDecimal score = useReviewedScore
                     ? safe(course.getReviewerScore() == null ? course.getScore() : course.getReviewerScore())
                     : safe(course.getScore());
@@ -852,6 +949,9 @@ public class SubmissionService {
         BigDecimal labor = BigDecimal.ZERO;
 
         for (ActivityItemEntity activity : activities) {
+            if (DELETE_DELETED.equals(normalizeDeleteState(activity.getDeleteState()))) {
+                continue;
+            }
             BigDecimal score = useReviewedScore
                     ? safe(activity.getFinalScore() == null ? activity.getSelfScore() : activity.getFinalScore())
                     : safe(activity.getSelfScore());
@@ -993,6 +1093,7 @@ public class SubmissionService {
         return cfg;
     }
 }
+
 
 
 

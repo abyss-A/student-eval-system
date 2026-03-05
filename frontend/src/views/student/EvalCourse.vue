@@ -53,6 +53,8 @@
           <option value="PENDING">待审核</option>
           <option value="APPROVED">通过</option>
           <option value="REJECTED">驳回</option>
+          <option value="DELETE_REQUESTED">待删除复审</option>
+          <option value="DELETED">已删除</option>
         </select>
       </div>
       <div class="table-search-right">
@@ -146,7 +148,7 @@
                   class="btn secondary"
                   type="button"
                   @click="removeCourse(c)"
-                  :disabled="loading || !canRemoveRows"
+                  :disabled="loading || !canDeleteCourseRow(c)"
                 >
                   删除
                 </button>
@@ -213,8 +215,28 @@ const canRemoveRows = computed(() => isDraftEditable.value)
 const canEditCourseRow = (row) => {
   if (isDraftEditable.value) return true
   if (!isRejectedOnlyEditable.value) return false
+  if (courseStateCode(row) !== 'REJECTED') return false
+  const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState && deleteState !== 'NONE') return false
+  return true
+}
+
+const canRequestDeleteCourseRow = (row) => {
+  if (!isRejectedOnlyEditable.value) return false
+  return courseStateCode(row) === 'REJECTED'
+}
+
+const canDeleteCourseRow = (row) => {
+  if (isDraftEditable.value) return true
+  return canRequestDeleteCourseRow(row)
+}
+
+const courseStateCode = (row) => {
+  const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState === 'DELETE_REQUESTED') return 'DELETE_REQUESTED'
+  if (deleteState === 'DELETED') return 'DELETED'
   const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
-  return reviewStatus === 'REJECTED'
+  return reviewStatus
 }
 
 const isSubmitStage = computed(() => {
@@ -233,16 +255,20 @@ const statusLabel = (raw) => {
 }
 
 const courseReviewResult = (c) => {
+  const stateCode = courseStateCode(c)
+  if (stateCode === 'DELETE_REQUESTED') return '待删除复审'
+  if (stateCode === 'DELETED') return '已删除'
   if (!reviewReady.value) return '-'
-  const statusCode = String(c?.reviewStatus || '').trim().toUpperCase()
-  if (statusCode === 'REJECTED') return '驳回'
-  if (statusCode === 'APPROVED') return '通过'
+  if (stateCode === 'REJECTED') return '驳回'
+  if (stateCode === 'APPROVED') return '通过'
   return '待审核'
 }
 
 const reviewResultBadge = (label) => {
   if (label === '通过') return 'success'
   if (label === '驳回') return 'danger'
+  if (label === '待删除复审') return 'warning'
+  if (label === '已删除') return 'secondary'
   return ''
 }
 
@@ -279,6 +305,8 @@ const mapCourse = (c) => ({
   credit: c?.credit ?? 0,
   evidenceFileId: c?.evidenceFileId ?? null,
   reviewStatus: c?.reviewStatus || 'PENDING',
+  deleteState: c?.deleteState || c?.delete_state || 'NONE',
+  deleteRequested: false,
   reviewerComment: c?.reviewerComment || '',
   _rowKey: c?.id ? `course_${c.id}` : `course_tmp_${Date.now()}_${Math.random()}`
 })
@@ -288,7 +316,7 @@ const filteredCourses = computed(() => {
   return courses.value.filter((item) => {
     const matchedKeyword = !kw || String(item.courseName || '').toLowerCase().includes(kw)
     const matchedType = typeFilter.value === 'ALL' || String(item.courseType || '').toUpperCase() === typeFilter.value
-    const code = String(item.reviewStatus || '').toUpperCase()
+    const code = courseStateCode(item)
     const matchedReview = reviewFilter.value === 'ALL' || code === reviewFilter.value
     return matchedKeyword && matchedType && matchedReview
   })
@@ -388,7 +416,8 @@ const buildCoursePayload = ({ silent }) => {
       courseType: type,
       score,
       credit,
-      evidenceFileId: c.evidenceFileId || null
+      evidenceFileId: c.evidenceFileId || null,
+      deleteRequested: Boolean(c.deleteRequested)
     })
   }
   return { ok: true, message: '', items: out }
@@ -440,9 +469,34 @@ const removeRow = (idx) => {
   resetPage()
 }
 
-const removeCourse = (course) => {
-  const idx = courses.value.findIndex((c) => c === course || (course.id && c.id === course.id))
-  if (idx >= 0) removeRow(idx)
+const removeCourse = async (course) => {
+  if (isDraftEditable.value) {
+    const idx = courses.value.findIndex((c) => c === course || (course.id && c.id === course.id))
+    if (idx >= 0) removeRow(idx)
+    return
+  }
+  if (!canRequestDeleteCourseRow(course)) {
+    alert('仅被驳回条目可发起删除复审')
+    return
+  }
+  if (!confirm('确认发起该课程的删除复审吗？')) return
+
+  const prevRequested = Boolean(course.deleteRequested)
+  course.deleteRequested = true
+  loading.value = true
+  try {
+    const payload = buildCoursePayload({ silent: false })
+    if (!payload.ok) return
+    await store.saveCourses(payload.items, { syncAfterSave: true })
+    syncCoursesFromStore()
+    autoSave.resetState()
+    alert('已提交删除复审')
+  } catch (e) {
+    course.deleteRequested = prevRequested
+    throw e
+  } finally {
+    loading.value = false
+  }
 }
 
 const clearFilters = () => {

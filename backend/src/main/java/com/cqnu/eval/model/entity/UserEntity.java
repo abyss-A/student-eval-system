@@ -2,10 +2,9 @@ package com.cqnu.eval.model.entity;
 
 public class UserEntity {
     private Long id;
-    private String username;
     private String passwordHash;
     private String role;
-    private String studentNo;
+    private String accountNo;
     private String realName;
     private String gender;
     private String phone;
@@ -19,14 +18,6 @@ public class UserEntity {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public String getPasswordHash() {
@@ -45,12 +36,12 @@ public class UserEntity {
         this.role = role;
     }
 
-    public String getStudentNo() {
-        return studentNo;
+    public String getAccountNo() {
+        return accountNo;
     }
 
-    public void setStudentNo(String studentNo) {
-        this.studentNo = studentNo;
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
     }
 
     public String getRealName() {

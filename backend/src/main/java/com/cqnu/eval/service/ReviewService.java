@@ -47,52 +47,58 @@ public class ReviewService {
     @Transactional(rollbackFor = Exception.class)
     public void decision(String itemType, Long itemId, ReviewDecisionRequest request, Long reviewerId) {
         String action = normalizeAction(request.getAction());
-        if (!"APPROVE".equals(action) && !"REJECT".equals(action) && !"UNDO".equals(action)) {
-            throw new BizException(40001, "不支持的审核动作");
+        if (!isSupportedAction(action)) {
+            throw new BizException(40001, "Unsupported review action");
         }
 
         if ("COURSE".equalsIgnoreCase(itemType)) {
-            handleCourse(itemId, action, request, reviewerId);
+            if (isDeleteReviewAction(action)) {
+                handleCourseDeleteReview(itemId, action, request, reviewerId);
+            } else {
+                handleCourse(itemId, action, request, reviewerId);
+            }
             return;
         }
         if ("ACTIVITY".equalsIgnoreCase(itemType)) {
-            handleActivity(itemId, action, request, reviewerId);
+            if (isDeleteReviewAction(action)) {
+                handleActivityDeleteReview(itemId, action, request, reviewerId);
+            } else {
+                handleActivity(itemId, action, request, reviewerId);
+            }
             return;
         }
-        throw new BizException(40001, "不支持的条目类型");
+        throw new BizException(40001, "Unsupported item type");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void submitToAdmin(Long submissionId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
-            throw new BizException(40003, "当前测评单状态不可提交管理员");
+            throw new BizException(40003, "Current submission status cannot be submitted to admin");
         }
 
-        int total = countTotalItems(submissionId);
-        int reviewed = countReviewedItems(submissionId);
-        int rejected = countRejectedItems(submissionId);
-        if (reviewed < total) {
-            throw new BizException(40001, "该测评单仍有未审核条目，请完成审核后再提交");
+        SubmissionService.ReviewStats stats = submissionService.getReviewStats(submissionId);
+        if (stats.getReviewPendingCount() > 0) {
+            throw new BizException(40001, "Submission still has unreviewed items");
         }
-        if (rejected > 0) {
-            throw new BizException(40001, "存在驳回条目，当前不能提交管理员");
+        if (stats.getReviewRejectedCount() > 0) {
+            throw new BizException(40001, "Submission still has rejected items");
         }
 
         submissionService.recalculate(submissionId);
         int updated = submissionMapper.updateStatusIfCurrent(submissionId, "SUBMITTED", "COUNSELOR_REVIEWED");
         if (updated == 0) {
-            throw new BizException(40901, "状态已变化，请刷新后重试");
+            throw new BizException(40901, "Status changed, please refresh and retry");
         }
     }
 
     private void handleCourse(Long itemId, String action, ReviewDecisionRequest req, Long reviewerId) {
         CourseItemEntity item = courseItemMapper.findById(itemId);
         if (item == null) {
-            throw new BizException(40401, "课程条目不存在");
+            throw new BizException(40401, "Course item not found");
         }
         ensureSubmissionSubmitted(item.getSubmissionId());
 
@@ -114,7 +120,7 @@ public class ReviewService {
         }
 
         if (updated == 0) {
-            throw new BizException(40901, "状态已变化，请刷新后重试");
+            throw new BizException(40901, "Status changed, please refresh and retry");
         }
         ensureSubmissionSubmitted(item.getSubmissionId());
 
@@ -126,7 +132,7 @@ public class ReviewService {
     private void handleActivity(Long itemId, String action, ReviewDecisionRequest req, Long reviewerId) {
         ActivityItemEntity item = activityItemMapper.findById(itemId);
         if (item == null) {
-            throw new BizException(40401, "活动条目不存在");
+            throw new BizException(40401, "Activity item not found");
         }
         ensureSubmissionSubmitted(item.getSubmissionId());
 
@@ -148,7 +154,75 @@ public class ReviewService {
         }
 
         if (updated == 0) {
-            throw new BizException(40901, "状态已变化，请刷新后重试");
+            throw new BizException(40901, "Status changed, please refresh and retry");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        log("ACTIVITY", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
+        submissionService.recalculate(item.getSubmissionId());
+        refreshCounselorReadyAt(item.getSubmissionId());
+    }
+
+    private void handleCourseDeleteReview(Long itemId, String action, ReviewDecisionRequest req, Long reviewerId) {
+        CourseItemEntity item = courseItemMapper.findById(itemId);
+        if (item == null) {
+            throw new BizException(40401, "Course item not found");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        BigDecimal before = item.getReviewerScore() == null ? item.getScore() : item.getReviewerScore();
+        BigDecimal after = before;
+        String reason = normalizeReason(req.getReason());
+        int updated;
+
+        if ("APPROVE_DELETE".equals(action)) {
+            after = BigDecimal.ZERO;
+            updated = courseItemMapper.approveDeleteIfRequested(itemId);
+        } else if ("REJECT_DELETE".equals(action)) {
+            after = safe(item.getReviewerScore());
+            updated = courseItemMapper.rejectDeleteIfRequested(itemId);
+        } else {
+            after = safe(item.getReviewerScore());
+            reason = null;
+            updated = courseItemMapper.undoDeletedToRejected(itemId);
+        }
+
+        if (updated == 0) {
+            throw new BizException(40901, "Status changed, please refresh and retry");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        log("COURSE", itemId, item.getSubmissionId(), action, before, after, reason, reviewerId);
+        submissionService.recalculate(item.getSubmissionId());
+        refreshCounselorReadyAt(item.getSubmissionId());
+    }
+
+    private void handleActivityDeleteReview(Long itemId, String action, ReviewDecisionRequest req, Long reviewerId) {
+        ActivityItemEntity item = activityItemMapper.findById(itemId);
+        if (item == null) {
+            throw new BizException(40401, "Activity item not found");
+        }
+        ensureSubmissionSubmitted(item.getSubmissionId());
+
+        BigDecimal before = item.getFinalScore() == null ? item.getSelfScore() : item.getFinalScore();
+        BigDecimal after = before;
+        String reason = normalizeReason(req.getReason());
+        int updated;
+
+        if ("APPROVE_DELETE".equals(action)) {
+            after = BigDecimal.ZERO;
+            updated = activityItemMapper.approveDeleteIfRequested(itemId);
+        } else if ("REJECT_DELETE".equals(action)) {
+            after = safe(item.getFinalScore());
+            updated = activityItemMapper.rejectDeleteIfRequested(itemId);
+        } else {
+            after = safe(item.getFinalScore());
+            reason = null;
+            updated = activityItemMapper.undoDeletedToRejected(itemId);
+        }
+
+        if (updated == 0) {
+            throw new BizException(40901, "Status changed, please refresh and retry");
         }
         ensureSubmissionSubmitted(item.getSubmissionId());
 
@@ -160,32 +234,32 @@ public class ReviewService {
     private void ensureSubmissionSubmitted(Long submissionId) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (!"SUBMITTED".equalsIgnoreCase(submission.getStatus())) {
-            throw new BizException(40003, "当前测评单不在可审核状态");
+            throw new BizException(40003, "Current submission is not in reviewable status");
         }
-    }
-
-    private int countTotalItems(Long submissionId) {
-        return courseItemMapper.countBySubmissionId(submissionId)
-                + activityItemMapper.countBySubmissionId(submissionId);
-    }
-
-    private int countReviewedItems(Long submissionId) {
-        return courseItemMapper.countReviewedBySubmissionId(submissionId)
-                + activityItemMapper.countReviewedBySubmissionId(submissionId);
-    }
-
-    private int countRejectedItems(Long submissionId) {
-        return courseItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED")
-                + activityItemMapper.countBySubmissionIdAndStatus(submissionId, "REJECTED");
     }
 
     private void refreshCounselorReadyAt(Long submissionId) {
         SubmissionService.ReviewStats stats = submissionService.getReviewStats(submissionId);
         boolean readyToSubmit = stats.getReviewPendingCount() == 0 && stats.getReviewRejectedCount() == 0;
         submissionMapper.updateCounselorReadyAt(submissionId, readyToSubmit ? LocalDateTime.now() : null);
+    }
+
+    private boolean isDeleteReviewAction(String action) {
+        return "APPROVE_DELETE".equals(action)
+                || "REJECT_DELETE".equals(action)
+                || "UNDO_DELETE".equals(action);
+    }
+
+    private boolean isSupportedAction(String action) {
+        return "APPROVE".equals(action)
+                || "REJECT".equals(action)
+                || "UNDO".equals(action)
+                || "APPROVE_DELETE".equals(action)
+                || "REJECT_DELETE".equals(action)
+                || "UNDO_DELETE".equals(action);
     }
 
     private String normalizeAction(String raw) {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="card">
     <div class="toolbar">
       <div>
@@ -38,7 +38,7 @@
           </thead>
           <tbody>
             <tr v-for="task in pager.pagedRows.value" :key="task.id">
-              <td>{{ task.student_no || '-' }}</td>
+              <td>{{ task.account_no || task.accountNo || '-' }}</td>
               <td>{{ task.real_name }}</td>
               <td>{{ task.class_name }}</td>
               <td><span class="badge">{{ statusLabel(task.status) }}</span></td>
@@ -74,7 +74,7 @@
         <div>
           <div style="font-weight: 700; font-size: 16px;">查看测评单 #{{ current.submission.id }}</div>
           <p class="muted" style="margin-top: 6px;">
-            学号：<b>{{ current.student.studentNo || '-' }}</b>
+            学号：<b>{{ current.student.accountNo || current.student.account_no || '-' }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
             学生：<b>{{ current.student.realName }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -191,7 +191,7 @@ const filteredTasks = computed(() => {
   const kw = String(keyword.value || '').trim().toLowerCase()
   return tasks.value.filter((item) => {
     if (!kw) return true
-    const source = `${item.student_no || ''} ${item.real_name || ''} ${item.class_name || ''}`.toLowerCase()
+    const source = `${item.account_no || item.accountNo || ''} ${item.real_name || ''} ${item.class_name || ''}`.toLowerCase()
     return source.includes(kw)
   })
 })
@@ -199,7 +199,7 @@ const filteredTasks = computed(() => {
 const pager = useTablePager(filteredTasks, 10)
 
 const statusLabel = (raw) => {
-  const code = (raw || '').trim().toUpperCase()
+  const code = String(raw || '').trim().toUpperCase()
   if (code === 'DRAFT') return '草稿'
   if (code === 'SUBMITTED') return '已提交'
   if (code === 'COUNSELOR_REVIEWED') return '已提交管理员'

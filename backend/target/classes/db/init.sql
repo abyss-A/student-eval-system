@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS student_eval DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+﻿CREATE DATABASE IF NOT EXISTS student_eval DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE student_eval;
 
 DROP TABLE IF EXISTS review_log;
@@ -14,10 +14,9 @@ DROP TABLE IF EXISTS sys_user;
 
 CREATE TABLE sys_user (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(64) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role VARCHAR(32) NOT NULL,
-  student_no VARCHAR(32) DEFAULT NULL,
+  account_no VARCHAR(32) DEFAULT NULL,
   real_name VARCHAR(64) NOT NULL,
   gender VARCHAR(16) DEFAULT NULL,
   phone VARCHAR(32) DEFAULT NULL,
@@ -25,7 +24,7 @@ CREATE TABLE sys_user (
   major_name VARCHAR(64) DEFAULT NULL,
   enabled TINYINT NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_sys_user_student_no (student_no)
+  UNIQUE KEY uk_sys_user_account_no (account_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE semester (
@@ -87,6 +86,7 @@ CREATE TABLE course_item (
   credit DECIMAL(8,2) NOT NULL,
   evidence_file_id BIGINT NULL,
   review_status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  delete_state VARCHAR(32) NOT NULL DEFAULT 'NONE',
   reviewer_score DECIMAL(8,2) NULL,
   reviewer_comment VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -104,6 +104,7 @@ CREATE TABLE activity_item (
   final_score DECIMAL(8,2) NULL,
   evidence_file_ids VARCHAR(500) NULL,
   review_status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  delete_state VARCHAR(32) NOT NULL DEFAULT 'NONE',
   reviewer_comment VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -170,3 +171,4 @@ CREATE TABLE feedback (
   INDEX idx_feedback_status (status),
   INDEX idx_feedback_creator (creator_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

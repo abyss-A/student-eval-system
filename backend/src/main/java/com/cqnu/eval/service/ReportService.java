@@ -34,10 +34,10 @@ public class ReportService {
     public Map<String, Object> availability(Long submissionId, CurrentUser user) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (submissionMapper.checkOwner(submissionId, user.getId()) == 0) {
-            throw new BizException(40301, "无权限访问该测评单");
+            throw new BizException(40301, "No permission to access this submission");
         }
 
         boolean canExport = !"DRAFT".equalsIgnoreCase(submission.getStatus());
@@ -53,18 +53,18 @@ public class ReportService {
     public ExportFile export(Long submissionId, String format, CurrentUser user) {
         SubmissionEntity submission = submissionMapper.findById(submissionId);
         if (submission == null) {
-            throw new BizException(40401, "测评单不存在");
+            throw new BizException(40401, "Submission not found");
         }
         if (submissionMapper.checkOwner(submissionId, user.getId()) == 0) {
-            throw new BizException(40301, "无权限访问该测评单");
+            throw new BizException(40301, "No permission to access this submission");
         }
         if ("DRAFT".equalsIgnoreCase(submission.getStatus())) {
-            throw new BizException(40003, "仅已提交的测评单可以导出");
+            throw new BizException(40003, "Draft submission cannot export. Please submit first.");
         }
 
         String normalized = format == null ? "" : format.trim().toUpperCase(Locale.ROOT);
         if (!"DOCX".equals(normalized)) {
-            throw new BizException(40001, "当前仅支持导出Word(DOCX)");
+            throw new BizException(40001, "Only DOCX export is supported");
         }
 
         Map<String, Object> detail = submissionService.getSubmissionDetail(submissionId, user);
@@ -86,16 +86,16 @@ public class ReportService {
         if (obj instanceof UserEntity) {
             return (UserEntity) obj;
         }
-        throw new BizException(50001, "学生信息类型异常: " + obj.getClass().getName());
+        throw new BizException(50001, "闂佽瀛╅崘缁樹繆閸ヮ剙鏋侀柟鎯ь嚟閳瑰秹鏌嶉埡浣告殨缂佽鲸鐗滅槐鎺楊敃閵夘喖娈梺璇查閸㈡煡顢氶敐澶婄＜婵ê宕悡? " + obj.getClass().getName());
     }
 
     private String buildBaseFileName(UserEntity student, Long submissionId) {
-        String studentNo = safeFilePart(student == null ? null : student.getStudentNo());
+        String accountNo = safeFilePart(student == null ? null : student.getAccountNo());
         String realName = safeFilePart(student == null ? null : student.getRealName());
-        if (studentNo.isEmpty() && realName.isEmpty()) {
-            return "综合奖学金申请表_" + submissionId;
+        if (accountNo.isEmpty() && realName.isEmpty()) {
+            return "Scholarship_Form_" + submissionId;
         }
-        return "综合奖学金申请表_" + studentNo + "_" + realName;
+        return "Scholarship_Form_" + accountNo + "_" + realName;
     }
 
     private String safeFilePart(String value) {
@@ -106,3 +106,4 @@ public class ReportService {
         return text.replaceAll("[\\\\/:*?\"<>|\\s]+", "_");
     }
 }
+

@@ -6,30 +6,30 @@ import javax.validation.constraints.Size;
 
 public class RegisterStudentRequest {
 
-    @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 32, message = "密码长度需在6-32位之间")
+    @NotBlank(message = "Password cannot be blank")
+    @Size(min = 6, max = 32, message = "Password length must be 6-32")
     private String password;
 
-    @NotBlank(message = "姓名不能为空")
-    @Size(max = 32, message = "姓名长度不能超过32位")
+    @NotBlank(message = "Real name cannot be blank")
+    @Size(max = 32, message = "Real name length cannot exceed 32")
     private String realName;
 
-    @NotBlank(message = "性别不能为空")
+    @NotBlank(message = "Gender cannot be blank")
     private String gender;
 
-    @NotBlank(message = "学号不能为空")
-    @Size(max = 32, message = "学号长度不能超过32位")
-    private String studentNo;
+    @NotBlank(message = "Account no cannot be blank")
+    @Size(max = 32, message = "Account no length cannot exceed 32")
+    private String accountNo;
 
-    @NotBlank(message = "年级班级不能为空")
-    @Size(max = 64, message = "年级班级长度不能超过64位")
+    @NotBlank(message = "Grade class cannot be blank")
+    @Size(max = 64, message = "Grade class length cannot exceed 64")
     private String gradeClass;
 
-    @NotBlank(message = "联系电话不能为空")
-    @Pattern(regexp = "^[0-9\\-]{7,20}$", message = "联系电话格式不正确")
+    @NotBlank(message = "Phone cannot be blank")
+    @Pattern(regexp = "^[0-9\\-]{7,20}$", message = "Phone format is invalid")
     private String phone;
 
-    @Size(max = 64, message = "专业长度不能超过64位")
+    @Size(max = 64, message = "Major length cannot exceed 64")
     private String majorName;
 
     public String getPassword() {
@@ -56,12 +56,12 @@ public class RegisterStudentRequest {
         this.gender = gender;
     }
 
-    public String getStudentNo() {
-        return studentNo;
+    public String getAccountNo() {
+        return accountNo;
     }
 
-    public void setStudentNo(String studentNo) {
-        this.studentNo = studentNo;
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
     }
 
     public String getGradeClass() {

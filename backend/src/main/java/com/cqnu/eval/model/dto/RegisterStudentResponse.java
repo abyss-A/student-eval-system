@@ -2,15 +2,15 @@ package com.cqnu.eval.model.dto;
 
 public class RegisterStudentResponse {
     private Long userId;
-    private String username;
+    private String accountNo;
     private String realName;
 
     public RegisterStudentResponse() {
     }
 
-    public RegisterStudentResponse(Long userId, String username, String realName) {
+    public RegisterStudentResponse(Long userId, String accountNo, String realName) {
         this.userId = userId;
-        this.username = username;
+        this.accountNo = accountNo;
         this.realName = realName;
     }
 
@@ -22,12 +22,12 @@ public class RegisterStudentResponse {
         this.userId = userId;
     }
 
-    public String getUsername() {
-        return username;
+    public String getAccountNo() {
+        return accountNo;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
     }
 
     public String getRealName() {

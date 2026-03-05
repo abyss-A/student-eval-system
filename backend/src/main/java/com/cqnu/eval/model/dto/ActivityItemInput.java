@@ -8,19 +8,20 @@ import java.math.BigDecimal;
 public class ActivityItemInput {
     private Long id;
 
-    @NotBlank(message = "板块不能为空")
+    @NotBlank(message = "Module type cannot be blank")
     private String moduleType;
 
-    @NotBlank(message = "活动标题不能为空")
+    @NotBlank(message = "Title cannot be blank")
     private String title;
 
     private String description;
 
-    @NotNull(message = "自评分不能为空")
-    @DecimalMin(value = "0", message = "自评分不能小于0")
+    @NotNull(message = "Self score cannot be null")
+    @DecimalMin(value = "0", message = "Self score cannot be less than 0")
     private BigDecimal selfScore;
 
     private String evidenceFileIds;
+    private Boolean deleteRequested;
 
     public Long getId() {
         return id;
@@ -68,5 +69,13 @@ public class ActivityItemInput {
 
     public void setEvidenceFileIds(String evidenceFileIds) {
         this.evidenceFileIds = evidenceFileIds;
+    }
+
+    public Boolean getDeleteRequested() {
+        return deleteRequested;
+    }
+
+    public void setDeleteRequested(Boolean deleteRequested) {
+        this.deleteRequested = deleteRequested;
     }
 }

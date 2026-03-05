@@ -105,7 +105,7 @@ public class MeController {
         map.put("id", user.getId());
         map.put("role", user.getRole());
         map.put("realName", user.getRealName());
-        map.put("studentNo", user.getStudentNo());
+        map.put("accountNo", user.getAccountNo());
         map.put("gender", user.getGender());
         map.put("phone", user.getPhone());
         map.put("className", user.getClassName());

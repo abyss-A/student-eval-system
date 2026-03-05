@@ -56,7 +56,7 @@
                   @change="taskSelection.toggle(task.id)"
                 />
               </td>
-              <td>{{ task.student_no || '-' }}</td>
+              <td>{{ task.account_no || task.accountNo || '-' }}</td>
               <td>{{ task.real_name }}</td>
               <td>{{ task.class_name }}</td>
               <td>{{ task.total_score ?? '-' }}</td>
@@ -104,7 +104,7 @@
         <div>
           <div style="font-weight: 700; font-size: 16px;">审核测评单 #{{ current.submission.id }}</div>
           <p class="muted" style="margin-top: 6px;">
-            学号：<b>{{ current.student.studentNo || '-' }}</b>
+            学号：<b>{{ current.student.accountNo || current.student.account_no || '-' }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
             学生：<b>{{ current.student.realName }}</b>
             <span style="margin: 0 6px; color: #cbd5e1;">|</span>
@@ -164,6 +164,7 @@
                   <th class="nowrap">课程</th>
                   <th class="nowrap">类型</th>
                   <th class="nowrap">分数</th>
+                  <th class="nowrap">状态</th>
                   <th>理由</th>
                   <th class="nowrap">操作</th>
                 </tr>
@@ -181,12 +182,22 @@
                   <td class="nowrap">{{ course.courseName }}</td>
                   <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
                   <td class="nowrap">{{ course.score }}</td>
+                  <td class="nowrap">
+                    <span class="badge" :class="reviewItemBadge(course)">
+                      {{ reviewItemStatus(course) }}
+                    </span>
+                  </td>
                   <td>
                     <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
                   </td>
                   <td>
                     <div class="action-row inline-actions">
-                      <template v-if="isPendingStatus(course.reviewStatus)">
+                      <template v-if="isDeleteRequested(course)">
+                        <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</button>
+                        <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                      </template>
+                      <button v-else-if="isDeleted(course)" class="btn secondary" type="button" @click="decide('COURSE', course.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</button>
+                      <template v-else-if="isPendingReviewable(course)">
                         <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
                         <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
                       </template>
@@ -195,7 +206,7 @@
                   </td>
                 </tr>
                 <tr v-if="!coursePager.pagedRows.value.length">
-                  <td colspan="6" class="empty">暂无符合条件的课程</td>
+                  <td colspan="7" class="empty">暂无符合条件的课程</td>
                 </tr>
               </tbody>
             </table>
@@ -262,6 +273,7 @@
                   <th class="nowrap col-title">标题</th>
                   <th class="nowrap col-score">分数</th>
                   <th class="nowrap col-evidence">证明图片</th>
+                  <th class="nowrap col-status">状态</th>
                   <th class="nowrap col-reason">理由</th>
                   <th class="nowrap col-action">操作</th>
                 </tr>
@@ -287,12 +299,22 @@
                     </div>
                     <span v-else class="muted" style="font-size: 12px;">未上传</span>
                   </td>
+                  <td class="nowrap">
+                    <span class="badge" :class="reviewItemBadge(activity)">
+                      {{ reviewItemStatus(activity) }}
+                    </span>
+                  </td>
                   <td>
                     <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
                   </td>
                   <td>
                     <div class="action-row inline-actions">
-                      <template v-if="isPendingStatus(activity.reviewStatus)">
+                      <template v-if="isDeleteRequested(activity)">
+                        <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</button>
+                        <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                      </template>
+                      <button v-else-if="isDeleted(activity)" class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</button>
+                      <template v-else-if="isPendingReviewable(activity)">
                         <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
                         <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
                       </template>
@@ -301,7 +323,7 @@
                   </td>
                 </tr>
                 <tr v-if="!activityPager.pagedRows.value.length">
-                  <td colspan="7" class="empty">暂无符合条件的活动</td>
+                  <td colspan="8" class="empty">暂无符合条件的活动</td>
                 </tr>
               </tbody>
             </table>
@@ -363,7 +385,7 @@ const filteredTasks = computed(() => {
   const kw = String(taskKeyword.value || '').trim().toLowerCase()
   return tasks.value.filter((task) => {
     if (!kw) return true
-    const source = `${task.student_no || ''} ${task.real_name || ''} ${task.class_name || ''}`.toLowerCase()
+    const source = `${task.account_no || task.accountNo || ''} ${task.real_name || ''} ${task.class_name || ''}`.toLowerCase()
     return source.includes(kw)
   })
 })
@@ -456,6 +478,30 @@ const moduleLabel = (raw) => {
 }
 
 const isPendingStatus = (raw) => String(raw || '').trim().toUpperCase() === 'PENDING'
+const normalizeDeleteState = (raw) => {
+  const state = String(raw || '').trim().toUpperCase()
+  return state || 'NONE'
+}
+const isDeleteRequested = (item) => normalizeDeleteState(item?.deleteState || item?.delete_state) === 'DELETE_REQUESTED'
+const isDeleted = (item) => normalizeDeleteState(item?.deleteState || item?.delete_state) === 'DELETED'
+const isPendingReviewable = (item) => isPendingStatus(item?.reviewStatus) && !isDeleteRequested(item) && !isDeleted(item)
+
+const reviewItemStatus = (item) => {
+  if (isDeleteRequested(item)) return '待删除复审'
+  if (isDeleted(item)) return '已删除'
+  const reviewStatus = String(item?.reviewStatus || '').trim().toUpperCase()
+  if (reviewStatus === 'APPROVED') return '已通过'
+  if (reviewStatus === 'REJECTED') return '已驳回'
+  return '待审核'
+}
+
+const reviewItemBadge = (item) => {
+  const label = reviewItemStatus(item)
+  if (label === '已通过') return 'success'
+  if (label === '已驳回') return 'danger'
+  if (label === '待删除复审') return 'warning'
+  return ''
+}
 
 const pickTaskDoneCount = (task) => {
   const raw = task?.reviewDoneCount ?? task?.review_done_count ?? 0
@@ -828,7 +874,7 @@ const runBatchDecision = async ({ itemType, action, reason }) => {
     let skipped = 0
 
     for (const row of selectedRows) {
-      if (!isPendingStatus(row.reviewStatus)) {
+      if (!isPendingReviewable(row)) {
         skipped += 1
         continue
       }

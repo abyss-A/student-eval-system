@@ -34,11 +34,11 @@ public class JwtUtils {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Long userId, String username, String role) {
+    public String createToken(Long userId, String accountNo, String role) {
         long now = System.currentTimeMillis();
         long exp = now + expireHours * 3600_000L;
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(accountNo)
                 .claim("uid", userId)
                 .claim("role", role)
                 .setIssuedAt(new Date(now))

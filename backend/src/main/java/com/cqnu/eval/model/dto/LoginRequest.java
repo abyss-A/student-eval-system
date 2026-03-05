@@ -5,19 +5,19 @@ import javax.validation.constraints.Size;
 
 public class LoginRequest {
 
-    @NotBlank(message = "学号不能为空")
-    @Size(min = 4, max = 32, message = "学号长度需在4-32位之间")
-    private String studentNo;
+    @NotBlank(message = "Account no cannot be blank")
+    @Size(min = 4, max = 32, message = "Account no length must be 4-32")
+    private String accountNo;
 
-    @NotBlank(message = "密码不能为空")
+    @NotBlank(message = "Password cannot be blank")
     private String password;
 
-    public String getStudentNo() {
-        return studentNo;
+    public String getAccountNo() {
+        return accountNo;
     }
 
-    public void setStudentNo(String studentNo) {
-        this.studentNo = studentNo;
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
     }
 
     public String getPassword() {

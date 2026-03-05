@@ -2,12 +2,12 @@ package com.cqnu.eval.security;
 
 public class CurrentUser {
     private Long id;
-    private String username;
+    private String accountNo;
     private String role;
 
-    public CurrentUser(Long id, String username, String role) {
+    public CurrentUser(Long id, String accountNo, String role) {
         this.id = id;
-        this.username = username;
+        this.accountNo = accountNo;
         this.role = role;
     }
 
@@ -15,8 +15,8 @@ public class CurrentUser {
         return id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getAccountNo() {
+        return accountNo;
     }
 
     public String getRole() {

@@ -13,6 +13,7 @@ public class ActivityItemEntity {
     private BigDecimal finalScore;
     private String evidenceFileIds;
     private String reviewStatus;
+    private String deleteState;
     private String reviewerComment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -87,6 +88,14 @@ public class ActivityItemEntity {
 
     public void setReviewStatus(String reviewStatus) {
         this.reviewStatus = reviewStatus;
+    }
+
+    public String getDeleteState() {
+        return deleteState;
+    }
+
+    public void setDeleteState(String deleteState) {
+        this.deleteState = deleteState;
     }
 
     public String getReviewerComment() {

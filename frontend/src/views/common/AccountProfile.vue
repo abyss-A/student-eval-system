@@ -7,7 +7,7 @@
     <article class="card" style="box-shadow: none; background: #fbfdff;">
       <h3 style="margin: 0 0 10px; font-size: 16px;">基本信息</h3>
       <div class="grid two">
-        <div class="field"><span class="field-label">学号</span><input :value="profile.studentNo || '-'" disabled /></div>
+        <div class="field"><span class="field-label">{{ accountNoLabel }}</span><input :value="profile.accountNo || '-'" disabled /></div>
         <div class="field"><span class="field-label">姓名</span><input :value="profile.realName || '-'" disabled /></div>
         <div class="field"><span class="field-label">角色</span><input :value="roleText" disabled /></div>
         <div class="field"><span class="field-label">性别</span><input :value="profile.gender || '-'" disabled /></div>
@@ -72,9 +72,10 @@ const phonePattern = /^[0-9-]{7,20}$/
 
 const role = ref(getRole())
 const roleText = computed(() => roleLabel(role.value))
+const accountNoLabel = computed(() => (role.value === 'STUDENT' ? '学号' : '工号'))
 
 const profile = reactive({
-  studentNo: '',
+  accountNo: '',
   realName: '',
   gender: '',
   phone: '',
@@ -95,7 +96,7 @@ const pwdError = ref('')
 const changingPwd = ref(false)
 
 const applyProfile = (data) => {
-  profile.studentNo = data?.studentNo || ''
+  profile.accountNo = data?.accountNo || ''
   profile.realName = data?.realName || ''
   profile.gender = data?.gender || ''
   profile.phone = data?.phone || ''

@@ -87,17 +87,17 @@
             </label>
 
             <label class="field">
-              <span class="field-label">学号</span>
+              <span class="field-label">学号/工号</span>
               <input
-                v-model.trim="form.studentNo"
-                :class="{ 'is-error': Boolean(errors.studentNo) }"
-                placeholder="请输入学号"
-                :aria-invalid="Boolean(errors.studentNo)"
-                aria-describedby="reg-studentno-error"
-                @blur="validateField('studentNo')"
-                @input="clearFieldError('studentNo')"
+                v-model.trim="form.accountNo"
+                :class="{ 'is-error': Boolean(errors.accountNo) }"
+                placeholder="请输入学号/工号"
+                :aria-invalid="Boolean(errors.accountNo)"
+                aria-describedby="reg-accountno-error"
+                @blur="validateField('accountNo')"
+                @input="clearFieldError('accountNo')"
               />
-              <span id="reg-studentno-error" class="reg-field-error">{{ errors.studentNo }}</span>
+              <span id="reg-accountno-error" class="reg-field-error">{{ errors.accountNo }}</span>
             </label>
 
             <label class="field">
@@ -188,7 +188,7 @@ const form = reactive({
   confirmPassword: '',
   realName: '',
   gender: '男',
-  studentNo: '',
+  accountNo: '',
   gradeClass: '',
   phone: '',
   majorName: ''
@@ -199,7 +199,7 @@ const errors = reactive({
   confirmPassword: '',
   realName: '',
   gender: '',
-  studentNo: '',
+  accountNo: '',
   gradeClass: '',
   phone: '',
   majorName: ''
@@ -231,7 +231,7 @@ const validateField = (field) => {
   const confirmPassword = String(form.confirmPassword || '')
   const realName = String(form.realName || '').trim()
   const gender = String(form.gender || '').trim()
-  const studentNo = String(form.studentNo || '').trim()
+  const accountNo = String(form.accountNo || '').trim()
   const gradeClass = String(form.gradeClass || '').trim()
   const phone = String(form.phone || '').trim()
   const majorName = String(form.majorName || '').trim()
@@ -263,10 +263,10 @@ const validateField = (field) => {
     return
   }
 
-  if (field === 'studentNo') {
-    if (!studentNo) errors.studentNo = '请输入学号'
-    else if (studentNo.length > 32) errors.studentNo = '学号长度不能超过32位'
-    else errors.studentNo = ''
+  if (field === 'accountNo') {
+    if (!accountNo) errors.accountNo = '请输入学号/工号'
+    else if (accountNo.length > 32) errors.accountNo = '学号/工号长度不能超过32位'
+    else errors.accountNo = ''
     return
   }
 
@@ -294,7 +294,7 @@ const validateForm = () => {
   validateField('realName')
   validateField('password')
   validateField('confirmPassword')
-  validateField('studentNo')
+  validateField('accountNo')
   validateField('gradeClass')
   validateField('phone')
   validateField('majorName')
@@ -304,7 +304,7 @@ const validateForm = () => {
     !errors.realName &&
     !errors.password &&
     !errors.confirmPassword &&
-    !errors.studentNo &&
+    !errors.accountNo &&
     !errors.gradeClass &&
     !errors.phone &&
     !errors.majorName &&
@@ -320,7 +320,7 @@ const submitRegister = async () => {
     password: String(form.password || ''),
     realName: String(form.realName || '').trim(),
     gender: String(form.gender || '').trim(),
-    studentNo: String(form.studentNo || '').trim(),
+    accountNo: String(form.accountNo || '').trim(),
     gradeClass: String(form.gradeClass || '').trim(),
     phone: String(form.phone || '').trim(),
     majorName: String(form.majorName || '').trim()
@@ -333,7 +333,7 @@ const submitRegister = async () => {
       path: '/login',
       query: {
         registered: '1',
-        studentNo: payload.studentNo
+        accountNo: payload.accountNo
       }
     })
   } catch (error) {

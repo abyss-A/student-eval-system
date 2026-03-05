@@ -11,20 +11,17 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface UserMapper {
 
-    @Select("select * from sys_user where username = #{username} and enabled = 1 limit 1")
-    UserEntity findByUsername(@Param("username") String username);
-
     @Select("select * from sys_user where id = #{id} limit 1")
     UserEntity findById(@Param("id") Long id);
 
-    @Select("select * from sys_user where student_no = #{studentNo} and enabled = 1 limit 1")
-    UserEntity findByStudentNo(@Param("studentNo") String studentNo);
+    @Select("select * from sys_user where account_no = #{accountNo} and enabled = 1 limit 1")
+    UserEntity findByAccountNo(@Param("accountNo") String accountNo);
 
-    @Select("select * from sys_user where student_no = #{studentNo} and enabled = 1 limit 1")
-    UserEntity findEnabledByStudentNo(@Param("studentNo") String studentNo);
+    @Select("select * from sys_user where account_no = #{accountNo} and enabled = 1 limit 1")
+    UserEntity findEnabledByAccountNo(@Param("accountNo") String accountNo);
 
-    @Insert("insert into sys_user(username, password_hash, role, student_no, real_name, gender, phone, class_name, major_name, enabled) " +
-            "values(#{username}, #{passwordHash}, #{role}, #{studentNo}, #{realName}, #{gender}, #{phone}, #{className}, #{majorName}, #{enabled})")
+    @Insert("insert into sys_user(password_hash, role, account_no, real_name, gender, phone, class_name, major_name, enabled) " +
+            "values(#{passwordHash}, #{role}, #{accountNo}, #{realName}, #{gender}, #{phone}, #{className}, #{majorName}, #{enabled})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(UserEntity entity);
 

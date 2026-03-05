@@ -12,6 +12,7 @@ public class CourseItemEntity {
     private BigDecimal credit;
     private Long evidenceFileId;
     private String reviewStatus;
+    private String deleteState;
     private BigDecimal reviewerScore;
     private String reviewerComment;
     private LocalDateTime createdAt;
@@ -79,6 +80,14 @@ public class CourseItemEntity {
 
     public void setReviewStatus(String reviewStatus) {
         this.reviewStatus = reviewStatus;
+    }
+
+    public String getDeleteState() {
+        return deleteState;
+    }
+
+    public void setDeleteState(String deleteState) {
+        this.deleteState = deleteState;
     }
 
     public BigDecimal getReviewerScore() {

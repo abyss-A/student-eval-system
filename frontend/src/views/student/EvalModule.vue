@@ -49,6 +49,8 @@
           <option value="PENDING">待审核</option>
           <option value="APPROVED">通过</option>
           <option value="REJECTED">驳回</option>
+          <option value="DELETE_REQUESTED">待删除复审</option>
+          <option value="DELETED">已删除</option>
         </select>
       </div>
       <div class="table-search-right">
@@ -138,7 +140,7 @@
                   class="btn secondary"
                   type="button"
                   @click="removeItem(a)"
-                  :disabled="loading || !canRemoveRows"
+                  :disabled="loading || !canDeleteActivityRow(a)"
                 >
                   删除
                 </button>
@@ -213,8 +215,28 @@ const UNIVERSITY_PE_TITLE = '大学体育'
 const canEditActivityRow = (row) => {
   if (isDraftEditable.value) return true
   if (!isRejectedOnlyEditable.value) return false
+  if (activityStateCode(row) !== 'REJECTED') return false
+  const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState && deleteState !== 'NONE') return false
+  return true
+}
+
+const canRequestDeleteActivityRow = (row) => {
+  if (!isRejectedOnlyEditable.value) return false
+  return activityStateCode(row) === 'REJECTED'
+}
+
+const canDeleteActivityRow = (row) => {
+  if (isDraftEditable.value) return true
+  return canRequestDeleteActivityRow(row)
+}
+
+const activityStateCode = (row) => {
+  const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState === 'DELETE_REQUESTED') return 'DELETE_REQUESTED'
+  if (deleteState === 'DELETED') return 'DELETED'
   const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
-  return reviewStatus === 'REJECTED'
+  return reviewStatus
 }
 
 const isSubmitStage = computed(() => {
@@ -252,16 +274,20 @@ const statusLabel = (raw) => {
 }
 
 const activityReviewResult = (a) => {
+  const stateCode = activityStateCode(a)
+  if (stateCode === 'DELETE_REQUESTED') return '待删除复审'
+  if (stateCode === 'DELETED') return '已删除'
   if (!reviewReady.value) return '-'
-  const statusCode = String(a?.reviewStatus || '').trim().toUpperCase()
-  if (statusCode === 'REJECTED') return '驳回'
-  if (statusCode === 'APPROVED') return '通过'
+  if (stateCode === 'REJECTED') return '驳回'
+  if (stateCode === 'APPROVED') return '通过'
   return '待审核'
 }
 
 const reviewResultBadge = (label) => {
   if (label === '通过') return 'success'
   if (label === '驳回') return 'danger'
+  if (label === '待删除复审') return 'warning'
+  if (label === '已删除') return 'secondary'
   return ''
 }
 
@@ -284,6 +310,8 @@ const blankRow = () => ({
   description: '',
   selfScore: 0,
   reviewStatus: 'PENDING',
+  deleteState: 'NONE',
+  deleteRequested: false,
   reviewerComment: '',
   evidenceFileIds: '',
   _rowKey: `tmp_${props.moduleType}_${Date.now()}_${Math.random()}`
@@ -296,6 +324,8 @@ const mapActivity = (a) => ({
   description: a?.description || '',
   selfScore: Number(a?.selfScore ?? 0),
   reviewStatus: a?.reviewStatus || 'PENDING',
+  deleteState: a?.deleteState || a?.delete_state || 'NONE',
+  deleteRequested: false,
   reviewerComment: a?.reviewerComment || '',
   evidenceFileIds: a?.evidenceFileIds || '',
   _rowKey: a?.id ? `act_${a.id}` : `tmp_${props.moduleType}_${Date.now()}_${Math.random()}`
@@ -306,7 +336,7 @@ const filteredRows = computed(() => {
   return rows.value.filter((item) => {
     const source = `${item.title || ''} ${item.description || ''}`.toLowerCase()
     const matchedKeyword = !kw || source.includes(kw)
-    const matchedReview = reviewFilter.value === 'ALL' || String(item.reviewStatus || '').toUpperCase() === reviewFilter.value
+    const matchedReview = reviewFilter.value === 'ALL' || activityStateCode(item) === reviewFilter.value
     return matchedKeyword && matchedReview
   })
 })
@@ -390,7 +420,8 @@ const buildActivityPayload = ({ silent }) => {
       title,
       description: desc,
       selfScore: score,
-      evidenceFileIds: ev
+      evidenceFileIds: ev,
+      deleteRequested: Boolean(a.deleteRequested)
     })
   }
   if (isSportModule.value && universityPeCount > 1) {
@@ -450,9 +481,34 @@ const removeRow = (idx) => {
   resetPage()
 }
 
-const removeItem = (item) => {
-  const idx = rows.value.findIndex((x) => x === item || (item.id && x.id === item.id))
-  if (idx >= 0) removeRow(idx)
+const removeItem = async (item) => {
+  if (isDraftEditable.value) {
+    const idx = rows.value.findIndex((x) => x === item || (item.id && x.id === item.id))
+    if (idx >= 0) removeRow(idx)
+    return
+  }
+  if (!canRequestDeleteActivityRow(item)) {
+    alert('仅被驳回条目可发起删除复审')
+    return
+  }
+  if (!confirm('确认发起该活动的删除复审吗？')) return
+
+  const prevRequested = Boolean(item.deleteRequested)
+  item.deleteRequested = true
+  loading.value = true
+  try {
+    const payload = buildActivityPayload({ silent: false })
+    if (!payload.ok) return
+    await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: true })
+    syncRowsFromStore()
+    autoSave.resetState()
+    alert('已提交删除复审')
+  } catch (e) {
+    item.deleteRequested = prevRequested
+    throw e
+  } finally {
+    loading.value = false
+  }
 }
 
 const clearFilters = () => {

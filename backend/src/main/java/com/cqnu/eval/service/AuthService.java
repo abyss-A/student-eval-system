@@ -27,12 +27,12 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
-        String studentNo = request.getStudentNo() == null ? "" : request.getStudentNo().trim();
-        UserEntity user = userMapper.findEnabledByStudentNo(studentNo);
+        String accountNo = request.getAccountNo() == null ? "" : request.getAccountNo().trim();
+        UserEntity user = userMapper.findEnabledByAccountNo(accountNo);
         if (user == null || !verifyPasswordAndUpgradeIfNeeded(user, request.getPassword())) {
-            throw new BizException(40101, "学号或密码错误");
+            throw new BizException(40101, "学号/工号或密码错误");
         }
-        String token = jwtUtils.createToken(user.getId(), user.getUsername(), user.getRole());
+        String token = jwtUtils.createToken(user.getId(), user.getAccountNo(), user.getRole());
         return new LoginResponse(token, user.getRole(), user.getId(), user.getRealName());
     }
 
@@ -40,7 +40,7 @@ public class AuthService {
         String password = request.getPassword().trim();
         String realName = request.getRealName().trim();
         String gender = request.getGender().trim();
-        String studentNo = request.getStudentNo().trim();
+        String accountNo = request.getAccountNo().trim();
         String gradeClass = request.getGradeClass().trim();
         String phone = request.getPhone().trim();
         String majorName = request.getMajorName() == null ? "" : request.getMajorName().trim();
@@ -50,18 +50,14 @@ public class AuthService {
             throw new BizException(40001, "性别仅支持：男、女");
         }
 
-        if (userMapper.findByStudentNo(studentNo) != null) {
-            throw new BizException(40001, "学号已被注册");
-        }
-        if (userMapper.findByUsername(studentNo) != null) {
-            throw new BizException(40001, "账号已存在，请更换后再试");
+        if (userMapper.findByAccountNo(accountNo) != null) {
+            throw new BizException(40001, "学号/工号已被注册");
         }
 
         UserEntity user = new UserEntity();
-        user.setUsername(studentNo);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole("STUDENT");
-        user.setStudentNo(studentNo);
+        user.setAccountNo(accountNo);
         user.setRealName(realName);
         user.setGender(normalizedGender);
         user.setPhone(phone);
@@ -70,7 +66,7 @@ public class AuthService {
         user.setEnabled(1);
         userMapper.insert(user);
 
-        return new RegisterStudentResponse(user.getId(), user.getStudentNo(), user.getRealName());
+        return new RegisterStudentResponse(user.getId(), user.getAccountNo(), user.getRealName());
     }
 
     private boolean verifyPasswordAndUpgradeIfNeeded(UserEntity user, String rawPassword) {

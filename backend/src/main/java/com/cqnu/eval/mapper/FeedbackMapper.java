@@ -18,7 +18,7 @@ public interface FeedbackMapper {
     FeedbackEntity findById(@Param("id") Long id);
 
     @Select("select f.*, c.real_name as creator_real_name, c.role as creator_role, " +
-            "c.student_no, c.class_name, c.major_name, h.real_name as handler_real_name " +
+            "c.account_no, c.class_name, c.major_name, h.real_name as handler_real_name " +
             "from feedback f join sys_user c on f.creator_id=c.id " +
             "left join sys_user h on f.handler_id=h.id " +
             "where f.id = #{id} limit 1")
@@ -36,7 +36,7 @@ public interface FeedbackMapper {
 
     @Select({
             "<script>",
-            "select f.*, c.real_name as creator_real_name, c.student_no, c.class_name, c.major_name",
+            "select f.*, c.real_name as creator_real_name, c.account_no, c.class_name, c.major_name",
             "from feedback f join sys_user c on f.creator_id=c.id",
             "<where>",
             " 1=1",
@@ -71,4 +71,5 @@ public interface FeedbackMapper {
     })
     int handleClose(@Param("id") Long id, @Param("handlerId") Long handlerId, @Param("replyContent") String replyContent);
 }
+
 

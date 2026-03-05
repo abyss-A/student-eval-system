@@ -152,14 +152,14 @@ public class ReportTemplateService {
     private void fillBaseInfo(XWPFTable table, UserEntity student, int fillFontSize) {
         setCellText(table, 0, 1, str(student == null ? null : student.getRealName()), fillFontSize);
         setCellText(table, 0, 3, normalizeGender(student == null ? null : student.getGender()), fillFontSize);
-        setCellText(table, 0, 5, str(student == null ? null : student.getStudentNo()), fillFontSize);
+        setCellText(table, 0, 5, str(student == null ? null : student.getAccountNo()), fillFontSize);
         setCellText(table, 1, 1, "\u672c\u79d1", fillFontSize);
         setCellText(table, 1, 3, str(student == null ? null : student.getClassName()), fillFontSize);
 
         String phone = str(student == null ? null : student.getPhone()).trim();
         setCellText(table, 1, 5, phone.isEmpty() ? "-" : phone, fillFontSize);
 
-        // 鏅鸿偛寰楀垎鍙繚鐣欑珫鎺掓爣绛撅紝涓嶅湪姝ゅ闄勫姞鍒嗘暟銆?        setCellText(table, 2, 0, "\u667a\n\u80b2\n\u5f97\n\u5206", fillFontSize);
+        // 闂佸搫鎳樼紓姘跺磻濞戞﹩鍤楁俊銈傚亾闁搞劌閰ｅ畷锝夘敂閸愵亞顔旈梺浼欑稻閻熝囨偟椤愶箑绠抽柟鐑樻尵閸ㄨ偐绱掑☉娆愬珪缂佽鲸绻冪粙澶婎吋閸涱喛鍚┑顔界缚閸婃洟藝閳哄懏鈷旈柛鏇ㄥ亜椤綁鏌涢幒鎴烆棡闁哄棛鍠栨俊?        setCellText(table, 2, 0, "\u667a\n\u80b2\n\u5f97\n\u5206", fillFontSize);
     }
 
     private void fillCourseSummary(XWPFTable table, List<CourseItemEntity> courses, int fillFontSize) {
@@ -460,17 +460,17 @@ public class ReportTemplateService {
         String value = str(raw);
         return value
                 .replaceAll("[\\s\\u3000\\r\\n\\t]+", "")
-                .replace("：", "")
                 .replace(":", "")
-                .replace("（", "")
-                .replace("）", "")
                 .replace("(", "")
                 .replace(")", "")
-                .replace("、", "")
-                .replace("，", "")
-                .replace(",", "");
+                .replace(",", "")
+                .replace("\uFF1A", "")
+                .replace("\uFF08", "")
+                .replace("\uFF09", "")
+                .replace("\u3010", "")
+                .replace("\u3011", "")
+                .replace("\uFF0C", "");
     }
-
     private String joinActivities(List<ActivityItemEntity> activities, String moduleType) {
         List<String> parts = new ArrayList<>();
         int index = 1;
@@ -759,3 +759,4 @@ public class ReportTemplateService {
         UnderlinePatterns underline;
     }
 }
+

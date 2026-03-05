@@ -25,6 +25,7 @@ public class CourseItemInput {
     private BigDecimal credit;
 
     private Long evidenceFileId;
+    private Boolean deleteRequested;
 
     public Long getId() {
         return id;
@@ -72,5 +73,13 @@ public class CourseItemInput {
 
     public void setEvidenceFileId(Long evidenceFileId) {
         this.evidenceFileId = evidenceFileId;
+    }
+
+    public Boolean getDeleteRequested() {
+        return deleteRequested;
+    }
+
+    public void setDeleteRequested(Boolean deleteRequested) {
+        this.deleteRequested = deleteRequested;
     }
 }
