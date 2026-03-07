@@ -1,0 +1,34 @@
+:root {
+  --app-bg: #f2f5fb;
+  --app-bg-soft: #f8faff;
+  --app-surface: #ffffff;
+  --app-surface-alt: #f7f9fe;
+  --app-border: #dbe4f0;
+  --app-border-strong: #c9d5e6;
+  --app-text: #132033;
+  --app-text-soft: #5b6b80;
+  --app-text-faint: #7f8fa6;
+  --app-primary: #1f5fae;
+  --app-primary-strong: #0f4b93;
+  --app-primary-soft: #eaf2ff;
+  --app-success: #1f8f5f;
+  --app-warning: #ba7c14;
+  --app-danger: #c0392b;
+  --app-info: #1769c8;
+  --app-shadow-sm: 0 2px 8px rgba(16, 41, 78, 0.06);
+  --app-shadow-md: 0 8px 20px rgba(16, 41, 78, 0.08);
+  --app-shadow-lg: 0 16px 40px rgba(16, 41, 78, 0.12);
+  --app-radius-xs: 8px;
+  --app-radius-sm: 10px;
+  --app-radius-md: 14px;
+  --app-radius-lg: 18px;
+  --app-gap-1: 4px;
+  --app-gap-2: 8px;
+  --app-gap-3: 12px;
+  --app-gap-4: 16px;
+  --app-gap-5: 20px;
+  --app-gap-6: 24px;
+  --app-font-ui: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --app-font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --app-font-number: "Inter", "Noto Sans SC", sans-serif;
+}

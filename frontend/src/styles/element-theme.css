@@ -1,0 +1,72 @@
+:root {
+  --el-color-primary: var(--app-primary);
+  --el-color-primary-light-3: #4b7ec0;
+  --el-color-primary-light-5: #7aa0d3;
+  --el-color-primary-light-7: #a8c1e4;
+  --el-color-primary-light-8: #bdd0eb;
+  --el-color-primary-light-9: #d3dff3;
+  --el-color-primary-dark-2: var(--app-primary-strong);
+
+  --el-color-success: var(--app-success);
+  --el-color-warning: var(--app-warning);
+  --el-color-danger: var(--app-danger);
+  --el-color-info: var(--app-info);
+
+  --el-text-color-primary: var(--app-text);
+  --el-text-color-regular: var(--app-text-soft);
+  --el-text-color-secondary: var(--app-text-faint);
+  --el-border-color: var(--app-border);
+  --el-border-color-light: #e8eef7;
+  --el-border-color-lighter: #edf2fa;
+  --el-border-color-extra-light: #f3f6fb;
+  --el-fill-color-blank: #ffffff;
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: var(--app-bg);
+  --el-bg-color-overlay: #ffffff;
+  --el-disabled-bg-color: #f3f6fb;
+  --el-disabled-text-color: #9aaac1;
+
+  --el-font-family: var(--app-font-ui);
+  --el-font-size-base: 14px;
+  --el-component-size: 36px;
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 999px;
+  --el-box-shadow-light: var(--app-shadow-sm);
+}
+
+.el-button {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  box-shadow: 0 0 0 1px var(--app-border) inset;
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px var(--app-border-strong) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--app-primary) inset, 0 0 0 3px rgba(31, 95, 174, 0.12) !important;
+}
+
+.el-card {
+  border-color: var(--app-border);
+  border-radius: var(--app-radius-md);
+}
+
+.el-table {
+  --el-table-header-bg-color: #f4f8ff;
+  --el-table-tr-bg-color: #ffffff;
+  --el-table-row-hover-bg-color: #eef4ff;
+  --el-table-border-color: var(--app-border);
+  --el-table-header-text-color: #2a3b53;
+}
