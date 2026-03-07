@@ -18,7 +18,7 @@
         </p>
       </div>
       <div class="toolbar-row">
-        <button class="btn" type="button" @click="save" :disabled="loading || !canEditAny">保存</button>
+        <el-button type="primary" @click="save" :loading="loading" :disabled="!canEditAny">保存</el-button>
       </div>
     </div>
 
@@ -39,29 +39,29 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="keyword"
-          width="320px"
+          width="180px"
           placeholder="搜索活动标题或说明"
           @submit="onSearchSubmit"
           @clear="onSearchSubmit"
         />
-        <select v-model="reviewFilter" style="width: 140px;">
-          <option value="ALL">全部审核</option>
-          <option value="PENDING">待审核</option>
-          <option value="APPROVED">通过</option>
-          <option value="REJECTED">驳回</option>
-          <option value="DELETE_REQUESTED">待删除复审</option>
-          <option value="DELETED">已删除</option>
-        </select>
+        <el-select v-model="reviewFilter" style="width: 140px;">
+          <el-option label="全部审核" value="ALL" />
+          <el-option label="待审核" value="PENDING" />
+          <el-option label="通过" value="APPROVED" />
+          <el-option label="驳回" value="REJECTED" />
+          <el-option label="待删除复审" value="DELETE_REQUESTED" />
+          <el-option label="已删除" value="DELETED" />
+        </el-select>
       </div>
       <div class="table-search-right">
         <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
-        <button class="btn secondary" type="button" :disabled="!canBatchDeleteRows" @click="batchDeleteRows">批量删除</button>
+        <el-button type="default" :disabled="!canBatchDeleteRows" @click="batchDeleteRows">批量删除</el-button>
       </div>
     </div>
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="student_eval_module">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 104px; --sticky-status-w: 106px;" data-resize-key="student_eval_module">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -77,9 +77,9 @@
               <th>说明</th>
               <th style="width: 110px;">分数</th>
               <th style="width: 320px;">证明材料</th>
-              <th style="width: 110px;">审核结论</th>
               <th style="width: 200px;">审核理由</th>
-              <th style="width: 90px;">操作</th>
+              <th class="col-status" style="width: 106px;">状态</th>
+              <th class="col-action" style="width: 104px;">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -128,22 +128,24 @@
                 />
               </td>
               <td>
+                <TableOverflowCell
+                  :text="displayReviewerComment(a.reviewerComment)"
+                  :cell-key="`student_activity_reason_${a.id || a._rowKey || idx}`"
+                />
+              </td>
+              <td class="col-status">
                 <span class="badge" :class="reviewResultBadge(activityReviewResult(a))">
                   {{ activityReviewResult(a) }}
                 </span>
               </td>
-              <td>
-                <div style="white-space: pre-wrap;">{{ displayReviewerComment(a.reviewerComment) }}</div>
-              </td>
-              <td>
-                <button
-                  class="btn secondary"
-                  type="button"
+              <td class="col-action">
+                <el-button
+                  type="default"
                   @click="removeItem(a)"
                   :disabled="loading || !canDeleteActivityRow(a)"
                 >
                   删除
-                </button>
+                </el-button>
               </td>
             </tr>
             <tr v-if="!pagedRows.length">
@@ -164,7 +166,7 @@
     </div>
 
     <div class="toolbar-row module-footer-row" style="margin-top: 10px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !isDraftEditable">新增</button>
+      <el-button type="default" @click="addRow" :disabled="loading || !isDraftEditable">新增</el-button>
       <div class="formula-note">
         {{ moduleFormulaText }}
       </div>
@@ -176,6 +178,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import submissionStore from '../../stores/submissionStore'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
+import TableOverflowCell from '../../components/TableOverflowCell.vue'
 import TablePager from '../../components/TablePager.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import useTablePager from '../../composables/useTablePager'

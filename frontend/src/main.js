@@ -1,8 +1,21 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import '@fontsource/inter/latin-400.css'
+import '@fontsource/inter/latin-500.css'
+import '@fontsource/inter/latin-600.css'
+import '@fontsource/inter/latin-ext-400.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-400.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-500.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-700.css'
+import '@fontsource/noto-sans-sc/latin-400.css'
 import './styles/global.css'
+import './styles/tokens.css'
+import './styles/element-theme.css'
+import './styles/app-layout.css'
 import { initTableColumnResize } from './utils/tableColumnResize'
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(router).use(ElementPlus).mount('#app')
 initTableColumnResize()

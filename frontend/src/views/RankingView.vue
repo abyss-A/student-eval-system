@@ -8,17 +8,17 @@
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <input
+        <el-input
           v-model.trim="semesterIdInput"
           type="number"
-          min="1"
+          class="ranking-semester-input"
           placeholder="学期ID"
-          style="width: 120px;"
-          @keyup.enter="load()"
+          @keydown.enter.prevent="load()"
         />
+        <el-button type="primary" :loading="loading" @click="load">查询</el-button>
         <SearchCapsule
           v-model="keyword"
-          width="320px"
+          width="180px"
           placeholder="搜索学号/姓名/班级"
           :disabled="loading"
           @submit="onKeywordSearch"
@@ -27,15 +27,11 @@
       </div>
     </div>
 
-    <div
-      v-if="errorMsg"
-      class="card"
-      style="margin-top: 12px; border-color: #fecaca; background: #fef2f2; box-shadow: none;"
-    >
-      <div style="font-weight: 700; color: #b42318;">加载失败</div>
-      <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
-      <div class="toolbar-row" style="margin-top: 10px;">
-        <button class="btn secondary" type="button" @click="load()" :disabled="loading">重试</button>
+    <div v-if="errorMsg" class="card ranking-error-card">
+      <el-alert type="error" :closable="false" title="加载失败" />
+      <div class="muted ranking-error-text">{{ errorMsg }}</div>
+      <div class="toolbar-row ranking-error-actions">
+        <el-button type="default" @click="load" :loading="loading">重试</el-button>
       </div>
     </div>
 
@@ -55,7 +51,12 @@
             <tr v-for="r in pager.pagedRows.value" :key="r.id || `${r.account_no || r.accountNo || '-'}_${r.real_name || ''}`">
               <td>{{ r.account_no || r.accountNo || '-' }}</td>
               <td>{{ r.real_name }}</td>
-              <td>{{ r.class_name }}</td>
+              <td>
+                <TableOverflowCell
+                  :text="r.class_name"
+                  :cell-key="`ranking_class_${r.id || r.account_no || r.accountNo || ''}`"
+                />
+              </td>
               <td>{{ r.total_score }}</td>
               <td>{{ r.rankClass }}</td>
             </tr>
@@ -82,6 +83,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import http from '../api/http'
 import SearchCapsule from '../components/SearchCapsule.vue'
+import TableOverflowCell from '../components/TableOverflowCell.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
@@ -166,5 +168,27 @@ onMounted(() => {
   load({ silent: true })
 })
 </script>
+
+<style scoped>
+.ranking-semester-input {
+  width: 120px;
+}
+
+.ranking-error-card {
+  margin-top: 12px;
+  border-color: #fecaca;
+  background: #fef2f2;
+  box-shadow: none;
+}
+
+.ranking-error-text {
+  margin-top: 6px;
+  white-space: pre-wrap;
+}
+
+.ranking-error-actions {
+  margin-top: 10px;
+}
+</style>
 
 

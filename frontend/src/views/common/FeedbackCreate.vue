@@ -5,22 +5,27 @@
         <p class="muted" style="margin-top: 6px;">用于提交系统问题与建议。截图仅支持 JPG/PNG，最多 6 张。</p>
       </div>
       <div class="toolbar-row">
-        <button class="btn secondary" type="button" @click="reset" :disabled="submitting">重置</button>
-        <button class="btn" type="button" @click="submit" :disabled="submitting">
+        <el-button type="default" @click="reset" :disabled="submitting">重置</el-button>
+        <el-button type="primary" @click="submit" :loading="submitting">
           {{ submitting ? '提交中...' : '提交反馈' }}
-        </button>
+        </el-button>
       </div>
     </div>
 
     <div class="grid" style="margin-top: 12px;">
       <label class="field">
         <span class="field-label">标题</span>
-        <input v-model.trim="form.title" placeholder="例如：系统无法上传图片" />
+        <el-input v-model.trim="form.title" placeholder="例如：系统无法上传图片" />
       </label>
 
       <label class="field">
         <span class="field-label">内容</span>
-        <textarea v-model.trim="form.content" rows="6" placeholder="请描述问题或建议（可填写复现步骤）"></textarea>
+        <el-input
+          v-model.trim="form.content"
+          type="textarea"
+          :rows="6"
+          placeholder="请描述问题或建议（可填写复现步骤）"
+        />
       </label>
 
       <div class="field">

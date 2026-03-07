@@ -33,38 +33,36 @@
     <div class="main">
       <header class="workspace-tools-bar">
         <div class="workspace-tools-left">
-          <button
-            class="icon-btn workspace-tool-btn"
-            type="button"
+          <el-button
+            class="workspace-tool-btn"
+            type="default"
+            circle
             aria-label="切换侧边栏"
             title="切换侧边栏"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </button>
-          <button
-            class="icon-btn workspace-tool-btn"
-            type="button"
+            <el-icon><Fold /></el-icon>
+          </el-button>
+          <el-button
+            class="workspace-tool-btn"
+            type="default"
+            circle
             aria-label="刷新当前页面"
             title="刷新当前页面"
             @click="refreshCurrentView"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 11a8 8 0 10.2 2M20 4v6h-6" />
-            </svg>
-          </button>
+            <el-icon><Refresh /></el-icon>
+          </el-button>
           <div class="workspace-title">{{ pageTitle }}</div>
         </div>
 
         <div class="workspace-tools-right">
-          <button class="user-pill user-pill-btn" type="button" @click="goProfile" aria-label="打开账号中心">
+          <el-button class="user-pill user-pill-btn" type="default" @click="goProfile" aria-label="打开账号中心">
             <span class="user-name">{{ state.realName || '未命名用户' }}</span>
             <span class="user-sep">·</span>
             <span class="user-role">{{ roleText }}</span>
-          </button>
-          <button class="btn ghost" type="button" @click="logout">退出登录</button>
+          </el-button>
+          <el-button class="btn ghost" type="default" @click="logout">退出登录</el-button>
         </div>
       </header>
 
@@ -105,6 +103,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { isNavigationFailure, useRoute, useRouter } from 'vue-router'
+import { Fold, Refresh } from '@element-plus/icons-vue'
 import { clearAuth, getHomeByRole, getProfilePathByRole, getRealName, getRole, roleLabel } from '../utils/auth'
 import submissionStore from '../stores/submissionStore'
 

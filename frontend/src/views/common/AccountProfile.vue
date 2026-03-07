@@ -7,11 +7,11 @@
     <article class="card" style="box-shadow: none; background: #fbfdff;">
       <h3 style="margin: 0 0 10px; font-size: 16px;">基本信息</h3>
       <div class="grid two">
-        <div class="field"><span class="field-label">{{ accountNoLabel }}</span><input :value="profile.accountNo || '-'" disabled /></div>
-        <div class="field"><span class="field-label">姓名</span><input :value="profile.realName || '-'" disabled /></div>
-        <div class="field"><span class="field-label">角色</span><input :value="roleText" disabled /></div>
-        <div class="field"><span class="field-label">性别</span><input :value="profile.gender || '-'" disabled /></div>
-        <div class="field"><span class="field-label">班级</span><input :value="profile.className || '-'" disabled /></div>
+        <div class="field"><span class="field-label">{{ accountNoLabel }}</span><el-input :model-value="profile.accountNo || '-'" disabled /></div>
+        <div class="field"><span class="field-label">姓名</span><el-input :model-value="profile.realName || '-'" disabled /></div>
+        <div class="field"><span class="field-label">角色</span><el-input :model-value="roleText" disabled /></div>
+        <div class="field"><span class="field-label">性别</span><el-input :model-value="profile.gender || '-'" disabled /></div>
+        <div class="field"><span class="field-label">班级</span><el-input :model-value="profile.className || '-'" disabled /></div>
       </div>
     </article>
 
@@ -20,7 +20,7 @@
       <div class="account-phone-row">
         <label class="field account-phone-field">
           <span class="field-label">电话</span>
-          <input
+          <el-input
             v-model.trim="phoneDraft"
             :disabled="savingPhone"
             placeholder="请输入联系电话"
@@ -28,9 +28,9 @@
           />
         </label>
         <div class="toolbar-row account-phone-actions">
-          <button class="btn" type="button" :disabled="savingPhone" @click="savePhone">
+          <el-button type="primary" :loading="savingPhone" @click="savePhone">
             {{ savingPhone ? '保存中...' : '保存电话' }}
-          </button>
+          </el-button>
         </div>
       </div>
       <span class="muted account-inline-error">{{ phoneError }}</span>
@@ -41,22 +41,22 @@
       <div class="grid two">
         <label class="field">
           <span class="field-label">旧密码</span>
-          <input v-model="pwdForm.oldPassword" type="password" :disabled="changingPwd" @input="pwdError = ''" />
+          <el-input v-model="pwdForm.oldPassword" type="password" :show-password="true" :disabled="changingPwd" @input="pwdError = ''" />
         </label>
         <label class="field">
           <span class="field-label">新密码</span>
-          <input v-model="pwdForm.newPassword" type="password" :disabled="changingPwd" @input="pwdError = ''" />
+          <el-input v-model="pwdForm.newPassword" type="password" :show-password="true" :disabled="changingPwd" @input="pwdError = ''" />
         </label>
         <label class="field">
           <span class="field-label">确认新密码</span>
-          <input v-model="pwdForm.confirmPassword" type="password" :disabled="changingPwd" @input="pwdError = ''" />
+          <el-input v-model="pwdForm.confirmPassword" type="password" :show-password="true" :disabled="changingPwd" @input="pwdError = ''" />
         </label>
       </div>
       <p class="muted" style="color: #b42318; min-height: 20px; margin-top: 8px;">{{ pwdError }}</p>
       <div class="toolbar-row" style="margin-top: 8px;">
-        <button class="btn" type="button" :disabled="changingPwd" @click="changePassword">
+        <el-button type="primary" :loading="changingPwd" @click="changePassword">
           {{ changingPwd ? '提交中...' : '修改密码' }}
-        </button>
+        </el-button>
       </div>
     </article>
   </section>

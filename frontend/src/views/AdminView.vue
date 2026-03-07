@@ -10,7 +10,7 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="keyword"
-          width="320px"
+          width="180px"
           placeholder="搜索学号/姓名/班级"
           :disabled="loadingTasks || loadingDetail"
           @submit="onSearchSubmit"
@@ -24,30 +24,35 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="admin_review_tasks">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 104px; --sticky-status-w: 106px;" data-resize-key="admin_review_tasks">
           <thead>
             <tr>
               <th>学号</th>
               <th>学生</th>
               <th>班级</th>
-              <th>状态</th>
               <th>当前总分</th>
               <th>通过时间</th>
-              <th>操作</th>
+              <th class="col-status">状态</th>
+              <th class="col-action">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="task in pager.pagedRows.value" :key="task.id">
               <td>{{ task.account_no || task.accountNo || '-' }}</td>
               <td>{{ task.real_name }}</td>
-              <td>{{ task.class_name }}</td>
-              <td><span class="badge">{{ statusLabel(task.status) }}</span></td>
+              <td>
+                <TableOverflowCell
+                  :text="task.class_name"
+                  :cell-key="`admin_task_class_${task.id}`"
+                />
+              </td>
               <td>{{ task.total_score ?? '-' }}</td>
               <td>{{ formatDate(task.passTime) }}</td>
-              <td>
-                <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail">
+              <td class="col-status"><span class="badge">{{ statusLabel(task.status) }}</span></td>
+              <td class="col-action">
+                <el-button type="default" @click="openTask(task.id)" :disabled="loadingDetail">
                   {{ selectedSubmissionId === task.id && drawerOpen ? '已打开' : '查看' }}
-                </button>
+                </el-button>
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
@@ -81,7 +86,7 @@
             状态：<span class="badge">{{ statusLabel(current.submission.status) }}</span>
           </p>
         </div>
-        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
+        <el-button class="workspace-tool-btn" type="default" circle @click="closeDrawer" aria-label="关闭">×</el-button>
       </div>
 
       <div class="drawer-body">
@@ -95,6 +100,7 @@
                   <th class="nowrap">类型</th>
                   <th class="nowrap">学分</th>
                   <th class="nowrap">原始分</th>
+                  <th class="nowrap">证明材料</th>
                   <th class="nowrap">审核状态</th>
                   <th class="nowrap">审核分</th>
                   <th>审核理由</th>
@@ -102,16 +108,41 @@
               </thead>
               <tbody>
                 <tr v-for="course in current.courses || []" :key="`course_${course.id}`">
-                  <td class="nowrap">{{ course.courseName }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="course.courseName"
+                      :cell-key="`admin_drawer_course_name_${course.id}`"
+                    />
+                  </td>
                   <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
                   <td class="nowrap">{{ course.credit }}</td>
                   <td class="nowrap">{{ course.score }}</td>
+                  <td>
+                    <div v-if="course._evidenceMetas && course._evidenceMetas.length" class="chip-list">
+                      <span v-for="m in course._evidenceMetas" :key="m.id" class="chip">
+                        <button
+                          class="link chip-file-link"
+                          type="button"
+                          :title="m.fileName || ('附件#' + m.id)"
+                          @click="previewEvidence(m.id, course._evidenceMetas)"
+                        >
+                          {{ m.fileName || ('附件#' + m.id) }}
+                        </button>
+                      </span>
+                    </div>
+                    <span v-else class="muted" style="font-size: 12px;">未上传</span>
+                  </td>
                   <td class="nowrap"><span class="badge">{{ reviewStatusLabel(course.reviewStatus) }}</span></td>
                   <td class="nowrap">{{ course.reviewerScore ?? '-' }}</td>
-                  <td>{{ course.reviewerComment || '-' }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="course.reviewerComment || '-'"
+                      :cell-key="`admin_drawer_course_comment_${course.id}`"
+                    />
+                  </td>
                 </tr>
                 <tr v-if="!(current.courses || []).length">
-                  <td colspan="7" class="empty">暂无课程数据</td>
+                  <td colspan="8" class="empty">暂无课程数据</td>
                 </tr>
               </tbody>
             </table>
@@ -136,15 +167,30 @@
               <tbody>
                 <tr v-for="activity in current.activities || []" :key="`act_${activity.id}`">
                   <td class="nowrap">{{ moduleLabel(activity.moduleType) }}</td>
-                  <td class="nowrap">{{ activity.title }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="activity.title"
+                      :cell-key="`admin_drawer_activity_title_${activity.id}`"
+                    />
+                  </td>
                   <td class="nowrap">{{ activity.selfScore }}</td>
                   <td class="nowrap"><span class="badge">{{ reviewStatusLabel(activity.reviewStatus) }}</span></td>
                   <td class="nowrap">{{ activity.finalScore ?? '-' }}</td>
-                  <td>{{ activity.reviewerComment || '-' }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="activity.reviewerComment || '-'"
+                      :cell-key="`admin_drawer_activity_comment_${activity.id}`"
+                    />
+                  </td>
                   <td>
                     <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
                       <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
-                        <button class="link" type="button" @click="previewEvidence(m.id, activity._evidenceMetas)">
+                        <button
+                          class="link chip-file-link"
+                          type="button"
+                          :title="m.fileName || ('附件#' + m.id)"
+                          @click="previewEvidence(m.id, activity._evidenceMetas)"
+                        >
                           {{ m.fileName || ('附件#' + m.id) }}
                         </button>
                       </span>
@@ -162,7 +208,7 @@
       </div>
 
       <div class="drawer-footer">
-        <button class="btn secondary" type="button" @click="closeDrawer">关闭</button>
+        <el-button type="default" @click="closeDrawer">关闭</el-button>
       </div>
     </div>
   </div>
@@ -173,6 +219,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import http from '../api/http'
 import { previewImageById } from '../utils/imagePreview'
 import SearchCapsule from '../components/SearchCapsule.vue'
+import TableOverflowCell from '../components/TableOverflowCell.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
@@ -266,15 +313,24 @@ const parseEvidenceIds = (raw) => {
 }
 
 const hydrateEvidenceMetas = async () => {
-  if (!current.value?.activities) return
+  if (!current.value) return
 
   const ids = []
-  for (const a of current.value.activities) {
+  for (const c of (current.value.courses || [])) {
+    const courseEvidenceId = Number(c?.evidenceFileId)
+    if (Number.isFinite(courseEvidenceId) && courseEvidenceId > 0) {
+      ids.push(courseEvidenceId)
+    }
+  }
+  for (const a of (current.value.activities || [])) {
     ids.push(...parseEvidenceIds(a.evidenceFileIds))
   }
   const uniqueIds = Array.from(new Set(ids))
   if (!uniqueIds.length) {
-    for (const a of current.value.activities) {
+    for (const c of (current.value.courses || [])) {
+      c._evidenceMetas = []
+    }
+    for (const a of (current.value.activities || [])) {
       a._evidenceMetas = []
     }
     return
@@ -288,7 +344,16 @@ const hydrateEvidenceMetas = async () => {
     evidenceMetaCache[m.id] = m
   }
 
-  for (const a of current.value.activities) {
+  for (const c of (current.value.courses || [])) {
+    const courseEvidenceId = Number(c?.evidenceFileId)
+    if (!Number.isFinite(courseEvidenceId) || courseEvidenceId <= 0) {
+      c._evidenceMetas = []
+      continue
+    }
+    c._evidenceMetas = [map[courseEvidenceId] || evidenceMetaCache[courseEvidenceId] || { id: courseEvidenceId, fileName: `附件#${courseEvidenceId}` }]
+  }
+
+  for (const a of (current.value.activities || [])) {
     const aIds = parseEvidenceIds(a.evidenceFileIds)
     a._evidenceMetas = aIds.map((id) => map[id] || evidenceMetaCache[id] || { id, fileName: `附件#${id}` })
   }

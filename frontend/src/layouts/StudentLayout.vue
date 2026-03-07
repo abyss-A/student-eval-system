@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <BaseLayout :menu-groups="menuGroups" />
 </template>
 
@@ -15,7 +15,7 @@ const menuGroups = [
       { label: '体育', to: '/student/eval/sport' },
       { label: '美育', to: '/student/eval/art' },
       { label: '劳育', to: '/student/eval/labor' },
-      { label: '综合成绩与提交', to: '/student/eval/submit' }
+      { label: '综合成绩', to: '/student/eval/submit' }
     ]
   },
   {

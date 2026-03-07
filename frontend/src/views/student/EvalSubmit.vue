@@ -11,8 +11,8 @@
     </div>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn" type="button" @click="submitForm" :disabled="loading || !canSubmit">{{ submitButtonLabel }}</button>
-      <button class="btn ghost" type="button" @click="exportFile('DOCX')" :disabled="loading">导出Word</button>
+      <el-button type="primary" @click="submitForm" :loading="loading" :disabled="!canSubmit">{{ submitButtonLabel }}</el-button>
+      <el-button type="default" @click="exportFile('DOCX')" :loading="loading">导出Word</el-button>
     </div>
     <p v-if="submitDisabledHint" class="muted" style="margin-top: 8px; color: #64748b;">{{ submitDisabledHint }}</p>
 
@@ -88,8 +88,6 @@
 
     <div class="formula-line">
       总分公式：综合总分 = 德育计入分 + 智育计入分 + 体育计入分 + 美育计入分 + 劳育计入分
-      <br />
-      体育口径：体育原始分 = 大学体育分 × 85% + min(体育活动总分, 100) × 15%
     </div>
   </section>
 </template>

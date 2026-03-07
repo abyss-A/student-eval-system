@@ -150,9 +150,9 @@ a {
   color: #0f172a;
 }
 
-input,
-select,
-textarea {
+input:not([class*='el-']):not([type='checkbox']):not([type='radio']),
+select:not([class*='el-']),
+textarea:not([class*='el-']) {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -160,9 +160,9 @@ textarea {
   background: #fff;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+input:not([class*='el-']):not([type='checkbox']):not([type='radio']):focus,
+select:not([class*='el-']):focus,
+textarea:not([class*='el-']):focus {
   outline: none;
   border-color: rgba(22, 119, 255, 0.55);
   box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.14);
@@ -259,60 +259,6 @@ textarea:focus {
 .table-search-input {
   width: 280px;
   max-width: 100%;
-}
-
-.search-capsule {
-  display: inline-flex;
-  align-items: center;
-  min-width: 220px;
-  max-width: 100%;
-  border: 1px solid #c7d7f2;
-  border-radius: 999px;
-  background: #ffffff;
-  overflow: hidden;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-
-.search-capsule:focus-within {
-  border-color: #8eb5ff;
-  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.16);
-}
-
-.search-capsule-input {
-  border: 0 !important;
-  background: transparent !important;
-  padding: 8px 12px;
-  min-width: 0;
-  flex: 1;
-  box-shadow: none !important;
-}
-
-.search-capsule-input:focus {
-  box-shadow: none !important;
-}
-
-.search-capsule-action,
-.search-capsule-clear {
-  border: 0;
-  background: #ffffff;
-  color: #3b5c96;
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.search-capsule-action:hover,
-.search-capsule-clear:hover {
-  background: rgba(59, 92, 150, 0.10);
-}
-
-.search-capsule-action:disabled,
-.search-capsule-clear:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .search-back-icon {
@@ -450,6 +396,9 @@ textarea:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .chip {
@@ -460,6 +409,8 @@ textarea:focus {
   border: 1px solid #dbe3ef;
   border-radius: 999px;
   background: #ffffff;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .link {
@@ -472,6 +423,20 @@ textarea:focus {
   font-weight: 600;
 }
 
+.chip .link {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.chip .chip-file-link,
+.chip .link:not(.danger) {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
 .link:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -479,6 +444,12 @@ textarea:focus {
 
 .link.danger {
   color: var(--danger);
+}
+
+.chip .chip-remove-link,
+.chip .link.danger {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* App layout */

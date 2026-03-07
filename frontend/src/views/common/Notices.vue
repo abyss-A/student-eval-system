@@ -5,7 +5,7 @@
         <p class="muted" style="margin-top: 6px;">发布通知、查看公告。学生仅可查看已发布公告。</p>
       </div>
       <div class="toolbar-row">
-        <button v-if="canManage" class="btn" type="button" @click="openCreate">新建公告</button>
+        <el-button v-if="canManage" type="primary" @click="openCreate">新建公告</el-button>
       </div>
     </div>
 
@@ -13,48 +13,44 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="keyword"
-          width="340px"
+          width="180px"
           placeholder="搜索公告标题/内容"
           :disabled="loading"
           @submit="handleSearch"
           @clear="handleSearch"
         />
-        <select
+        <el-select
           v-if="canManage"
           v-model="activeTab"
           style="width: 160px;"
           :disabled="loading"
           @change="onStatusChange"
         >
-          <option value="ALL">全部状态</option>
-          <option value="DRAFT">草稿</option>
-          <option value="PUBLISHED">已发布</option>
-          <option value="OFFLINE">已下线</option>
-        </select>
+          <el-option label="全部状态" value="ALL" />
+          <el-option label="草稿" value="DRAFT" />
+          <el-option label="已发布" value="PUBLISHED" />
+          <el-option label="已下线" value="OFFLINE" />
+        </el-select>
       </div>
       <div v-if="canManage" class="table-search-right">
         <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
-        <button class="btn secondary" type="button" :disabled="!canBatchOperate" @click="batchPublish">批量发布</button>
-        <button class="btn secondary" type="button" :disabled="!canBatchOperate" @click="batchOffline">批量下线</button>
-        <button class="btn danger" type="button" :disabled="!canBatchOperate" @click="batchDelete">批量删除</button>
+        <el-button type="default" :disabled="!canBatchOperate" @click="batchPublish">批量发布</el-button>
+        <el-button type="default" :disabled="!canBatchOperate" @click="batchOffline">批量下线</el-button>
+        <el-button type="danger" :disabled="!canBatchOperate" @click="batchDelete">批量删除</el-button>
       </div>
     </div>
 
-    <div
-      v-if="errorMsg"
-      class="card"
-      style="margin-top: 12px; border-color: #fecaca; background: #fef2f2; box-shadow: none;"
-    >
-      <div style="font-weight: 700; color: #b42318;">加载失败</div>
-      <div class="muted" style="margin-top: 6px; white-space: pre-wrap;">{{ errorMsg }}</div>
-      <div class="toolbar-row" style="margin-top: 10px;">
-        <button class="btn secondary" type="button" @click="load()" :disabled="loading">重试</button>
+    <div v-if="errorMsg" class="card notices-error-card">
+      <el-alert type="error" :closable="false" title="加载失败" />
+      <div class="muted notices-error-text">{{ errorMsg }}</div>
+      <div class="toolbar-row notices-error-actions">
+        <el-button type="default" :loading="loading" @click="load">重试</el-button>
       </div>
     </div>
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="notices_main">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 250px; --sticky-status-w: 110px;" data-resize-key="notices_main">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -67,11 +63,11 @@
                 />
               </th>
               <th>标题</th>
-              <th style="width: 110px;">状态</th>
               <th style="width: 140px;">发布人</th>
               <th style="width: 170px;">发布时间</th>
               <th style="width: 170px;">更新时间</th>
-              <th style="width: 250px;">操作</th>
+              <th class="col-status" style="width: 110px;">状态</th>
+              <th class="col-action" style="width: 250px;">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -85,21 +81,24 @@
                 />
               </td>
               <td>
-                <div style="font-weight: 700; color: #0f172a;">{{ n.title }}</div>
-              </td>
-              <td>
-                <span class="badge" :class="statusBadge(n.status)">{{ statusLabel(n.status) }}</span>
+                <TableOverflowCell
+                  :text="n.title"
+                  :cell-key="`notice_title_${n.id}`"
+                />
               </td>
               <td>{{ n.publisher_real_name || '-' }}</td>
               <td>{{ formatDate(n.published_at) }}</td>
               <td>{{ formatDate(n.updated_at) }}</td>
-              <td>
+              <td class="col-status">
+                <span class="badge" :class="statusBadge(n.status)">{{ statusLabel(n.status) }}</span>
+              </td>
+              <td class="col-action">
                 <div class="action-row">
-                  <button class="btn ghost" type="button" @click="goDetail(n.id)">查看</button>
-                  <button v-if="canManage && canEdit(n)" class="btn secondary" type="button" @click="openEdit(n)">编辑</button>
-                  <button v-if="canManage && canPublish(n)" class="btn" type="button" @click="publish(n.id)">发布</button>
-                  <button v-if="canManage && canOffline(n)" class="btn secondary" type="button" @click="offline(n.id)">下线</button>
-                  <button v-if="canManage && canDelete(n)" class="btn danger" type="button" @click="remove(n.id)">删除</button>
+                  <el-button type="default" @click="goDetail(n.id)">查看</el-button>
+                  <el-button v-if="canManage && canEdit(n)" type="default" @click="openEdit(n)">编辑</el-button>
+                  <el-button v-if="canManage && canPublish(n)" type="primary" @click="publish(n.id)">发布</el-button>
+                  <el-button v-if="canManage && canOffline(n)" type="default" @click="offline(n.id)">下线</el-button>
+                  <el-button v-if="canManage && canDelete(n)" type="danger" @click="remove(n.id)">删除</el-button>
                 </div>
               </td>
             </tr>
@@ -128,30 +127,33 @@
           <div style="font-weight: 700; font-size: 16px;">{{ drawer.mode === 'create' ? '新建公告' : '编辑公告' }}</div>
           <p class="muted" style="margin-top: 6px;">公告内容支持换行显示。已发布公告需先下线再修改。</p>
         </div>
-        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
+        <el-button class="workspace-tool-btn" type="default" circle @click="closeDrawer" aria-label="关闭">×</el-button>
       </div>
 
       <div class="drawer-body">
         <div class="stack">
           <label class="field">
             <span class="field-label">标题</span>
-            <input v-model.trim="form.title" placeholder="请输入公告标题" />
+            <el-input v-model.trim="form.title" placeholder="请输入公告标题" />
           </label>
           <label class="field">
             <span class="field-label">内容</span>
-            <textarea v-model.trim="form.content" rows="10" placeholder="请输入公告内容（支持换行）"></textarea>
+            <el-input
+              v-model.trim="form.content"
+              type="textarea"
+              :rows="10"
+              placeholder="请输入公告内容（支持换行）"
+            />
           </label>
         </div>
       </div>
 
       <div class="drawer-footer">
-        <button class="btn secondary" type="button" @click="closeDrawer" :disabled="drawer.saving">取消</button>
-        <button class="btn" type="button" @click="saveDraft" :disabled="drawer.saving">
+        <el-button type="default" @click="closeDrawer" :disabled="drawer.saving">取消</el-button>
+        <el-button type="primary" @click="saveDraft" :loading="drawer.saving">
           {{ drawer.saving ? '保存中...' : '保存草稿' }}
-        </button>
-        <button v-if="drawer.mode === 'edit'" class="btn ghost" type="button" @click="publish(form.id)" :disabled="drawer.saving">
-          发布
-        </button>
+        </el-button>
+        <el-button v-if="drawer.mode === 'edit'" type="default" @click="publish(form.id)" :disabled="drawer.saving">发布</el-button>
       </div>
     </div>
   </div>
@@ -162,6 +164,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import http from '../../api/http'
 import SearchCapsule from '../../components/SearchCapsule.vue'
+import TableOverflowCell from '../../components/TableOverflowCell.vue'
 import TablePager from '../../components/TablePager.vue'
 import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
 import useTablePager from '../../composables/useTablePager'
@@ -488,4 +491,22 @@ onMounted(() => {
   load()
 })
 </script>
+
+<style scoped>
+.notices-error-card {
+  margin-top: 12px;
+  border-color: #fecaca;
+  background: #fef2f2;
+  box-shadow: none;
+}
+
+.notices-error-text {
+  margin-top: 6px;
+  white-space: pre-wrap;
+}
+
+.notices-error-actions {
+  margin-top: 10px;
+}
+</style>
 

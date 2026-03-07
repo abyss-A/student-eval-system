@@ -6,14 +6,22 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4173"
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "test:e2e:quick": "playwright test --project=chromium --grep @quick",
+    "test:e2e:full": "playwright test --project=chromium --grep-invert @visual",
+    "test:visual": "playwright test --project=chromium --grep @visual"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@fontsource/inter": "^5.1.1",
+    "@fontsource/noto-sans-sc": "^5.1.1",
     "axios": "^1.7.9",
+    "element-plus": "^2.11.7",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@vitejs/plugin-vue": "^5.2.1",
     "vite": "^6.0.3"
   }

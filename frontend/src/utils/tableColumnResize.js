@@ -20,6 +20,11 @@ const clampWidth = (value) => {
   return Math.max(MIN_COL_WIDTH, Math.round(parsed))
 }
 
+const isFixedRightLockedHeader = (table, th) => {
+  if (!table.classList.contains('table-fixed-right')) return false
+  return th.classList.contains('col-status') || th.classList.contains('col-action')
+}
+
 const buildStorageKey = (table) => {
   const resizeKey = String(table.dataset.resizeKey || '').trim()
   if (!resizeKey) return ''
@@ -136,14 +141,28 @@ const initTable = (table) => {
 
   const cols = ensureColgroup(table, ths.length)
   const storageKey = buildStorageKey(table)
+  const lockedIndexes = new Set()
+  ths.forEach((th, index) => {
+    if (isFixedRightLockedHeader(table, th)) {
+      lockedIndexes.add(index)
+    }
+  })
 
   const stored = readStoredWidths(storageKey, ths.length)
-  const widths = stored || collectHeaderWidths(ths)
+  const headerWidths = collectHeaderWidths(ths)
+  const widths = stored
+    ? headerWidths.map((fallbackWidth, index) => (
+      lockedIndexes.has(index)
+        ? fallbackWidth
+        : clampWidth(stored[index] ?? fallbackWidth)
+    ))
+    : headerWidths
   applyWidths(cols, widths)
 
   table.classList.add('table-resizable')
 
   ths.forEach((th, index) => {
+    if (lockedIndexes.has(index)) return
     createResizer({
       table,
       th,

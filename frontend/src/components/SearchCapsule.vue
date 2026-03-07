@@ -1,49 +1,34 @@
 ﻿<template>
   <div class="search-capsule" :style="capsuleStyle">
-    <input
+    <el-input
       ref="inputRef"
-      :value="modelValue"
+      :model-value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
+      clearable
       class="search-capsule-input"
       @input="onInput"
       @keyup.enter="$emit('submit')"
-    />
-    <button
-      v-if="showClear"
-      type="button"
-      class="search-capsule-clear"
-      :disabled="disabled"
-      aria-label="清空"
-      @click="clearValue"
+      @clear="clearValue"
     >
-      ×
-    </button>
-    <button
-      type="button"
-      class="search-capsule-action"
-      :disabled="disabled"
-      aria-label="搜索"
-      @click="$emit('submit')"
-    >
-      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-        <path
-          d="M10.5 3a7.5 7.5 0 1 0 4.8 13.3l4.2 4.2a1 1 0 0 0 1.4-1.4l-4.2-4.2A7.5 7.5 0 0 0 10.5 3Zm0 2a5.5 5.5 0 1 1 0 11a5.5 5.5 0 0 1 0-11Z"
-          fill="currentColor"
-        />
-      </svg>
-    </button>
+      <template #suffix>
+        <el-icon class="search-capsule-icon" @click="$emit('submit')">
+          <Search />
+        </el-icon>
+      </template>
+    </el-input>
   </div>
 </template>
 
 <script setup>
+import { Search } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: '请输入关键字' },
   disabled: { type: Boolean, default: false },
-  width: { type: String, default: '320px' }
+  width: { type: String, default: '180px' }
 })
 
 const emit = defineEmits(['update:modelValue', 'submit', 'clear'])
@@ -51,13 +36,11 @@ const emit = defineEmits(['update:modelValue', 'submit', 'clear'])
 const inputRef = ref(null)
 
 const capsuleStyle = computed(() => ({
-  width: props.width || '320px'
+  width: props.width || '180px'
 }))
 
-const showClear = computed(() => String(props.modelValue || '').length > 0)
-
-const onInput = (e) => {
-  emit('update:modelValue', e?.target?.value || '')
+const onInput = (value) => {
+  emit('update:modelValue', value || '')
 }
 
 const clearValue = () => {
@@ -66,3 +49,39 @@ const clearValue = () => {
   inputRef.value?.focus()
 }
 </script>
+
+<style scoped>
+.search-capsule {
+  display: inline-flex;
+  align-items: center;
+  min-width: 180px;
+  max-width: 100%;
+}
+
+.search-capsule-input {
+  width: 100%;
+}
+
+.search-capsule-input :deep(.el-input__wrapper) {
+  border-radius: 999px;
+  min-height: 36px;
+  box-shadow: 0 0 0 1px #c7d7f2 inset;
+}
+
+.search-capsule-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #abc3e6 inset;
+}
+
+.search-capsule-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #709bd2 inset, 0 0 0 3px rgba(47, 109, 184, 0.14);
+}
+
+.search-capsule-icon {
+  cursor: pointer;
+  color: #355f96;
+}
+
+.search-capsule-icon:hover {
+  color: #1f5fae;
+}
+</style>

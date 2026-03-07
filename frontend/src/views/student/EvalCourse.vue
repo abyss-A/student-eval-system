@@ -18,7 +18,7 @@
         </p>
       </div>
       <div class="toolbar-row">
-        <button class="btn" type="button" @click="save" :disabled="loading || !canEditAny">保存</button>
+        <el-button type="primary" @click="save" :loading="loading" :disabled="!canEditAny">保存</el-button>
       </div>
     </div>
 
@@ -36,36 +36,36 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="keyword"
-          width="300px"
+          width="180px"
           placeholder="搜索课程名称"
           @submit="onSearchSubmit"
           @clear="onSearchSubmit"
         />
-        <select v-model="typeFilter" style="width: 140px;">
-          <option value="ALL">全部类型</option>
-          <option value="REQUIRED">必修</option>
-          <option value="ELECTIVE">选修</option>
-          <option value="RETAKE">重修</option>
-          <option value="RELEARN">再修</option>
-        </select>
-        <select v-model="reviewFilter" style="width: 140px;">
-          <option value="ALL">全部审核</option>
-          <option value="PENDING">待审核</option>
-          <option value="APPROVED">通过</option>
-          <option value="REJECTED">驳回</option>
-          <option value="DELETE_REQUESTED">待删除复审</option>
-          <option value="DELETED">已删除</option>
-        </select>
+        <el-select v-model="typeFilter" style="width: 140px;">
+          <el-option label="全部类型" value="ALL" />
+          <el-option label="必修" value="REQUIRED" />
+          <el-option label="选修" value="ELECTIVE" />
+          <el-option label="重修" value="RETAKE" />
+          <el-option label="再修" value="RELEARN" />
+        </el-select>
+        <el-select v-model="reviewFilter" style="width: 140px;">
+          <el-option label="全部审核" value="ALL" />
+          <el-option label="待审核" value="PENDING" />
+          <el-option label="通过" value="APPROVED" />
+          <el-option label="驳回" value="REJECTED" />
+          <el-option label="待删除复审" value="DELETE_REQUESTED" />
+          <el-option label="已删除" value="DELETED" />
+        </el-select>
       </div>
       <div class="table-search-right">
         <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
-        <button class="btn secondary" type="button" :disabled="!canBatchDeleteCourses" @click="batchDeleteCourses">批量删除</button>
+        <el-button type="default" :disabled="!canBatchDeleteCourses" @click="batchDeleteCourses">批量删除</el-button>
       </div>
     </div>
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="student_eval_courses">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 104px; --sticky-status-w: 106px;" data-resize-key="student_eval_courses">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -81,9 +81,10 @@
               <th style="width: 110px;">类型</th>
               <th style="width: 110px;">分数</th>
               <th style="width: 90px;">学分</th>
-              <th style="width: 110px;">审核结论</th>
+              <th style="width: 240px;">证明材料</th>
               <th>审核理由</th>
-              <th style="width: 90px;">操作</th>
+              <th class="col-status" style="width: 106px;">状态</th>
+              <th class="col-action" style="width: 104px;">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -136,26 +137,37 @@
                 />
               </td>
               <td>
+                <ImageIdsUploader
+                  :model-value="toCourseEvidenceModel(c)"
+                  :max="1"
+                  :hint="''"
+                  :readonly="!canEditCourseRow(c)"
+                  @update:modelValue="(value) => onCourseEvidenceChange(c, value)"
+                />
+              </td>
+              <td>
+                <TableOverflowCell
+                  :text="displayReviewerComment(c.reviewerComment)"
+                  :cell-key="`student_course_reason_${c.id || c._rowKey || idx}`"
+                />
+              </td>
+              <td class="col-status">
                 <span class="badge" :class="reviewResultBadge(courseReviewResult(c))">
                   {{ courseReviewResult(c) }}
                 </span>
               </td>
-              <td>
-                <div style="white-space: pre-wrap;">{{ displayReviewerComment(c.reviewerComment) }}</div>
-              </td>
-              <td>
-                <button
-                  class="btn secondary"
-                  type="button"
+              <td class="col-action">
+                <el-button
+                  type="default"
                   @click="removeCourse(c)"
                   :disabled="loading || !canDeleteCourseRow(c)"
                 >
                   删除
-                </button>
+                </el-button>
               </td>
             </tr>
             <tr v-if="!pagedCourses.length">
-              <td colspan="8" class="empty">暂无符合条件的课程</td>
+              <td colspan="9" class="empty">暂无符合条件的课程</td>
             </tr>
           </tbody>
         </table>
@@ -172,7 +184,7 @@
     </div>
 
     <div class="toolbar-row" style="margin-top: 12px;">
-      <button class="btn secondary" type="button" @click="addRow" :disabled="loading || !isDraftEditable">新增</button>
+      <el-button type="default" @click="addRow" :disabled="loading || !isDraftEditable">新增</el-button>
       <p class="muted">提示：保存时会自动忽略“完全空白”的行。</p>
     </div>
   </section>
@@ -181,6 +193,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import submissionStore from '../../stores/submissionStore'
+import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
+import TableOverflowCell from '../../components/TableOverflowCell.vue'
 import TablePager from '../../components/TablePager.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import useTablePager from '../../composables/useTablePager'
@@ -310,6 +324,21 @@ const mapCourse = (c) => ({
   reviewerComment: c?.reviewerComment || '',
   _rowKey: c?.id ? `course_${c.id}` : `course_tmp_${Date.now()}_${Math.random()}`
 })
+
+const toCourseEvidenceModel = (course) => {
+  const id = Number(course?.evidenceFileId)
+  if (!Number.isFinite(id) || id <= 0) return ''
+  return String(id)
+}
+
+const onCourseEvidenceChange = (course, raw) => {
+  const firstId = String(raw || '')
+    .split(',')
+    .map((s) => Number(String(s || '').trim()))
+    .find((n) => Number.isFinite(n) && n > 0)
+  course.evidenceFileId = Number.isFinite(firstId) ? firstId : null
+  triggerImmediateSave(course)
+}
 
 const filteredCourses = computed(() => {
   const kw = String(keyword.value || '').trim().toLowerCase()

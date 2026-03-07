@@ -10,28 +10,28 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="keyword"
-          width="340px"
+          width="180px"
           placeholder="搜索标题/内容关键词"
           :disabled="loading"
           @submit="handleSearch"
           @clear="handleSearch"
         />
-        <select v-model="activeStatus" style="width: 140px;" :disabled="loading" @change="handleSearch">
-          <option value="ALL">全部状态</option>
-          <option value="NEW">待处理</option>
-          <option value="REPLIED">已回复</option>
-          <option value="CLOSED">已关闭</option>
-        </select>
+        <el-select v-model="activeStatus" style="width: 140px;" :disabled="loading" @change="handleSearch">
+          <el-option label="全部状态" value="ALL" />
+          <el-option label="待处理" value="NEW" />
+          <el-option label="已回复" value="REPLIED" />
+          <el-option label="已关闭" value="CLOSED" />
+        </el-select>
       </div>
       <div class="table-search-right">
         <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
-        <button class="btn secondary" type="button" :disabled="!canBatchClose" @click="batchClose">批量关闭</button>
+        <el-button type="default" :disabled="!canBatchClose" @click="batchClose">批量关闭</el-button>
       </div>
     </div>
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="feedback_handle_list">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 104px; --sticky-status-w: 106px;" data-resize-key="feedback_handle_list">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -44,11 +44,11 @@
                 />
               </th>
               <th>标题</th>
-              <th style="width: 110px;">状态</th>
               <th style="width: 160px;">提交人</th>
               <th style="width: 180px;">班级</th>
               <th style="width: 170px;">提交时间</th>
-              <th style="width: 140px;">操作</th>
+              <th class="col-status" style="width: 106px;">状态</th>
+              <th class="col-action" style="width: 104px;">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -61,15 +61,25 @@
                   @change="selection.toggle(f.id)"
                 />
               </td>
-              <td style="font-weight: 700; color: #0f172a;">{{ f.title }}</td>
               <td>
-                <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
+                <TableOverflowCell
+                  :text="f.title"
+                  :cell-key="`feedback_handle_title_${f.id}`"
+                />
               </td>
               <td>{{ f.creator_real_name || '-' }}</td>
-              <td>{{ f.class_name || '-' }}</td>
-              <td>{{ formatDate(f.created_at) }}</td>
               <td>
-                <button class="btn ghost" type="button" @click="openDrawer(f.id)">处理</button>
+                <TableOverflowCell
+                  :text="f.class_name || '-'"
+                  :cell-key="`feedback_handle_class_${f.id}`"
+                />
+              </td>
+              <td>{{ formatDate(f.created_at) }}</td>
+              <td class="col-status">
+                <span class="badge" :class="statusBadge(f.status)">{{ statusLabel(f.status) }}</span>
+              </td>
+              <td class="col-action">
+                <el-button type="default" @click="openDrawer(f.id)">处理</el-button>
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
@@ -147,11 +157,13 @@
                 <textarea v-model.trim="drawer.replyContent" rows="5" placeholder="请输入回复内容"></textarea>
               </label>
               <div class="action-row">
-                <button class="btn" type="button" @click="reply" :disabled="drawer.handling">
+                <el-button type="primary" @click="reply" :loading="drawer.handling">
                   {{ drawer.handling ? '处理中...' : '回复' }}
-                </button>
-                <button class="btn secondary" type="button" @click="closeIt" :disabled="drawer.handling">关闭</button>
-                <RouterLink class="btn ghost" :to="detailLink(drawer.detail.id)">详情页</RouterLink>
+                </el-button>
+                <el-button type="default" @click="closeIt" :disabled="drawer.handling">关闭</el-button>
+                <RouterLink :to="detailLink(drawer.detail.id)">
+                  <el-button type="default">详情页</el-button>
+                </RouterLink>
               </div>
             </div>
           </div>
@@ -159,14 +171,16 @@
           <div v-else class="card" style="box-shadow: none; background: #fbfdff;">
             <div style="font-weight: 700;">该反馈已关闭</div>
             <div class="toolbar-row" style="margin-top: 10px;">
-              <RouterLink class="btn ghost" :to="detailLink(drawer.detail.id)">查看详情页</RouterLink>
+              <RouterLink :to="detailLink(drawer.detail.id)">
+                <el-button type="default">查看详情页</el-button>
+              </RouterLink>
             </div>
           </div>
         </div>
       </div>
 
       <div class="drawer-footer">
-        <button class="btn secondary" type="button" @click="closeDrawer">关闭</button>
+        <el-button type="default" @click="closeDrawer">关闭</el-button>
       </div>
     </div>
   </div>
@@ -177,6 +191,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import http from '../../api/http'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
+import TableOverflowCell from '../../components/TableOverflowCell.vue'
 import TablePager from '../../components/TablePager.vue'
 import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
 import useTablePager from '../../composables/useTablePager'

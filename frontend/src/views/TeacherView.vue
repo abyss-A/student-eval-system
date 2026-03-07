@@ -10,7 +10,7 @@
       <div class="table-search-left">
         <SearchCapsule
           v-model="taskKeyword"
-          width="320px"
+          width="180px"
           placeholder="搜索学号/姓名/班级"
           :disabled="loadingTasks"
           @submit="onTaskSearch"
@@ -19,13 +19,13 @@
       </div>
       <div class="table-search-right">
         <span class="muted">已选 {{ taskSelection.selectedCount.value }} 项</span>
-        <button class="btn secondary" type="button" :disabled="!canBatchSubmitTasks" @click="batchSubmitTasksToAdmin">批量提交管理员</button>
+        <el-button type="default" :disabled="!canBatchSubmitTasks" @click="batchSubmitTasksToAdmin">批量提交管理员</el-button>
       </div>
     </div>
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky" data-resize-key="teacher_tasks">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_tasks">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -42,8 +42,8 @@
               <th>班级</th>
               <th>总分</th>
               <th>提交时间</th>
-              <th>状态</th>
-              <th>操作</th>
+              <th class="col-status">状态</th>
+              <th class="col-action">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -58,25 +58,30 @@
               </td>
               <td>{{ task.account_no || task.accountNo || '-' }}</td>
               <td>{{ task.real_name }}</td>
-              <td>{{ task.class_name }}</td>
+              <td>
+                <TableOverflowCell
+                  :text="task.class_name"
+                  :cell-key="`teacher_task_class_${task.id}`"
+                />
+              </td>
               <td>{{ task.total_score ?? '-' }}</td>
               <td>{{ formatDate(task.submitted_at) }}</td>
-              <td>
+              <td class="col-status">
                 <span class="badge" :class="taskProgressBadge(task)">{{ taskProgressLabel(task) }}</span>
-                <span class="muted" style="margin-left: 6px;">{{ pickTaskDoneCount(task) }}/{{ pickTaskTotalCount(task) }}</span>
+                <span class="muted">{{ pickTaskDoneCount(task) }}/{{ pickTaskTotalCount(task) }}</span>
               </td>
-              <td>
+              <td class="col-action">
                 <div class="action-row inline-actions">
-                  <button class="btn secondary" @click="openTask(task.id)" :disabled="loadingDetail || submittingTaskId === task.id">
+                  <el-button type="default" @click="openTask(task.id)" :disabled="loadingDetail || submittingTaskId === task.id">
                     {{ taskOpenActionLabel(task) }}
-                  </button>
-                  <button
-                    class="btn"
+                  </el-button>
+                  <el-button
+                    type="primary"
                     @click="submitTaskToAdmin(task)"
                     :disabled="!canSubmitTask(task) || submittingTaskId === task.id"
                   >
                     {{ submitTaskButtonLabel(task) }}
-                  </button>
+                  </el-button>
                 </div>
               </td>
             </tr>
@@ -111,7 +116,7 @@
             状态：<span class="badge">{{ current.submission.status }}</span>
           </p>
         </div>
-        <button class="icon-btn" type="button" @click="closeDrawer" aria-label="关闭">X</button>
+        <el-button class="workspace-tool-btn" type="default" circle @click="closeDrawer" aria-label="关闭">×</el-button>
       </div>
 
       <div class="drawer-body">
@@ -120,36 +125,36 @@
           <div class="table-search-left">
             <SearchCapsule
               v-model="courseKeyword"
-              width="300px"
+              width="180px"
               placeholder="搜索课程名称"
               :disabled="loadingDetail || isDeciding"
               @submit="onCourseSearch"
               @clear="onCourseSearch"
             />
-            <select v-model="courseTypeFilter" style="width: 140px;" :disabled="loadingDetail || isDeciding">
-              <option value="ALL">全部类型</option>
-              <option value="REQUIRED">必修</option>
-              <option value="ELECTIVE">选修</option>
-              <option value="RETAKE">重修</option>
-              <option value="RELEARN">再修</option>
-            </select>
+            <el-select v-model="courseTypeFilter" style="width: 140px;" :disabled="loadingDetail || isDeciding">
+              <el-option label="全部类型" value="ALL" />
+              <el-option label="必修" value="REQUIRED" />
+              <el-option label="选修" value="ELECTIVE" />
+              <el-option label="重修" value="RETAKE" />
+              <el-option label="再修" value="RELEARN" />
+            </el-select>
           </div>
           <div class="table-search-right">
             <span class="muted">已选 {{ courseSelection.selectedCount.value }} 项</span>
-            <input
+            <el-input
               v-model.trim="courseBatchRejectReason"
               style="width: 220px;"
               placeholder="批量驳回理由（可空）"
               :disabled="isDeciding || loadingDetail || !canReviewCurrent"
             />
-            <button class="btn secondary" type="button" :disabled="!canBatchCourseReview" @click="batchApproveCourses">批量通过</button>
-            <button class="btn danger" type="button" :disabled="!canBatchCourseReview" @click="batchRejectCourses">批量驳回</button>
+            <el-button type="default" :disabled="!canBatchCourseReview" @click="batchApproveCourses">批量通过</el-button>
+            <el-button type="danger" :disabled="!canBatchCourseReview" @click="batchRejectCourses">批量驳回</el-button>
           </div>
         </div>
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky" data-resize-key="teacher_drawer_courses">
+            <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_drawer_courses">
               <thead>
                 <tr>
                   <th style="width: 44px;">
@@ -164,9 +169,10 @@
                   <th class="nowrap">课程</th>
                   <th class="nowrap">类型</th>
                   <th class="nowrap">分数</th>
-                  <th class="nowrap">状态</th>
+                  <th class="nowrap">证明材料</th>
                   <th>理由</th>
-                  <th class="nowrap">操作</th>
+                  <th class="nowrap col-status">状态</th>
+                  <th class="nowrap col-action">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,34 +185,52 @@
                       @change="courseSelection.toggle(course.id)"
                     />
                   </td>
-                  <td class="nowrap">{{ course.courseName }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="course.courseName"
+                      :cell-key="`teacher_drawer_course_name_${course.id}`"
+                    />
+                  </td>
                   <td class="nowrap">{{ courseTypeLabel(course.courseType) }}</td>
                   <td class="nowrap">{{ course.score }}</td>
-                  <td class="nowrap">
+                  <td>
+                    <div v-if="course._evidenceMetas && course._evidenceMetas.length" class="chip-list">
+                      <span v-for="m in course._evidenceMetas" :key="m.id" class="chip">
+                        <button
+                          class="link chip-file-link"
+                          type="button"
+                          :title="m.fileName || ('附件#' + m.id)"
+                          @click="previewEvidence(m.id, course._evidenceMetas)"
+                        >{{ m.fileName || ('附件#' + m.id) }}</button>
+                      </span>
+                    </div>
+                    <span v-else class="muted" style="font-size: 12px;">未上传</span>
+                  </td>
+                  <td>
+                    <el-input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
+                  </td>
+                  <td class="nowrap col-status">
                     <span class="badge" :class="reviewItemBadge(course)">
                       {{ reviewItemStatus(course) }}
                     </span>
                   </td>
-                  <td>
-                    <input v-model.trim="drafts[courseKey(course.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
-                  </td>
-                  <td>
+                  <td class="col-action">
                     <div class="action-row inline-actions">
                       <template v-if="isDeleteRequested(course)">
-                        <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</button>
-                        <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                        <el-button type="primary" @click="decide('COURSE', course.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</el-button>
+                        <el-button type="danger" @click="decide('COURSE', course.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <button v-else-if="isDeleted(course)" class="btn secondary" type="button" @click="decide('COURSE', course.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</button>
+                      <el-button v-else-if="isDeleted(course)" type="default" @click="decide('COURSE', course.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</el-button>
                       <template v-else-if="isPendingReviewable(course)">
-                        <button class="btn" type="button" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
-                        <button class="btn danger" type="button" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                        <el-button type="primary" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</el-button>
+                        <el-button type="danger" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <button v-else class="btn secondary" type="button" @click="decide('COURSE', course.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</button>
+                      <el-button v-else type="default" @click="decide('COURSE', course.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</el-button>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="!coursePager.pagedRows.value.length">
-                  <td colspan="7" class="empty">暂无符合条件的课程</td>
+                  <td colspan="8" class="empty">暂无符合条件的课程</td>
                 </tr>
               </tbody>
             </table>
@@ -227,37 +251,37 @@
           <div class="table-search-left">
             <SearchCapsule
               v-model="activityKeyword"
-              width="300px"
+              width="180px"
               placeholder="搜索活动标题"
               :disabled="loadingDetail || isDeciding"
               @submit="onActivitySearch"
               @clear="onActivitySearch"
             />
-            <select v-model="activityModuleFilter" style="width: 140px;" :disabled="loadingDetail || isDeciding">
-              <option value="ALL">全部模块</option>
-              <option value="MORAL">德育</option>
-              <option value="INTEL_PRO_INNOV">智育</option>
-              <option value="SPORT_ACTIVITY">体育</option>
-              <option value="ART">美育</option>
-              <option value="LABOR">劳育</option>
-            </select>
+            <el-select v-model="activityModuleFilter" style="width: 140px;" :disabled="loadingDetail || isDeciding">
+              <el-option label="全部模块" value="ALL" />
+              <el-option label="德育" value="MORAL" />
+              <el-option label="智育" value="INTEL_PRO_INNOV" />
+              <el-option label="体育" value="SPORT_ACTIVITY" />
+              <el-option label="美育" value="ART" />
+              <el-option label="劳育" value="LABOR" />
+            </el-select>
           </div>
           <div class="table-search-right">
             <span class="muted">已选 {{ activitySelection.selectedCount.value }} 项</span>
-            <input
+            <el-input
               v-model.trim="activityBatchRejectReason"
               style="width: 220px;"
               placeholder="批量驳回理由（可空）"
               :disabled="isDeciding || loadingDetail || !canReviewCurrent"
             />
-            <button class="btn secondary" type="button" :disabled="!canBatchActivityReview" @click="batchApproveActivities">批量通过</button>
-            <button class="btn danger" type="button" :disabled="!canBatchActivityReview" @click="batchRejectActivities">批量驳回</button>
+            <el-button type="default" :disabled="!canBatchActivityReview" @click="batchApproveActivities">批量通过</el-button>
+            <el-button type="danger" :disabled="!canBatchActivityReview" @click="batchRejectActivities">批量驳回</el-button>
           </div>
         </div>
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky activity-table" data-resize-key="teacher_drawer_activities">
+            <table class="table table-sticky activity-table table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_drawer_activities">
               <thead>
                 <tr>
                   <th style="width: 44px;">
@@ -273,8 +297,8 @@
                   <th class="nowrap col-title">标题</th>
                   <th class="nowrap col-score">分数</th>
                   <th class="nowrap col-evidence">证明图片</th>
-                  <th class="nowrap col-status">状态</th>
                   <th class="nowrap col-reason">理由</th>
+                  <th class="nowrap col-status">状态</th>
                   <th class="nowrap col-action">操作</th>
                 </tr>
               </thead>
@@ -289,36 +313,46 @@
                     />
                   </td>
                   <td class="nowrap">{{ moduleLabel(activity.moduleType) }}</td>
-                  <td class="nowrap">{{ activity.title }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="activity.title"
+                      :cell-key="`teacher_drawer_activity_title_${activity.id}`"
+                    />
+                  </td>
                   <td class="nowrap">{{ activity.selfScore }}</td>
                   <td>
                     <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
                       <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
-                        <button class="link" type="button" @click="previewEvidence(m.id, activity._evidenceMetas)">{{ m.fileName || ('附件#' + m.id) }}</button>
+                        <button
+                          class="link chip-file-link"
+                          type="button"
+                          :title="m.fileName || ('附件#' + m.id)"
+                          @click="previewEvidence(m.id, activity._evidenceMetas)"
+                        >{{ m.fileName || ('附件#' + m.id) }}</button>
                       </span>
                     </div>
                     <span v-else class="muted" style="font-size: 12px;">未上传</span>
                   </td>
-                  <td class="nowrap">
+                  <td>
+                    <el-input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
+                  </td>
+                  <td class="nowrap col-status">
                     <span class="badge" :class="reviewItemBadge(activity)">
                       {{ reviewItemStatus(activity) }}
                     </span>
                   </td>
-                  <td>
-                    <input v-model.trim="drafts[activityKey(activity.id)].reason" placeholder="可填写审核理由（选填）" :disabled="isDeciding || !canReviewCurrent" />
-                  </td>
-                  <td>
+                  <td class="col-action">
                     <div class="action-row inline-actions">
                       <template v-if="isDeleteRequested(activity)">
-                        <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</button>
-                        <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                        <el-button type="primary" @click="decide('ACTIVITY', activity.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</el-button>
+                        <el-button type="danger" @click="decide('ACTIVITY', activity.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <button v-else-if="isDeleted(activity)" class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</button>
+                      <el-button v-else-if="isDeleted(activity)" type="default" @click="decide('ACTIVITY', activity.id, 'UNDO_DELETE')" :disabled="isDeciding || !canReviewCurrent">撤回</el-button>
                       <template v-else-if="isPendingReviewable(activity)">
-                        <button class="btn" type="button" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</button>
-                        <button class="btn danger" type="button" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</button>
+                        <el-button type="primary" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</el-button>
+                        <el-button type="danger" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <button v-else class="btn secondary" type="button" @click="decide('ACTIVITY', activity.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</button>
+                      <el-button v-else type="default" @click="decide('ACTIVITY', activity.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</el-button>
                     </div>
                   </td>
                 </tr>
@@ -341,7 +375,7 @@
       </div>
 
       <div class="drawer-footer">
-        <button class="btn secondary" type="button" @click="closeDrawer">关闭</button>
+        <el-button type="default" @click="closeDrawer">关闭</el-button>
       </div>
     </div>
   </div>
@@ -352,6 +386,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import http from '../api/http'
 import { previewImageById } from '../utils/imagePreview'
 import SearchCapsule from '../components/SearchCapsule.vue'
+import TableOverflowCell from '../components/TableOverflowCell.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
@@ -568,7 +603,7 @@ const taskOpenActionLabel = (task) => {
 const submitTaskButtonLabel = (task) => {
   if (submittingTaskId.value === task?.id) return '提交中...'
   if (isSubmittedToAdminTask(task)) return '已提交'
-  return '提交管理员'
+  return '提交'
 }
 
 const isAutoReason = (text) => {
@@ -722,15 +757,24 @@ const parseEvidenceIds = (raw) => {
 }
 
 const hydrateEvidenceMetas = async () => {
-  if (!current.value?.activities) return
+  if (!current.value) return
 
   const ids = []
-  for (const a of current.value.activities) {
+  for (const c of (current.value.courses || [])) {
+    const courseEvidenceId = Number(c?.evidenceFileId)
+    if (Number.isFinite(courseEvidenceId) && courseEvidenceId > 0) {
+      ids.push(courseEvidenceId)
+    }
+  }
+  for (const a of (current.value.activities || [])) {
     ids.push(...parseEvidenceIds(a.evidenceFileIds))
   }
   const uniqueIds = Array.from(new Set(ids))
   if (!uniqueIds.length) {
-    for (const a of current.value.activities) {
+    for (const c of (current.value.courses || [])) {
+      c._evidenceMetas = []
+    }
+    for (const a of (current.value.activities || [])) {
       a._evidenceMetas = []
     }
     return
@@ -744,7 +788,16 @@ const hydrateEvidenceMetas = async () => {
     evidenceMetaCache[m.id] = m
   }
 
-  for (const a of current.value.activities) {
+  for (const c of (current.value.courses || [])) {
+    const courseEvidenceId = Number(c?.evidenceFileId)
+    if (!Number.isFinite(courseEvidenceId) || courseEvidenceId <= 0) {
+      c._evidenceMetas = []
+      continue
+    }
+    c._evidenceMetas = [map[courseEvidenceId] || evidenceMetaCache[courseEvidenceId] || { id: courseEvidenceId, fileName: `附件#${courseEvidenceId}` }]
+  }
+
+  for (const a of (current.value.activities || [])) {
     const aIds = parseEvidenceIds(a.evidenceFileIds)
     a._evidenceMetas = aIds.map((id) => map[id] || evidenceMetaCache[id] || { id, fileName: `附件#${id}` })
   }
@@ -1006,7 +1059,7 @@ onMounted(() => {
 .inline-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: nowrap;
 }
 

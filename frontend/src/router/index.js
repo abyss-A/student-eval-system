@@ -52,7 +52,7 @@ const routes = [
       { path: 'eval/sport', component: EvalModule, props: { moduleType: 'SPORT_ACTIVITY', label: '体育' }, meta: { title: '体育填报' } },
       { path: 'eval/art', component: EvalModule, props: { moduleType: 'ART', label: '美育' }, meta: { title: '美育填报' } },
       { path: 'eval/labor', component: EvalModule, props: { moduleType: 'LABOR', label: '劳育' }, meta: { title: '劳育填报' } },
-      { path: 'eval/submit', component: EvalSubmit, meta: { title: '综合成绩与提交' } },
+      { path: 'eval/submit', component: EvalSubmit, meta: { title: '综合成绩' } },
       { path: 'notices', component: Notices, meta: { title: '公告通知' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈', unsavedGuard: 'feedbackCreate' } },

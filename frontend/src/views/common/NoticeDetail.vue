@@ -11,7 +11,9 @@
         </p>
       </div>
       <div class="toolbar-row">
-        <RouterLink class="btn ghost" :to="backTo">返回列表</RouterLink>
+        <RouterLink :to="backTo">
+          <el-button type="default">返回列表</el-button>
+        </RouterLink>
       </div>
     </div>
 

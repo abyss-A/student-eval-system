@@ -2,78 +2,56 @@
   <div class="table-footer pager-skin">
     <div class="table-pager-wrap">
       <div class="table-pager-actions">
-        <button
-          v-if="showBoundaryButtons"
+        <el-button
           class="pager-btn pager-icon"
-          type="button"
-          :disabled="disabled || page <= 1"
-          aria-label="首页"
-          title="首页"
-          @click="emit('change', 1)"
-        >«</button>
-
-        <button
-          class="pager-btn pager-icon"
-          type="button"
+          type="default"
           :disabled="disabled || page <= 1"
           aria-label="上一页"
           title="上一页"
           @click="emit('change', page - 1)"
-        >‹</button>
+        >‹</el-button>
 
-        <button
+        <el-button
           v-for="p in displayPages"
           :key="p.key"
           class="pager-btn pager-page"
-          type="button"
+          type="default"
           :disabled="disabled || p.ellipsis || p.value === page"
           :class="p.value === page ? 'active' : ''"
           @click="!p.ellipsis && emit('change', p.value)"
         >
           {{ p.label }}
-        </button>
+        </el-button>
 
-        <button
+        <el-button
           class="pager-btn pager-icon"
-          type="button"
+          type="default"
           :disabled="disabled || page >= totalPages"
           aria-label="下一页"
           title="下一页"
           @click="emit('change', page + 1)"
-        >›</button>
-
-        <button
-          v-if="showBoundaryButtons"
-          class="pager-btn pager-icon"
-          type="button"
-          :disabled="disabled || page >= totalPages"
-          aria-label="末页"
-          title="末页"
-          @click="emit('change', totalPages)"
-        >»</button>
+        >›</el-button>
       </div>
 
       <div v-if="showQuickJumper" class="table-pager-jumper">
         <span class="pager-label">到第</span>
-        <input
+        <el-input
           v-model="quickValue"
           class="pager-input"
-          type="number"
-          min="1"
-          :max="Math.max(1, totalPages)"
           :disabled="disabled"
+          inputmode="numeric"
           @keyup.enter="applyQuickJump"
         />
         <span class="pager-label">页</span>
-        <button class="pager-confirm" type="button" :disabled="disabled" @click="applyQuickJump">确定</button>
+        <el-button class="pager-confirm" type="default" :disabled="disabled" @click="applyQuickJump">确定</el-button>
       </div>
 
       <div class="pager-total">共 {{ total }} 条</div>
 
       <div class="table-pager-size">
-        <select :value="currentPageSize" :disabled="disabled" @change="onPageSizeChange">
-          <option v-for="size in normalizedPageSizeOptions" :key="`size_${size}`" :value="size">{{ size }} 条/页</option>
-        </select>
+        <el-select :model-value="currentPageSize" :disabled="disabled" @change="onPageSizeChange">
+          <el-option v-for="size in normalizedPageSizeOptions" :key="`size_${size}`" :label="`${size} 条/页`" :value="size" />
+        </el-select>
       </div>
     </div>
   </div>
@@ -89,8 +67,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   pageSize: { type: Number, default: 10 },
   pageSizeOptions: { type: Array, default: () => [10, 20, 50] },
-  showQuickJumper: { type: Boolean, default: true },
-  showBoundaryButtons: { type: Boolean, default: false }
+  showQuickJumper: { type: Boolean, default: true }
 })
 
 const emit = defineEmits(['change', 'page-size-change', 'quick-jump'])
@@ -134,8 +111,8 @@ const applyQuickJump = () => {
   emit('change', target)
 }
 
-const onPageSizeChange = (event) => {
-  const next = Number(event?.target?.value)
+const onPageSizeChange = (nextValue) => {
+  const next = Number(nextValue)
   if (!Number.isFinite(next) || next <= 0) return
   emit('page-size-change', Math.floor(next))
 }
@@ -143,13 +120,37 @@ const onPageSizeChange = (event) => {
 const displayPages = computed(() => {
   const total = Math.max(1, Number(props.totalPages) || 1)
   const current = Math.min(Math.max(Number(props.page) || 1, 1), total)
-  return [{ key: `p_${current}`, value: current, label: String(current), ellipsis: false }]
+  const pages = []
+  const pushPage = (value) => {
+    if (pages.some((item) => item.value === value && !item.ellipsis)) return
+    pages.push({ key: `p_${value}`, value, label: String(value), ellipsis: false })
+  }
+  const pushEllipsis = (key) => {
+    if (pages.length && pages[pages.length - 1].ellipsis) return
+    pages.push({ key, value: -1, label: '…', ellipsis: true })
+  }
+
+  if (total <= 7) {
+    for (let p = 1; p <= total; p += 1) pushPage(p)
+    return pages
+  }
+
+  pushPage(1)
+  if (current > 4) pushEllipsis('left_ellipsis')
+
+  const windowStart = Math.max(2, current - 1)
+  const windowEnd = Math.min(total - 1, current + 1)
+  for (let p = windowStart; p <= windowEnd; p += 1) pushPage(p)
+
+  if (current < total - 3) pushEllipsis('right_ellipsis')
+  pushPage(total)
+  return pages
 })
 </script>
 
 <style scoped>
 .pager-skin {
-  background: #edf0f4;
+  background: #f5f8fd;
 }
 
 .table-pager-wrap {
@@ -158,6 +159,7 @@ const displayPages = computed(() => {
   gap: 6px;
   flex-wrap: nowrap;
   overflow-x: auto;
+  overflow-y: hidden;
   padding: 1px 0;
 }
 
@@ -172,41 +174,14 @@ const displayPages = computed(() => {
   height: 30px;
   min-width: 30px;
   padding: 0 8px;
-  border: 1px solid #d2d9e3;
-  border-radius: 5px;
-  background: #f8fafc;
-  color: #99a3b4;
-  cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  line-height: 1.1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
-  box-shadow: none;
-}
-
-.pager-btn:hover:not(:disabled) {
-  border-color: #bec8d8;
-  background: #f3f6fa;
-  color: #5f6c82;
-}
-
-.pager-btn:disabled {
-  opacity: 1;
-  cursor: not-allowed;
-  color: #c1c8d4;
-  background: #f4f6f9;
+  line-height: 1;
 }
 
 .pager-btn.pager-icon {
   width: 30px;
   min-width: 30px;
-  height: 30px;
   padding: 0;
   font-size: 16px;
   font-weight: 400;
@@ -214,18 +189,15 @@ const displayPages = computed(() => {
 
 .pager-btn.pager-page {
   min-width: 38px;
-  height: 30px;
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .pager-btn.pager-page.active {
-  background: #7395c0;
-  border-color: #7395c0;
-  color: #ffffff;
-  opacity: 1;
-  box-shadow: none;
+  background: #2f6db8;
+  border-color: #2f6db8;
+  color: #fff;
 }
 
 .table-pager-jumper {
@@ -242,54 +214,22 @@ const displayPages = computed(() => {
 
 .pager-input {
   width: 56px;
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid #d2d9e3;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 12px;
-  color: #111827;
-  vertical-align: middle;
+  min-width: 56px;
 }
 
-.pager-input:focus {
-  outline: none;
-  border-color: #b6c2d4;
-  box-shadow: none;
+.pager-input:deep(.el-input__wrapper) {
+  height: 30px;
+  padding: 0 8px;
+}
+
+.pager-input:deep(.el-input__inner) {
+  text-align: center;
 }
 
 .pager-confirm {
-  height: 30px;
   min-width: 56px;
-  padding: 0 12px;
-  border: 1px solid #d2d9e3;
-  border-radius: 4px;
-  background: #fff;
-  color: #0f172a;
   font-size: 12px;
-  font-family: inherit;
   font-weight: 400;
-  cursor: pointer;
-  flex: 0 0 auto;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.pager-confirm:hover:not(:disabled) {
-  border-color: #bec8d8;
-  background: #f8fafe;
-}
-
-.pager-confirm:disabled {
-  opacity: 1;
-  color: #9ca3af;
-  background: #f3f5f8;
-  cursor: not-allowed;
 }
 
 .pager-total {
@@ -305,22 +245,12 @@ const displayPages = computed(() => {
   flex: 0 0 auto;
 }
 
-.table-pager-size select {
-  width: 112px;
-  height: 30px;
-  padding: 0 26px 0 8px;
-  border: 1px solid #d2d9e3;
-  border-radius: 5px;
-  background: #fff;
-  font-size: 12px;
-  color: #111827;
-  vertical-align: middle;
+.table-pager-size :deep(.el-select) {
+  width: 116px;
 }
 
-.table-pager-size select:focus {
-  outline: none;
-  border-color: #b6c2d4;
-  box-shadow: none;
+.table-pager-size :deep(.el-select__wrapper) {
+  min-height: 30px;
 }
 
 @media (max-width: 900px) {
@@ -335,9 +265,7 @@ const displayPages = computed(() => {
   }
 
   .pager-btn,
-  .pager-confirm,
-  .pager-input,
-  .table-pager-size select {
+  .pager-confirm {
     height: 30px;
     font-size: 12px;
   }
@@ -345,10 +273,6 @@ const displayPages = computed(() => {
   .pager-label,
   .pager-total {
     font-size: 12px;
-  }
-
-  .table-pager-size select {
-    width: 112px;
   }
 }
 </style>

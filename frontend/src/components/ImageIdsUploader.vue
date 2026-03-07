@@ -10,12 +10,12 @@
       <span v-if="hint" class="muted">{{ hint }}</span>
     </div>
 
-    <div v-if="metas.length" class="chip-list" style="margin-top: 8px;">
-      <span v-for="m in metas" :key="m.id" class="chip">
-        <button class="link" type="button" @click="preview(m.id)">
+    <div v-if="metas.length" class="chip-list uploader-chip-list" style="margin-top: 8px;">
+      <span v-for="m in metas" :key="m.id" class="chip uploader-chip">
+        <button class="link chip-file-link" type="button" :title="m.fileName || (`附件#${m.id}`)" @click="preview(m.id)">
           {{ m.fileName || `附件#${m.id}` }}
         </button>
-        <button v-if="!readonly" class="link danger" type="button" @click="remove(m.id)">移除</button>
+        <button v-if="!readonly" class="link danger chip-remove-link" type="button" @click="remove(m.id)">移除</button>
       </span>
     </div>
     <p v-else class="muted" style="margin-top: 8px;">未上传</p>
@@ -163,3 +163,18 @@ const preview = async (id) => {
 }
 </script>
 
+<style scoped>
+.uploader {
+  min-width: 0;
+}
+
+.uploader-chip-list {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.uploader-chip {
+  max-width: 100%;
+  min-width: 0;
+}
+</style>
