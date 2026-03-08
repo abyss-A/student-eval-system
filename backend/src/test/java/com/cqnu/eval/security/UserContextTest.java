@@ -1,4 +1,4 @@
-﻿package com.cqnu.eval.security;
+package com.cqnu.eval.security;
 
 import org.junit.jupiter.api.Test;
 

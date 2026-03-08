@@ -1,4 +1,4 @@
-﻿package com.cqnu.eval.common;
+package com.cqnu.eval.common;
 
 import com.cqnu.eval.security.CurrentUser;
 import org.junit.jupiter.api.Test;

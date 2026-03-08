@@ -1,4 +1,4 @@
-﻿package com.cqnu.eval.common;
+package com.cqnu.eval.common;
 
 import org.junit.jupiter.api.Test;
 

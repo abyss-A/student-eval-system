@@ -1,4 +1,4 @@
-﻿package com.cqnu.eval.security;
+package com.cqnu.eval.security;
 
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.Test;
