@@ -1,8 +1,13 @@
 const STORAGE_PREFIX = 'table_col_widths:v1'
 const MIN_COL_WIDTH = 72
+const MIN_STATUS_COL_WIDTH = 94
+const DEFAULT_ACTION_BTN_WIDTH = 72
+const DEFAULT_ACTION_GAP = 4
+const DEFAULT_ACTION_PADDING_X = 4
 const DESKTOP_MIN_WIDTH = 768
 
 const enhancedTables = new WeakSet()
+const tableStates = new WeakMap()
 
 let observer = null
 let scanRaf = 0
@@ -14,15 +19,56 @@ const isDesktopPointer = () => {
   return window.matchMedia('(pointer:fine)').matches
 }
 
-const clampWidth = (value) => {
+const clampWidth = (value, minWidth = MIN_COL_WIDTH) => {
   const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return MIN_COL_WIDTH
-  return Math.max(MIN_COL_WIDTH, Math.round(parsed))
+  const floor = Math.max(MIN_COL_WIDTH, Math.round(minWidth))
+  if (!Number.isFinite(parsed)) return floor
+  return Math.max(floor, Math.round(parsed))
 }
 
-const isFixedRightLockedHeader = (table, th) => {
-  if (!table.classList.contains('table-fixed-right')) return false
-  return th.classList.contains('col-status') || th.classList.contains('col-action')
+const readCssPx = (table, varName, fallback) => {
+  if (!table || typeof window === 'undefined') return fallback
+  try {
+    const raw = window.getComputedStyle(table).getPropertyValue(varName).trim()
+    if (!raw) return fallback
+    const value = parseFloat(raw)
+    return Number.isFinite(value) ? value : fallback
+  } catch (_) {
+    return fallback
+  }
+}
+
+const resolveMaxActionButtonCount = (table) => {
+  const cells = table.querySelectorAll('tbody td.col-action')
+  let maxCount = 1
+  cells.forEach((cell) => {
+    const count = cell.querySelectorAll('.el-button, .btn').length
+    if (count > maxCount) {
+      maxCount = count
+    }
+  })
+  return maxCount
+}
+
+const resolveColumnMinWidth = (table, th) => {
+  if (!th) return MIN_COL_WIDTH
+
+  if (th.classList.contains('col-status')) {
+    const configured = readCssPx(table, '--sticky-status-min-w', MIN_STATUS_COL_WIDTH)
+    return Math.max(MIN_COL_WIDTH, configured)
+  }
+
+  if (th.classList.contains('col-action')) {
+    const buttonWidth = readCssPx(table, '--fixed-action-btn-w', DEFAULT_ACTION_BTN_WIDTH)
+    const buttonGap = readCssPx(table, '--fixed-action-gap', DEFAULT_ACTION_GAP)
+    const paddingX = readCssPx(table, '--fixed-action-padding-x', DEFAULT_ACTION_PADDING_X)
+    const buttonCount = Math.max(1, resolveMaxActionButtonCount(table))
+    const autoMin = (buttonCount * buttonWidth) + ((buttonCount - 1) * buttonGap) + (paddingX * 2)
+    const configured = readCssPx(table, '--sticky-action-min-w', autoMin)
+    return Math.max(MIN_COL_WIDTH, configured, autoMin)
+  }
+
+  return MIN_COL_WIDTH
 }
 
 const buildStorageKey = (table) => {
@@ -31,14 +77,15 @@ const buildStorageKey = (table) => {
   return `${STORAGE_PREFIX}:${window.location.pathname}:${resizeKey}`
 }
 
-const readStoredWidths = (storageKey, count) => {
+const readStoredWidths = (storageKey, minWidths) => {
   if (!storageKey) return null
+  const count = minWidths.length
   try {
     const raw = localStorage.getItem(storageKey)
     if (!raw) return null
     const arr = JSON.parse(raw)
     if (!Array.isArray(arr) || arr.length !== count) return null
-    const widths = arr.map((item) => clampWidth(item))
+    const widths = arr.map((item, index) => clampWidth(item, minWidths[index]))
     if (widths.some((item) => !Number.isFinite(item))) return null
     return widths
   } catch (_) {
@@ -46,12 +93,12 @@ const readStoredWidths = (storageKey, count) => {
   }
 }
 
-const persistWidths = (storageKey, cols) => {
+const persistWidths = (storageKey, cols, minWidths) => {
   if (!storageKey) return
   try {
-    const widths = cols.map((col) => {
+    const widths = cols.map((col, index) => {
       const current = parseFloat(col.style.width || '0')
-      return clampWidth(current)
+      return clampWidth(current, minWidths[index])
     })
     localStorage.setItem(storageKey, JSON.stringify(widths))
   } catch (_) {
@@ -75,23 +122,83 @@ const ensureColgroup = (table, count) => {
   return Array.from(colgroup.children)
 }
 
-const collectHeaderWidths = (ths) =>
-  ths.map((th) => clampWidth(th.getBoundingClientRect().width || th.offsetWidth || MIN_COL_WIDTH))
+const findHeaderIndex = (ths, className) => ths.findIndex((th) => th.classList.contains(className))
 
-const applyWidths = (cols, widths) => {
-  cols.forEach((col, index) => {
-    const width = clampWidth(widths[index])
-    col.style.width = `${width}px`
-  })
+const resolveColumnWidth = (th, col, minWidth) => {
+  const fromCol = parseFloat(col?.style?.width || '0')
+  if (Number.isFinite(fromCol) && fromCol > 0) {
+    return clampWidth(fromCol, minWidth)
+  }
+  return clampWidth(th?.getBoundingClientRect().width || th?.offsetWidth || minWidth, minWidth)
 }
 
-const createResizer = ({ table, th, col, storageKey }) => {
+const syncFixedRightVars = (table, ths, cols, minWidths) => {
+  if (!table.classList.contains('table-fixed-right')) return
+
+  const actionIndex = findHeaderIndex(ths, 'col-action')
+  const statusIndex = findHeaderIndex(ths, 'col-status')
+
+  if (actionIndex >= 0) {
+    const actionWidth = resolveColumnWidth(ths[actionIndex], cols[actionIndex], minWidths[actionIndex])
+    table.style.setProperty('--sticky-action-w', `${actionWidth}px`)
+  }
+
+  if (statusIndex >= 0) {
+    const statusWidth = resolveColumnWidth(ths[statusIndex], cols[statusIndex], minWidths[statusIndex])
+    table.style.setProperty('--sticky-status-w', `${statusWidth}px`)
+  }
+}
+
+const collectHeaderWidths = (ths, minWidths) =>
+  ths.map((th, index) => clampWidth(th.getBoundingClientRect().width || th.offsetWidth || MIN_COL_WIDTH, minWidths[index]))
+
+const applyWidths = (cols, widths, minWidths) => {
+  let changed = false
+  cols.forEach((col, index) => {
+    const width = clampWidth(widths[index], minWidths[index])
+    const prev = parseFloat(col.style.width || '0')
+    if (!Number.isFinite(prev) || Math.abs(prev - width) > 0.5) {
+      changed = true
+      col.style.width = `${width}px`
+    }
+  })
+  return changed
+}
+
+const computeMinWidths = (table, ths) => ths.map((th) => resolveColumnMinWidth(table, th))
+
+const refreshTableState = (state, { persist = false } = {}) => {
+  const { table, ths, cols } = state
+  const minWidths = computeMinWidths(table, ths)
+  state.minWidths = minWidths
+
+  const currentWidths = cols.map((col, index) => {
+    const current = parseFloat(col.style.width || '0')
+    if (Number.isFinite(current) && current > 0) return current
+    return ths[index].getBoundingClientRect().width || ths[index].offsetWidth || MIN_COL_WIDTH
+  })
+
+  const changed = applyWidths(cols, currentWidths, minWidths)
+  syncFixedRightVars(table, ths, cols, minWidths)
+
+  if (persist || changed) {
+    persistWidths(state.storageKey, cols, minWidths)
+  }
+}
+
+const createResizer = ({ state, index }) => {
+  const { table, ths, cols, storageKey } = state
+  const th = ths[index]
+  const col = cols[index]
+
   th.classList.add('table-resize-th')
 
   const handle = document.createElement('span')
   handle.className = 'table-col-resizer'
   handle.setAttribute('aria-hidden', 'true')
   th.appendChild(handle)
+
+  const getMinWidth = () => state.minWidths[index] || MIN_COL_WIDTH
 
   const onMouseDown = (event) => {
     if (event.button !== 0) return
@@ -101,7 +208,7 @@ const createResizer = ({ table, th, col, storageKey }) => {
     event.stopPropagation()
 
     const startX = event.clientX
-    const startWidth = clampWidth(parseFloat(col.style.width || '0') || th.getBoundingClientRect().width)
+    const startWidth = clampWidth(parseFloat(col.style.width || '0') || th.getBoundingClientRect().width, getMinWidth())
 
     table.classList.add('is-resizing-columns')
     handle.classList.add('active')
@@ -111,8 +218,9 @@ const createResizer = ({ table, th, col, storageKey }) => {
 
     const onMouseMove = (moveEvent) => {
       const delta = moveEvent.clientX - startX
-      const next = clampWidth(startWidth + delta)
+      const next = clampWidth(startWidth + delta, getMinWidth())
       col.style.width = `${next}px`
+      syncFixedRightVars(table, state.ths, state.cols, state.minWidths)
     }
 
     const stopDrag = () => {
@@ -121,7 +229,7 @@ const createResizer = ({ table, th, col, storageKey }) => {
       handle.classList.remove('active')
       table.classList.remove('is-resizing-columns')
       document.body.style.userSelect = prevUserSelect
-      persistWidths(storageKey, Array.from(table.querySelectorAll('colgroup[data-resize-colgroup="1"] > col')))
+      refreshTableState(state, { persist: true })
     }
 
     document.addEventListener('mousemove', onMouseMove)
@@ -131,53 +239,80 @@ const createResizer = ({ table, th, col, storageKey }) => {
   handle.addEventListener('mousedown', onMouseDown)
 }
 
+const hasHeaderChanged = (state, latestThs) => {
+  if (state.ths.length !== latestThs.length) return true
+  for (let i = 0; i < latestThs.length; i += 1) {
+    if (state.ths[i] !== latestThs[i]) return true
+  }
+  return false
+}
+
 const initTable = (table) => {
   if (!(table instanceof HTMLTableElement)) return
-  if (enhancedTables.has(table)) return
   if (!isDesktopPointer()) return
 
   const ths = Array.from(table.querySelectorAll('thead th'))
   if (!ths.length) return
 
   const cols = ensureColgroup(table, ths.length)
+  const minWidths = computeMinWidths(table, ths)
   const storageKey = buildStorageKey(table)
-  const lockedIndexes = new Set()
-  ths.forEach((th, index) => {
-    if (isFixedRightLockedHeader(table, th)) {
-      lockedIndexes.add(index)
-    }
-  })
 
-  const stored = readStoredWidths(storageKey, ths.length)
-  const headerWidths = collectHeaderWidths(ths)
-  const widths = stored
-    ? headerWidths.map((fallbackWidth, index) => (
-      lockedIndexes.has(index)
-        ? fallbackWidth
-        : clampWidth(stored[index] ?? fallbackWidth)
-    ))
+  const stored = readStoredWidths(storageKey, minWidths)
+  const headerWidths = collectHeaderWidths(ths, minWidths)
+  const initialWidths = stored
+    ? headerWidths.map((fallbackWidth, index) => clampWidth(stored[index] ?? fallbackWidth, minWidths[index]))
     : headerWidths
-  applyWidths(cols, widths)
+
+  applyWidths(cols, initialWidths, minWidths)
+
+  const state = {
+    table,
+    ths,
+    cols,
+    storageKey,
+    minWidths
+  }
 
   table.classList.add('table-resizable')
+  ths.forEach((_, index) => createResizer({ state, index }))
 
-  ths.forEach((th, index) => {
-    if (lockedIndexes.has(index)) return
-    createResizer({
-      table,
-      th,
-      col: cols[index],
-      storageKey
-    })
-  })
-
+  tableStates.set(table, state)
   enhancedTables.add(table)
+  refreshTableState(state, { persist: true })
+}
+
+const refreshTable = (table) => {
+  const state = tableStates.get(table)
+  if (!state) {
+    initTable(table)
+    return
+  }
+
+  const latestThs = Array.from(table.querySelectorAll('thead th'))
+  if (!latestThs.length) return
+
+  if (hasHeaderChanged(state, latestThs)) {
+    tableStates.delete(table)
+    enhancedTables.delete(table)
+    initTable(table)
+    return
+  }
+
+  state.cols = ensureColgroup(table, latestThs.length)
+  refreshTableState(state)
 }
 
 const scanTables = () => {
   if (!isDesktopPointer()) return
   const tables = document.querySelectorAll('table.table')
-  tables.forEach((table) => initTable(table))
+  tables.forEach((table) => {
+    if (!enhancedTables.has(table)) {
+      initTable(table)
+      return
+    }
+    refreshTable(table)
+  })
 }
 
 const scheduleScan = () => {

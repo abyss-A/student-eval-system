@@ -4412,3 +4412,115 @@ Caused by: java.io.IOException: Cannot delete C:\Windows\Temp\tomcat.8080.843272
 2026-03-07 19:56:54.892 DEBUG 56104 --- [io-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
 2026-03-07 19:56:54.892 DEBUG 56104 --- [io-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@58e98746]
 2026-03-07 19:56:54.892 DEBUG 56104 --- [io-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:12:30.485 DEBUG 56104 --- [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/notices?status=PUBLISHED", parameters={masked}
+2026-03-07 20:12:30.485 DEBUG 56104 --- [nio-8080-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.NoticeController#list(String, String)
+2026-03-07 20:12:30.491 DEBUG 56104 --- [nio-8080-exec-4] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:12:30.491 DEBUG 56104 --- [nio-8080-exec-4] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@735db32c]
+2026-03-07 20:12:30.492 DEBUG 56104 --- [nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:12:33.764 DEBUG 56104 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:12:33.764 DEBUG 56104 --- [nio-8080-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:12:33.769 DEBUG 56104 --- [nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:12:33.769 DEBUG 56104 --- [nio-8080-exec-5] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@16a47c60]
+2026-03-07 20:12:33.771 DEBUG 56104 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:12:37.014 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/notices?status=PUBLISHED", parameters={masked}
+2026-03-07 20:12:37.015 DEBUG 56104 --- [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.NoticeController#list(String, String)
+2026-03-07 20:12:37.017 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:12:37.018 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@44e805a9]
+2026-03-07 20:12:37.019 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:12:37.896 DEBUG 56104 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:12:37.896 DEBUG 56104 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:12:37.899 DEBUG 56104 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:12:37.900 DEBUG 56104 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@32525d50]
+2026-03-07 20:12:37.900 DEBUG 56104 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:22:47.578 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:22:47.579 DEBUG 56104 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:22:47.610 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:22:47.610 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@53e3fcdc]
+2026-03-07 20:22:47.611 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:24:31.395 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:24:31.396 DEBUG 56104 --- [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:24:31.404 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:24:31.404 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@15b3c65]
+2026-03-07 20:24:31.405 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:25:51.730 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:25:51.732 DEBUG 56104 --- [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:25:51.740 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:25:51.741 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@140d2010]
+2026-03-07 20:25:51.741 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:26:31.071 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:26:31.072 DEBUG 56104 --- [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:26:31.076 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:26:31.076 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@7be264b6]
+2026-03-07 20:26:31.077 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:29:01.074 DEBUG 56104 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:29:01.075 DEBUG 56104 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:29:01.082 DEBUG 56104 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:29:01.082 DEBUG 56104 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@268a3472]
+2026-03-07 20:29:01.082 DEBUG 56104 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:29:31.065 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:29:31.066 DEBUG 56104 --- [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:29:31.068 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:29:31.069 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@28ddb95c]
+2026-03-07 20:29:31.069 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:30:01.065 DEBUG 56104 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:30:01.066 DEBUG 56104 --- [nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:30:01.069 DEBUG 56104 --- [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:30:01.069 DEBUG 56104 --- [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@1cf8db74]
+2026-03-07 20:30:01.070 DEBUG 56104 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:30:24.797 DEBUG 56104 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/submissions/1", parameters={}
+2026-03-07 20:30:24.798 DEBUG 56104 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.SubmissionController#detail(Long)
+2026-03-07 20:30:24.808 DEBUG 56104 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:30:24.809 DEBUG 56104 --- [nio-8080-exec-1] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@4decfc59]
+2026-03-07 20:30:24.810 DEBUG 56104 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:30:24.826 DEBUG 56104 --- [io-8080-exec-10] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/files/metas", parameters={}
+2026-03-07 20:30:24.827 DEBUG 56104 --- [io-8080-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.FileController#metas(BatchMetaRequest)
+2026-03-07 20:30:24.830 DEBUG 56104 --- [io-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.cqnu.eval.controller.FileController$BatchMetaRequest@4dc70388]
+2026-03-07 20:30:24.839 DEBUG 56104 --- [io-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:30:24.840 DEBUG 56104 --- [io-8080-exec-10] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@4cae4268]
+2026-03-07 20:30:24.841 DEBUG 56104 --- [io-8080-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:31:01.069 DEBUG 56104 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:31:01.069 DEBUG 56104 --- [nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:31:01.072 DEBUG 56104 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:31:01.072 DEBUG 56104 --- [nio-8080-exec-2] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@52fc2915]
+2026-03-07 20:31:01.074 DEBUG 56104 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:32:01.067 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:32:01.068 DEBUG 56104 --- [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:32:01.072 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:32:01.072 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@219fc0b3]
+2026-03-07 20:32:01.073 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:33:31.079 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:33:31.080 DEBUG 56104 --- [nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:33:31.084 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:33:31.084 DEBUG 56104 --- [nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@3a681c73]
+2026-03-07 20:33:31.085 DEBUG 56104 --- [nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:34:01.066 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:34:01.067 DEBUG 56104 --- [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:34:01.071 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:34:01.071 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@2c80adc2]
+2026-03-07 20:34:01.072 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:34:31.075 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:34:31.075 DEBUG 56104 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:34:31.078 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:34:31.079 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@79a861f9]
+2026-03-07 20:34:31.079 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:37:58.367 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:37:58.367 DEBUG 56104 --- [nio-8080-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:37:58.371 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:37:58.372 DEBUG 56104 --- [nio-8080-exec-6] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@630c9219]
+2026-03-07 20:37:58.372 DEBUG 56104 --- [nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:38:13.890 DEBUG 56104 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/reviews/tasks", parameters={}
+2026-03-07 20:38:13.891 DEBUG 56104 --- [nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.ReviewController#tasks()
+2026-03-07 20:38:13.894 DEBUG 56104 --- [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:38:13.894 DEBUG 56104 --- [nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@2911843f]
+2026-03-07 20:38:13.895 DEBUG 56104 --- [nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:39:36.355 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/v1/submissions/1", parameters={}
+2026-03-07 20:39:36.365 DEBUG 56104 --- [nio-8080-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.SubmissionController#detail(Long)
+2026-03-07 20:39:36.370 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:39:36.370 DEBUG 56104 --- [nio-8080-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@4211acf]
+2026-03-07 20:39:36.372 DEBUG 56104 --- [nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-07 20:39:36.383 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : POST "/api/v1/files/metas", parameters={}
+2026-03-07 20:39:36.383 DEBUG 56104 --- [nio-8080-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.cqnu.eval.controller.FileController#metas(BatchMetaRequest)
+2026-03-07 20:39:36.383 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.cqnu.eval.controller.FileController$BatchMetaRequest@64a224c8]
+2026-03-07 20:39:36.386 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2026-03-07 20:39:36.386 DEBUG 56104 --- [nio-8080-exec-3] m.m.a.RequestResponseBodyMethodProcessor : Writing [com.cqnu.eval.common.ApiResponse@71c72d10]
+2026-03-07 20:39:36.387 DEBUG 56104 --- [nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK

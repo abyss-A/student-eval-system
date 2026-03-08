@@ -16,6 +16,14 @@
           @submit="onTaskSearch"
           @clear="onTaskSearch"
         />
+        <el-select v-model="taskStatusFilter" style="width: 132px;" :disabled="loadingTasks || loadingDetail || !!submittingTaskId">
+          <el-option label="全部状态" value="ALL" />
+          <el-option label="未审核" value="UNREVIEWED" />
+          <el-option label="正在审核" value="IN_PROGRESS" />
+          <el-option label="待复审" value="REVIEWED" />
+          <el-option label="待提交" value="READY_TO_SUBMIT" />
+          <el-option label="已提交" value="SUBMITTED" />
+        </el-select>
       </div>
       <div class="table-search-right">
         <span class="muted">已选 {{ taskSelection.selectedCount.value }} 项</span>
@@ -25,7 +33,7 @@
 
     <div class="table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_tasks">
+        <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 156px; --sticky-status-w: 102px; --fixed-action-btn-w: 72px;" data-resize-key="teacher_tasks">
           <thead>
             <tr>
               <th style="width: 44px;">
@@ -121,7 +129,7 @@
 
       <div class="drawer-body">
         <h4 class="section-title">课程审核</h4>
-        <div class="table-search-bar" style="margin-top: 0;">
+        <div class="table-search-bar review-toolbar" style="margin-top: 0;">
           <div class="table-search-left">
             <SearchCapsule
               v-model="courseKeyword"
@@ -138,23 +146,31 @@
               <el-option label="重修" value="RETAKE" />
               <el-option label="再修" value="RELEARN" />
             </el-select>
+            <el-select v-model="courseStatusFilter" style="width: 132px;" :disabled="loadingDetail || isDeciding">
+              <el-option label="全部状态" value="ALL" />
+              <el-option label="待审核" value="PENDING" />
+              <el-option label="已通过" value="APPROVED" />
+              <el-option label="已驳回" value="REJECTED" />
+              <el-option label="待删除复审" value="DELETE_REQUESTED" />
+              <el-option label="已删除" value="DELETED" />
+            </el-select>
           </div>
-          <div class="table-search-right">
+          <div class="table-search-right review-toolbar-right">
             <span class="muted">已选 {{ courseSelection.selectedCount.value }} 项</span>
             <el-input
+              class="review-batch-reason"
               v-model.trim="courseBatchRejectReason"
-              style="width: 220px;"
               placeholder="批量驳回理由（可空）"
               :disabled="isDeciding || loadingDetail || !canReviewCurrent"
             />
-            <el-button type="default" :disabled="!canBatchCourseReview" @click="batchApproveCourses">批量通过</el-button>
-            <el-button type="danger" :disabled="!canBatchCourseReview" @click="batchRejectCourses">批量驳回</el-button>
+            <el-button class="review-batch-btn" type="default" :disabled="!canBatchCourseReview" @click="batchApproveCourses">批量通过</el-button>
+            <el-button class="review-batch-btn" type="danger" :disabled="!canBatchCourseReview" @click="batchRejectCourses">批量驳回</el-button>
           </div>
         </div>
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_drawer_courses">
+            <table class="table table-sticky table-fixed-right" style="--sticky-action-w: 141px; --sticky-status-w: 102px; --fixed-action-btn-w: 66px; --fixed-action-gap: 3px; --fixed-action-padding-x: 3px;" data-resize-key="teacher_drawer_courses">
               <thead>
                 <tr>
                   <th style="width: 44px;">
@@ -215,7 +231,7 @@
                     </span>
                   </td>
                   <td class="col-action">
-                    <div class="action-row inline-actions">
+                    <div class="action-row inline-actions review-row-actions">
                       <template v-if="isDeleteRequested(course)">
                         <el-button type="primary" @click="decide('COURSE', course.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</el-button>
                         <el-button type="danger" @click="decide('COURSE', course.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
@@ -247,7 +263,7 @@
         </div>
 
         <h4 class="section-title">活动审核</h4>
-        <div class="table-search-bar" style="margin-top: 0;">
+        <div class="table-search-bar review-toolbar" style="margin-top: 0;">
           <div class="table-search-left">
             <SearchCapsule
               v-model="activityKeyword"
@@ -265,23 +281,31 @@
               <el-option label="美育" value="ART" />
               <el-option label="劳育" value="LABOR" />
             </el-select>
+            <el-select v-model="activityStatusFilter" style="width: 132px;" :disabled="loadingDetail || isDeciding">
+              <el-option label="全部状态" value="ALL" />
+              <el-option label="待审核" value="PENDING" />
+              <el-option label="已通过" value="APPROVED" />
+              <el-option label="已驳回" value="REJECTED" />
+              <el-option label="待删除复审" value="DELETE_REQUESTED" />
+              <el-option label="已删除" value="DELETED" />
+            </el-select>
           </div>
-          <div class="table-search-right">
+          <div class="table-search-right review-toolbar-right">
             <span class="muted">已选 {{ activitySelection.selectedCount.value }} 项</span>
             <el-input
+              class="review-batch-reason"
               v-model.trim="activityBatchRejectReason"
-              style="width: 220px;"
               placeholder="批量驳回理由（可空）"
               :disabled="isDeciding || loadingDetail || !canReviewCurrent"
             />
-            <el-button type="default" :disabled="!canBatchActivityReview" @click="batchApproveActivities">批量通过</el-button>
-            <el-button type="danger" :disabled="!canBatchActivityReview" @click="batchRejectActivities">批量驳回</el-button>
+            <el-button class="review-batch-btn" type="default" :disabled="!canBatchActivityReview" @click="batchApproveActivities">批量通过</el-button>
+            <el-button class="review-batch-btn" type="danger" :disabled="!canBatchActivityReview" @click="batchRejectActivities">批量驳回</el-button>
           </div>
         </div>
 
         <div class="table-shell">
           <div class="table-scroll-drawer">
-            <table class="table table-sticky activity-table table-fixed-right" style="--sticky-action-w: 172px; --sticky-status-w: 106px;" data-resize-key="teacher_drawer_activities">
+            <table class="table table-sticky activity-table table-fixed-right" style="--sticky-action-w: 141px; --sticky-status-w: 102px; --fixed-action-btn-w: 66px; --fixed-action-gap: 3px; --fixed-action-padding-x: 3px;" data-resize-key="teacher_drawer_activities">
               <thead>
                 <tr>
                   <th style="width: 44px;">
@@ -342,7 +366,7 @@
                     </span>
                   </td>
                   <td class="col-action">
-                    <div class="action-row inline-actions">
+                    <div class="action-row inline-actions review-row-actions">
                       <template v-if="isDeleteRequested(activity)">
                         <el-button type="primary" @click="decide('ACTIVITY', activity.id, 'APPROVE_DELETE')" :disabled="isDeciding || !canReviewCurrent">同意</el-button>
                         <el-button type="danger" @click="decide('ACTIVITY', activity.id, 'REJECT_DELETE')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
@@ -406,10 +430,13 @@ const drafts = reactive({})
 const evidenceMetaCache = reactive({})
 
 const taskKeyword = ref('')
+const taskStatusFilter = ref('ALL')
 const courseKeyword = ref('')
 const courseTypeFilter = ref('ALL')
+const courseStatusFilter = ref('ALL')
 const activityKeyword = ref('')
 const activityModuleFilter = ref('ALL')
+const activityStatusFilter = ref('ALL')
 const courseBatchRejectReason = ref('')
 const activityBatchRejectReason = ref('')
 
@@ -419,9 +446,10 @@ const activityKey = (id) => `ACTIVITY_${id}`
 const filteredTasks = computed(() => {
   const kw = String(taskKeyword.value || '').trim().toLowerCase()
   return tasks.value.filter((task) => {
-    if (!kw) return true
     const source = `${task.account_no || task.accountNo || ''} ${task.real_name || ''} ${task.class_name || ''}`.toLowerCase()
-    return source.includes(kw)
+    const matchKeyword = !kw || source.includes(kw)
+    const matchStatus = taskStatusFilter.value === 'ALL' || taskProgressCode(task) === taskStatusFilter.value
+    return matchKeyword && matchStatus
   })
 })
 
@@ -434,7 +462,8 @@ const filteredCourses = computed(() => {
   return list.filter((item) => {
     const matchKeyword = !kw || String(item.courseName || '').toLowerCase().includes(kw)
     const matchType = courseTypeFilter.value === 'ALL' || String(item.courseType || '').toUpperCase() === courseTypeFilter.value
-    return matchKeyword && matchType
+    const matchStatus = courseStatusFilter.value === 'ALL' || reviewItemStatusCode(item) === courseStatusFilter.value
+    return matchKeyword && matchType && matchStatus
   })
 })
 
@@ -446,7 +475,8 @@ const filteredActivities = computed(() => {
   return list.filter((item) => {
     const matchKeyword = !kw || String(item.title || '').toLowerCase().includes(kw)
     const matchModule = activityModuleFilter.value === 'ALL' || String(item.moduleType || '').toUpperCase() === activityModuleFilter.value
-    return matchKeyword && matchModule
+    const matchStatus = activityStatusFilter.value === 'ALL' || reviewItemStatusCode(item) === activityStatusFilter.value
+    return matchKeyword && matchModule && matchStatus
   })
 })
 
@@ -521,12 +551,21 @@ const isDeleteRequested = (item) => normalizeDeleteState(item?.deleteState || it
 const isDeleted = (item) => normalizeDeleteState(item?.deleteState || item?.delete_state) === 'DELETED'
 const isPendingReviewable = (item) => isPendingStatus(item?.reviewStatus) && !isDeleteRequested(item) && !isDeleted(item)
 
-const reviewItemStatus = (item) => {
-  if (isDeleteRequested(item)) return '待删除复审'
-  if (isDeleted(item)) return '已删除'
+const reviewItemStatusCode = (item) => {
+  if (isDeleteRequested(item)) return 'DELETE_REQUESTED'
+  if (isDeleted(item)) return 'DELETED'
   const reviewStatus = String(item?.reviewStatus || '').trim().toUpperCase()
-  if (reviewStatus === 'APPROVED') return '已通过'
-  if (reviewStatus === 'REJECTED') return '已驳回'
+  if (reviewStatus === 'APPROVED') return 'APPROVED'
+  if (reviewStatus === 'REJECTED') return 'REJECTED'
+  return 'PENDING'
+}
+
+const reviewItemStatus = (item) => {
+  const code = reviewItemStatusCode(item)
+  if (code === 'DELETE_REQUESTED') return '待删除复审'
+  if (code === 'DELETED') return '已删除'
+  if (code === 'APPROVED') return '已通过'
+  if (code === 'REJECTED') return '已驳回'
   return '待审核'
 }
 
@@ -566,21 +605,29 @@ const pickTaskPhase = (task) => {
 
 const isSubmittedToAdminTask = (task) => String(task?.status || '').trim().toUpperCase() === 'COUNSELOR_REVIEWED'
 
-const taskProgressLabel = (task) => {
-  if (isSubmittedToAdminTask(task)) return '已提交'
+const taskProgressCode = (task) => {
+  if (isSubmittedToAdminTask(task)) return 'SUBMITTED'
   const phase = pickTaskPhase(task)
-  if (phase === 'READY_TO_SUBMIT') return '待提交'
-  if (phase === 'REVIEWED') return '待复审'
-  if (phase === 'IN_PROGRESS') return '正在审核'
+  if (phase === 'READY_TO_SUBMIT') return 'READY_TO_SUBMIT'
+  if (phase === 'REVIEWED') return 'REVIEWED'
+  if (phase === 'IN_PROGRESS') return 'IN_PROGRESS'
+  return 'UNREVIEWED'
+}
+
+const taskProgressLabel = (task) => {
+  const code = taskProgressCode(task)
+  if (code === 'SUBMITTED') return '已提交'
+  if (code === 'READY_TO_SUBMIT') return '待提交'
+  if (code === 'REVIEWED') return '待复审'
+  if (code === 'IN_PROGRESS') return '正在审核'
   return '未审核'
 }
 
 const taskProgressBadge = (task) => {
-  if (isSubmittedToAdminTask(task)) return 'success'
-  const phase = pickTaskPhase(task)
-  if (phase === 'READY_TO_SUBMIT') return 'success'
-  if (phase === 'REVIEWED') return 'warning'
-  if (phase === 'IN_PROGRESS') return ''
+  const code = taskProgressCode(task)
+  if (code === 'SUBMITTED' || code === 'READY_TO_SUBMIT') return 'success'
+  if (code === 'REVIEWED') return 'warning'
+  if (code === 'IN_PROGRESS') return ''
   return 'danger'
 }
 
@@ -655,8 +702,10 @@ const loadTasks = async ({ keepPage = false } = {}) => {
 const resetDrawerFilters = () => {
   courseKeyword.value = ''
   courseTypeFilter.value = 'ALL'
+  courseStatusFilter.value = 'ALL'
   activityKeyword.value = ''
   activityModuleFilter.value = 'ALL'
+  activityStatusFilter.value = 'ALL'
   courseBatchRejectReason.value = ''
   activityBatchRejectReason.value = ''
   coursePager.resetPage()
@@ -993,6 +1042,7 @@ const onActivitySearch = () => {
 
 const resetTaskFilter = () => {
   taskKeyword.value = ''
+  taskStatusFilter.value = 'ALL'
   taskSelection.clear()
   taskPager.resetPage()
 }
@@ -1000,6 +1050,7 @@ const resetTaskFilter = () => {
 const resetCourseFilter = () => {
   courseKeyword.value = ''
   courseTypeFilter.value = 'ALL'
+  courseStatusFilter.value = 'ALL'
   courseSelection.clear()
   coursePager.resetPage()
 }
@@ -1007,16 +1058,22 @@ const resetCourseFilter = () => {
 const resetActivityFilter = () => {
   activityKeyword.value = ''
   activityModuleFilter.value = 'ALL'
+  activityStatusFilter.value = 'ALL'
   activitySelection.clear()
   activityPager.resetPage()
 }
 
-watch([courseKeyword, courseTypeFilter], () => {
+watch(taskStatusFilter, () => {
+  taskSelection.clear()
+  taskPager.resetPage()
+})
+
+watch([courseKeyword, courseTypeFilter, courseStatusFilter], () => {
   courseSelection.clear()
   coursePager.resetPage()
 })
 
-watch([activityKeyword, activityModuleFilter], () => {
+watch([activityKeyword, activityModuleFilter, activityStatusFilter], () => {
   activitySelection.clear()
   activityPager.resetPage()
 })
@@ -1061,6 +1118,50 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   flex-wrap: nowrap;
+}
+
+.review-toolbar {
+  gap: 6px;
+}
+
+.review-toolbar .table-search-left,
+.review-toolbar .table-search-right {
+  gap: 6px;
+}
+
+.review-toolbar-right :deep(.review-batch-reason.el-input) {
+  width: 178px;
+}
+
+.review-toolbar-right :deep(.review-batch-reason .el-input__wrapper) {
+  min-height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.review-toolbar-right :deep(.review-batch-btn.el-button) {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.drawer-review :deep(.table-fixed-right td.col-action .review-row-actions) {
+  gap: 2px;
+}
+
+.drawer-review :deep(.table-fixed-right td.col-action .review-row-actions .el-button) {
+  height: 24px;
+  min-height: 24px;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .activity-table .col-module,
