@@ -1,0 +1,22 @@
+# OS / editor
+Thumbs.db
+.DS_Store
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+
+# Root-level test output
+test-results/
+
+# Backend build output
+backend/target/
+
+# Runtime / debug logs
+backend/*.log
+frontend/*.log
+
+# Legacy stray uploads outside backend runtime dir
+uploads/
