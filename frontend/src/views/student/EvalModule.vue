@@ -49,6 +49,7 @@
           <el-option label="待审核" value="PENDING" />
           <el-option label="通过" value="APPROVED" />
           <el-option label="驳回" value="REJECTED" />
+          <el-option label="待提交删除" value="DELETE_PENDING_SUBMIT" />
           <el-option label="待删除复审" value="DELETE_REQUESTED" />
           <el-option label="已删除" value="DELETED" />
         </el-select>
@@ -144,7 +145,7 @@
                   @click="removeItem(a)"
                   :disabled="loading || !canDeleteActivityRow(a)"
                 >
-                  删除
+                  {{ deleteActionLabel(a) }}
                 </el-button>
               </td>
             </tr>
@@ -226,7 +227,8 @@ const canEditActivityRow = (row) => {
 
 const canRequestDeleteActivityRow = (row) => {
   if (!isRejectedOnlyEditable.value) return false
-  return activityStateCode(row) === 'REJECTED'
+  const stateCode = activityStateCode(row)
+  return stateCode === 'REJECTED' || stateCode === 'DELETE_PENDING_SUBMIT'
 }
 
 const canDeleteActivityRow = (row) => {
@@ -236,6 +238,7 @@ const canDeleteActivityRow = (row) => {
 
 const activityStateCode = (row) => {
   const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState === 'DELETE_PENDING_SUBMIT') return 'DELETE_PENDING_SUBMIT'
   if (deleteState === 'DELETE_REQUESTED') return 'DELETE_REQUESTED'
   if (deleteState === 'DELETED') return 'DELETED'
   const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
@@ -278,6 +281,7 @@ const statusLabel = (raw) => {
 
 const activityReviewResult = (a) => {
   const stateCode = activityStateCode(a)
+  if (stateCode === 'DELETE_PENDING_SUBMIT') return '待提交删除'
   if (stateCode === 'DELETE_REQUESTED') return '待删除复审'
   if (stateCode === 'DELETED') return '已删除'
   if (!reviewReady.value) return '-'
@@ -289,10 +293,15 @@ const activityReviewResult = (a) => {
 const reviewResultBadge = (label) => {
   if (label === '通过') return 'success'
   if (label === '驳回') return 'danger'
+  if (label === '待提交删除') return 'warning'
   if (label === '待删除复审') return 'warning'
   if (label === '已删除') return 'secondary'
   return ''
 }
+
+const isDeletePendingSubmitActivity = (row) => activityStateCode(row) === 'DELETE_PENDING_SUBMIT'
+
+const deleteActionLabel = (row) => isDeletePendingSubmitActivity(row) ? '撤回删除' : '删除'
 
 const isAutoReason = (text) => {
   const value = String(text || '').trim().toUpperCase()
@@ -328,7 +337,7 @@ const mapActivity = (a) => ({
   selfScore: Number(a?.selfScore ?? 0),
   reviewStatus: a?.reviewStatus || 'PENDING',
   deleteState: a?.deleteState || a?.delete_state || 'NONE',
-  deleteRequested: false,
+  deleteRequested: String(a?.deleteState || a?.delete_state || 'NONE').trim().toUpperCase() === 'DELETE_PENDING_SUBMIT',
   reviewerComment: a?.reviewerComment || '',
   evidenceFileIds: a?.evidenceFileIds || '',
   _rowKey: a?.id ? `act_${a.id}` : `tmp_${props.moduleType}_${Date.now()}_${Math.random()}`
@@ -491,13 +500,14 @@ const removeItem = async (item) => {
     return
   }
   if (!canRequestDeleteActivityRow(item)) {
-    alert('仅被驳回条目可发起删除复审')
+    alert('仅被驳回条目可标记删除')
     return
   }
-  if (!confirm('确认发起该活动的删除复审吗？')) return
+  const nextRequested = !Boolean(item.deleteRequested)
+  if (!confirm(nextRequested ? '确认标记该活动为待提交删除吗？' : '确认撤回该活动的待提交删除吗？')) return
 
   const prevRequested = Boolean(item.deleteRequested)
-  item.deleteRequested = true
+  item.deleteRequested = nextRequested
   loading.value = true
   try {
     const payload = buildActivityPayload({ silent: false })
@@ -505,7 +515,7 @@ const removeItem = async (item) => {
     await store.saveActivitiesModule(props.moduleType, payload.items, { syncAfterSave: true })
     syncRowsFromStore()
     autoSave.resetState()
-    alert('已提交删除复审')
+    alert(nextRequested ? '已标记为待提交删除' : '已撤回待提交删除')
   } catch (e) {
     item.deleteRequested = prevRequested
     throw e

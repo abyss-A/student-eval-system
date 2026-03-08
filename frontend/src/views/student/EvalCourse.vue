@@ -53,6 +53,7 @@
           <el-option label="待审核" value="PENDING" />
           <el-option label="通过" value="APPROVED" />
           <el-option label="驳回" value="REJECTED" />
+          <el-option label="待提交删除" value="DELETE_PENDING_SUBMIT" />
           <el-option label="待删除复审" value="DELETE_REQUESTED" />
           <el-option label="已删除" value="DELETED" />
         </el-select>
@@ -162,7 +163,7 @@
                   @click="removeCourse(c)"
                   :disabled="loading || !canDeleteCourseRow(c)"
                 >
-                  删除
+                  {{ deleteActionLabel(c) }}
                 </el-button>
               </td>
             </tr>
@@ -237,7 +238,8 @@ const canEditCourseRow = (row) => {
 
 const canRequestDeleteCourseRow = (row) => {
   if (!isRejectedOnlyEditable.value) return false
-  return courseStateCode(row) === 'REJECTED'
+  const stateCode = courseStateCode(row)
+  return stateCode === 'REJECTED' || stateCode === 'DELETE_PENDING_SUBMIT'
 }
 
 const canDeleteCourseRow = (row) => {
@@ -247,6 +249,7 @@ const canDeleteCourseRow = (row) => {
 
 const courseStateCode = (row) => {
   const deleteState = String(row?.deleteState || '').trim().toUpperCase()
+  if (deleteState === 'DELETE_PENDING_SUBMIT') return 'DELETE_PENDING_SUBMIT'
   if (deleteState === 'DELETE_REQUESTED') return 'DELETE_REQUESTED'
   if (deleteState === 'DELETED') return 'DELETED'
   const reviewStatus = String(row?.reviewStatus || '').trim().toUpperCase()
@@ -270,6 +273,7 @@ const statusLabel = (raw) => {
 
 const courseReviewResult = (c) => {
   const stateCode = courseStateCode(c)
+  if (stateCode === 'DELETE_PENDING_SUBMIT') return '待提交删除'
   if (stateCode === 'DELETE_REQUESTED') return '待删除复审'
   if (stateCode === 'DELETED') return '已删除'
   if (!reviewReady.value) return '-'
@@ -281,10 +285,15 @@ const courseReviewResult = (c) => {
 const reviewResultBadge = (label) => {
   if (label === '通过') return 'success'
   if (label === '驳回') return 'danger'
+  if (label === '待提交删除') return 'warning'
   if (label === '待删除复审') return 'warning'
   if (label === '已删除') return 'secondary'
   return ''
 }
+
+const isDeletePendingSubmitCourse = (row) => courseStateCode(row) === 'DELETE_PENDING_SUBMIT'
+
+const deleteActionLabel = (row) => isDeletePendingSubmitCourse(row) ? '撤回删除' : '删除'
 
 const isAutoReason = (text) => {
   const value = String(text || '').trim().toUpperCase()
@@ -320,7 +329,7 @@ const mapCourse = (c) => ({
   evidenceFileId: c?.evidenceFileId ?? null,
   reviewStatus: c?.reviewStatus || 'PENDING',
   deleteState: c?.deleteState || c?.delete_state || 'NONE',
-  deleteRequested: false,
+  deleteRequested: String(c?.deleteState || c?.delete_state || 'NONE').trim().toUpperCase() === 'DELETE_PENDING_SUBMIT',
   reviewerComment: c?.reviewerComment || '',
   _rowKey: c?.id ? `course_${c.id}` : `course_tmp_${Date.now()}_${Math.random()}`
 })
@@ -505,13 +514,14 @@ const removeCourse = async (course) => {
     return
   }
   if (!canRequestDeleteCourseRow(course)) {
-    alert('仅被驳回条目可发起删除复审')
+    alert('仅被驳回条目可标记删除')
     return
   }
-  if (!confirm('确认发起该课程的删除复审吗？')) return
+  const nextRequested = !Boolean(course.deleteRequested)
+  if (!confirm(nextRequested ? '确认标记该课程为待提交删除吗？' : '确认撤回该课程的待提交删除吗？')) return
 
   const prevRequested = Boolean(course.deleteRequested)
-  course.deleteRequested = true
+  course.deleteRequested = nextRequested
   loading.value = true
   try {
     const payload = buildCoursePayload({ silent: false })
@@ -519,7 +529,7 @@ const removeCourse = async (course) => {
     await store.saveCourses(payload.items, { syncAfterSave: true })
     syncCoursesFromStore()
     autoSave.resetState()
-    alert('已提交删除复审')
+    alert(nextRequested ? '已标记为待提交删除' : '已撤回待提交删除')
   } catch (e) {
     course.deleteRequested = prevRequested
     throw e

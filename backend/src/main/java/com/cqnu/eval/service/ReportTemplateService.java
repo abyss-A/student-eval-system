@@ -16,8 +16,11 @@ import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTInd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHeight;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTFonts;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTrPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STHeightRule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -154,12 +158,36 @@ public class ReportTemplateService {
         setCellText(table, 0, 3, normalizeGender(student == null ? null : student.getGender()), fillFontSize);
         setCellText(table, 0, 5, str(student == null ? null : student.getAccountNo()), fillFontSize);
         setCellText(table, 1, 1, "\u672c\u79d1", fillFontSize);
-        setCellText(table, 1, 3, str(student == null ? null : student.getClassName()), fillFontSize);
+        allowAutoRowHeight(table, 1);
+        setCellText(table, 1, 3, str(student == null ? null : student.getClassName()), resolveBaseInfoFontSize(student == null ? null : student.getClassName(), fillFontSize));
 
         String phone = str(student == null ? null : student.getPhone()).trim();
         setCellText(table, 1, 5, phone.isEmpty() ? "-" : phone, fillFontSize);
 
         // 闂佸搫鎳樼紓姘跺磻濞戞﹩鍤楁俊銈傚亾闁搞劌閰ｅ畷锝夘敂閸愵亞顔旈梺浼欑稻閻熝囨偟椤愶箑绠抽柟鐑樻尵閸ㄨ偐绱掑☉娆愬珪缂佽鲸绻冪粙澶婎吋閸涱喛鍚┑顔界缚閸婃洟藝閳哄懏鈷旈柛鏇ㄥ亜椤綁鏌涢幒鎴烆棡闁哄棛鍠栨俊?        setCellText(table, 2, 0, "\u667a\n\u80b2\n\u5f97\n\u5206", fillFontSize);
+    }
+
+    private int resolveBaseInfoFontSize(String value, int fillFontSize) {
+        int base = fillFontSize > 0 ? fillFontSize : 10;
+        int len = safeLen(value);
+        if (len >= 26) {
+            return Math.max(7, base - 2);
+        }
+        if (len >= 18) {
+            return Math.max(8, base - 1);
+        }
+        return base;
+    }
+
+    private void allowAutoRowHeight(XWPFTable table, int rowIndex) {
+        XWPFTableRow row = table.getRow(rowIndex);
+        if (row == null) {
+            return;
+        }
+        CTTrPr trPr = row.getCtRow().isSetTrPr() ? row.getCtRow().getTrPr() : row.getCtRow().addNewTrPr();
+        CTHeight height = trPr.sizeOfTrHeightArray() > 0 ? trPr.getTrHeightArray(0) : trPr.addNewTrHeight();
+        height.setVal(BigInteger.ZERO);
+        height.setHRule(STHeightRule.AUTO);
     }
 
     private void fillCourseSummary(XWPFTable table, List<CourseItemEntity> courses, int fillFontSize) {

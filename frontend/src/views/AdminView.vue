@@ -157,11 +157,11 @@
                 <tr>
                   <th class="nowrap">模块</th>
                   <th class="nowrap">标题</th>
-                  <th class="nowrap">自评分</th>
+                  <th class="nowrap">原始分</th>
+                  <th class="nowrap">证明材料</th>
                   <th class="nowrap">审核状态</th>
                   <th class="nowrap">审核分</th>
                   <th>审核理由</th>
-                  <th class="nowrap">证明图片</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,14 +174,6 @@
                     />
                   </td>
                   <td class="nowrap">{{ activity.selfScore }}</td>
-                  <td class="nowrap"><span class="badge">{{ reviewStatusLabel(activity.reviewStatus) }}</span></td>
-                  <td class="nowrap">{{ activity.finalScore ?? '-' }}</td>
-                  <td>
-                    <TableOverflowCell
-                      :text="activity.reviewerComment || '-'"
-                      :cell-key="`admin_drawer_activity_comment_${activity.id}`"
-                    />
-                  </td>
                   <td>
                     <div v-if="activity._evidenceMetas && activity._evidenceMetas.length" class="chip-list">
                       <span v-for="m in activity._evidenceMetas" :key="m.id" class="chip">
@@ -196,6 +188,14 @@
                       </span>
                     </div>
                     <span v-else class="muted" style="font-size: 12px;">未上传</span>
+                  </td>
+                  <td class="nowrap"><span class="badge">{{ reviewStatusLabel(activity.reviewStatus) }}</span></td>
+                  <td class="nowrap">{{ activity.finalScore ?? '-' }}</td>
+                  <td>
+                    <TableOverflowCell
+                      :text="activity.reviewerComment || '-'"
+                      :cell-key="`admin_drawer_activity_comment_${activity.id}`"
+                    />
                   </td>
                 </tr>
                 <tr v-if="!(current.activities || []).length">

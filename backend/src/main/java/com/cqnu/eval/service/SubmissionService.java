@@ -44,6 +44,7 @@ public class SubmissionService {
     private static final String UNIVERSITY_PE_TITLE = "\u5927\u5b66\u4f53\u80b2";
     private static final BigDecimal MAX_INPUT_SCORE = new BigDecimal("100");
     private static final String DELETE_NONE = "NONE";
+    private static final String DELETE_PENDING_SUBMIT = "DELETE_PENDING_SUBMIT";
     private static final String DELETE_REQUESTED = "DELETE_REQUESTED";
     private static final String DELETE_DELETED = "DELETED";
 
@@ -418,17 +419,26 @@ public class SubmissionService {
             String deleteState = normalizeDeleteState(current.getDeleteState());
 
             if (requestDelete) {
-                if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                if (!"REJECTED".equals(reviewStatus)
+                        || !(DELETE_NONE.equals(deleteState) || DELETE_PENDING_SUBMIT.equals(deleteState))) {
                     throw new BizException(40001, "Only rejected items can request delete review");
                 }
                 if (changed) {
                     throw new BizException(40001, "Cannot edit content while requesting deletion");
                 }
-                int marked = courseItemMapper.requestDeleteIfRejected(current.getId());
+                int marked = courseItemMapper.markDeletePendingSubmitIfRejected(current.getId());
                 if (marked == 0) {
                     throw new BizException(40901, "Status changed, please refresh and retry");
                 }
                 continue;
+            }
+
+            if (DELETE_PENDING_SUBMIT.equals(deleteState)) {
+                int cleared = courseItemMapper.clearDeletePendingSubmit(current.getId());
+                if (cleared == 0) {
+                    throw new BizException(40901, "Status changed, please refresh and retry");
+                }
+                deleteState = DELETE_NONE;
             }
 
             if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
@@ -501,17 +511,26 @@ public class SubmissionService {
             String deleteState = normalizeDeleteState(current.getDeleteState());
 
             if (requestDelete) {
-                if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
+                if (!"REJECTED".equals(reviewStatus)
+                        || !(DELETE_NONE.equals(deleteState) || DELETE_PENDING_SUBMIT.equals(deleteState))) {
                     throw new BizException(40001, "Only rejected items can request delete review");
                 }
                 if (changed) {
                     throw new BizException(40001, "Cannot edit content while requesting deletion");
                 }
-                int marked = activityItemMapper.requestDeleteIfRejected(current.getId());
+                int marked = activityItemMapper.markDeletePendingSubmitIfRejected(current.getId());
                 if (marked == 0) {
                     throw new BizException(40901, "Status changed, please refresh and retry");
                 }
                 continue;
+            }
+
+            if (DELETE_PENDING_SUBMIT.equals(deleteState)) {
+                int cleared = activityItemMapper.clearDeletePendingSubmit(current.getId());
+                if (cleared == 0) {
+                    throw new BizException(40901, "Status changed, please refresh and retry");
+                }
+                deleteState = DELETE_NONE;
             }
 
             if (!"REJECTED".equals(reviewStatus) || !DELETE_NONE.equals(deleteState)) {
@@ -601,6 +620,8 @@ public class SubmissionService {
             throw new BizException(40003, "Still under review, cannot resubmit now");
         }
 
+        courseItemMapper.promoteDeletePendingSubmitBySubmissionId(submissionId);
+        activityItemMapper.promoteDeletePendingSubmitBySubmissionId(submissionId);
         courseItemMapper.reopenRejectedBySubmissionId(submissionId);
         activityItemMapper.reopenRejectedBySubmissionId(submissionId);
 
@@ -706,7 +727,15 @@ public class SubmissionService {
     }
 
     public List<Map<String, Object>> listCounselorReviewedTasks() {
-        return submissionMapper.listCounselorReviewedTasks();
+        List<Map<String, Object>> tasks = submissionMapper.listCounselorReviewedTasks();
+        for (Map<String, Object> task : tasks) {
+            Long submissionId = toLong(task.get("id"));
+            if (submissionId == null) {
+                continue;
+            }
+            task.put("total_score", calculateScore(submissionId, true).getTotalScore());
+        }
+        return tasks;
     }
 
     public ReviewStats getReviewStats(Long submissionId) {
@@ -867,6 +896,20 @@ public class SubmissionService {
 
     private String trim(String raw) {
         return raw == null ? "" : raw.trim();
+    }
+
+    private Long toLong(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof Number) {
+            return ((Number) raw).longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(raw).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public static class ReviewStats {

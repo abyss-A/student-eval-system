@@ -49,6 +49,14 @@ public interface ActivityItemMapper {
             "where id=#{id} and review_status='REJECTED' and coalesce(delete_state,'NONE')='NONE'")
     int requestDeleteIfRejected(@Param("id") Long id);
 
+    @Update("update activity_item set delete_state='DELETE_PENDING_SUBMIT', updated_at=now() " +
+            "where id=#{id} and review_status='REJECTED' and coalesce(delete_state,'NONE') in ('NONE','DELETE_PENDING_SUBMIT')")
+    int markDeletePendingSubmitIfRejected(@Param("id") Long id);
+
+    @Update("update activity_item set delete_state='NONE', updated_at=now() " +
+            "where id=#{id} and review_status='REJECTED' and delete_state='DELETE_PENDING_SUBMIT'")
+    int clearDeletePendingSubmit(@Param("id") Long id);
+
     @Update("update activity_item set delete_state='DELETED', updated_at=now() " +
             "where id=#{id} and review_status='REJECTED' and delete_state='DELETE_REQUESTED'")
     int approveDeleteIfRequested(@Param("id") Long id);
@@ -60,6 +68,10 @@ public interface ActivityItemMapper {
     @Update("update activity_item set delete_state='NONE', review_status='REJECTED', updated_at=now() " +
             "where id=#{id} and delete_state='DELETED'")
     int undoDeletedToRejected(@Param("id") Long id);
+
+    @Update("update activity_item set delete_state='DELETE_REQUESTED', updated_at=now() " +
+            "where submission_id=#{submissionId} and review_status='REJECTED' and delete_state='DELETE_PENDING_SUBMIT'")
+    int promoteDeletePendingSubmitBySubmissionId(@Param("submissionId") Long submissionId);
 
     @Select("select count(1) from activity_item where submission_id = #{submissionId}")
     int countBySubmissionId(@Param("submissionId") Long submissionId);

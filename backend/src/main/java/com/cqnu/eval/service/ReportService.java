@@ -12,9 +12,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class ReportService {
+
+    private static final Set<String> EXPORTABLE_STATUSES = Set.of("COUNSELOR_REVIEWED", "FINALIZED", "PUBLISHED");
 
     private final SubmissionMapper submissionMapper;
     private final SubmissionService submissionService;
@@ -40,11 +43,12 @@ public class ReportService {
             throw new BizException(40301, "No permission to access this submission");
         }
 
-        boolean canExport = !"DRAFT".equalsIgnoreCase(submission.getStatus());
+        String status = normalizeStatus(submission.getStatus());
+        boolean canExport = EXPORTABLE_STATUSES.contains(status);
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("canExport", canExport);
         map.put("allowedFormats", List.of("DOCX"));
-        map.put("scoreVersion", "SUBMITTED".equalsIgnoreCase(submission.getStatus()) ? "SUBMIT_VERSION" : "EFFECTIVE_VERSION");
+        map.put("scoreVersion", canExport ? "EFFECTIVE_VERSION" : "SUBMIT_VERSION");
         map.put("layoutPolicy", "WORD_TEMPLATE_ONLY");
         map.put("templateVersion", templateVersion);
         return map;
@@ -58,8 +62,9 @@ public class ReportService {
         if (submissionMapper.checkOwner(submissionId, user.getId()) == 0) {
             throw new BizException(40301, "No permission to access this submission");
         }
-        if ("DRAFT".equalsIgnoreCase(submission.getStatus())) {
-            throw new BizException(40003, "Draft submission cannot export. Please submit first.");
+        String status = normalizeStatus(submission.getStatus());
+        if (!EXPORTABLE_STATUSES.contains(status)) {
+            throw new BizException(40003, "Word export is available after counselor submission to admin only.");
         }
 
         String normalized = format == null ? "" : format.trim().toUpperCase(Locale.ROOT);
@@ -104,6 +109,10 @@ public class ReportService {
             return "";
         }
         return text.replaceAll("[\\\\/:*?\"<>|\\s]+", "_");
+    }
+
+    private String normalizeStatus(String raw) {
+        return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
     }
 }
 

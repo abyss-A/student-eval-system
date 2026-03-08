@@ -12,9 +12,10 @@
 
     <div class="toolbar-row" style="margin-top: 12px;">
       <el-button type="primary" @click="submitForm" :loading="loading" :disabled="!canSubmit">{{ submitButtonLabel }}</el-button>
-      <el-button type="default" @click="exportFile('DOCX')" :loading="loading">导出Word</el-button>
+      <el-button type="default" @click="exportFile('DOCX')" :loading="loading" :disabled="!canExport">导出Word</el-button>
     </div>
     <p v-if="submitDisabledHint" class="muted" style="margin-top: 8px; color: #64748b;">{{ submitDisabledHint }}</p>
+    <p v-if="exportDisabledHint" class="muted" style="margin-top: 6px; color: #64748b;">{{ exportDisabledHint }}</p>
 
     <div class="score-block" style="margin-top: 14px;">
       <h3 style="margin: 0;">预览分数</h3>
@@ -105,6 +106,7 @@ const score = computed(() => store.state.score)
 const statusCode = computed(() => String(status.value || '').trim().toUpperCase())
 const reviewPhase = computed(() => String(score.value?.reviewPhase || '').trim().toUpperCase())
 const canStudentResubmit = computed(() => Boolean(score.value?.canStudentResubmit))
+const canExport = computed(() => ['COUNSELOR_REVIEWED', 'FINALIZED', 'PUBLISHED'].includes(statusCode.value))
 const canSubmit = computed(() => {
   if (statusCode.value === 'DRAFT') return true
   if (statusCode.value === 'SUBMITTED') {
@@ -131,6 +133,10 @@ const submitDisabledHint = computed(() => {
   return ''
 })
 const reviewReady = computed(() => Boolean(score.value?.reviewReady))
+const exportDisabledHint = computed(() => {
+  if (canExport.value) return ''
+  return '辅导员提交管理员后方可导出正式 Word。'
+})
 
 const pickScoreValue = (source, prefixedKey, fallbackKey) => {
   if (!source) return null

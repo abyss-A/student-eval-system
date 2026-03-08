@@ -184,7 +184,7 @@
                   </th>
                   <th class="nowrap">课程</th>
                   <th class="nowrap">类型</th>
-                  <th class="nowrap">分数</th>
+                  <th class="nowrap">原始分</th>
                   <th class="nowrap">证明材料</th>
                   <th>理由</th>
                   <th class="nowrap col-status">状态</th>
@@ -241,7 +241,7 @@
                         <el-button type="primary" @click="decide('COURSE', course.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</el-button>
                         <el-button type="danger" @click="decide('COURSE', course.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <el-button v-else type="default" @click="decide('COURSE', course.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</el-button>
+                      <el-button v-else type="default" @click="decide('COURSE', course.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤回</el-button>
                     </div>
                   </td>
                 </tr>
@@ -319,8 +319,8 @@
                   </th>
                   <th class="nowrap col-module">模块</th>
                   <th class="nowrap col-title">标题</th>
-                  <th class="nowrap col-score">分数</th>
-                  <th class="nowrap col-evidence">证明图片</th>
+                  <th class="nowrap col-score">原始分</th>
+                  <th class="nowrap col-evidence">证明材料</th>
                   <th class="nowrap col-reason">理由</th>
                   <th class="nowrap col-status">状态</th>
                   <th class="nowrap col-action">操作</th>
@@ -376,7 +376,7 @@
                         <el-button type="primary" @click="decide('ACTIVITY', activity.id, 'APPROVE')" :disabled="isDeciding || !canReviewCurrent">通过</el-button>
                         <el-button type="danger" @click="decide('ACTIVITY', activity.id, 'REJECT')" :disabled="isDeciding || !canReviewCurrent">驳回</el-button>
                       </template>
-                      <el-button v-else type="default" @click="decide('ACTIVITY', activity.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤销</el-button>
+                      <el-button v-else type="default" @click="decide('ACTIVITY', activity.id, 'UNDO')" :disabled="isDeciding || !canReviewCurrent">撤回</el-button>
                     </div>
                   </td>
                 </tr>
