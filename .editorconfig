@@ -1,0 +1,18 @@
+﻿root = true
+
+[*]
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+[*.md]
+charset = utf-8-bom
+trim_trailing_whitespace = false
+
+[*.txt]
+charset = utf-8-bom
+trim_trailing_whitespace = false
+
+[*.{java,js,ts,vue,json,yml,yaml,xml,sql,ps1,sh}]
+charset = utf-8
