@@ -6,6 +6,8 @@
       v-if="isOverflow"
       :visible="isOpen"
       :teleported="true"
+      :width="popoverWidthPx || undefined"
+      :popper-style="popoverPopperStyle"
       trigger="click"
       placement="bottom-start"
       :fallback-placements="['top-start', 'bottom-end', 'top-end']"
@@ -25,16 +27,21 @@
         </button>
       </template>
 
-      <div class="table-overflow-cell__popover" @click.stop>
-        <button class="table-overflow-cell__popover-close" type="button" aria-label="关闭" @click.stop="closeOpen">×</button>
-        <div class="table-overflow-cell__popover-text">{{ displayText }}</div>
+      <div ref="popoverRef" class="table-overflow-cell__popover" @click.stop>
+        <button class="table-overflow-cell__popover-close" type="button" aria-label="关闭" @click.stop="closeOpen">&times;</button>
+        <div
+          ref="popoverTextRef"
+          class="table-overflow-cell__popover-text"
+        >
+          {{ displayText }}
+        </div>
       </div>
     </el-popover>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { overflowCellRuntime } from './tableOverflowCellState'
 
 const props = defineProps({
@@ -62,7 +69,11 @@ const onKeyDown = (event) => {
   }
 }
 
-const onAnyScroll = () => {
+const onAnyScroll = (event) => {
+  const target = event?.target
+  if (target && typeof target.closest === 'function' && target.closest('.table-overflow-cell-popper')) {
+    return
+  }
   closeActive()
 }
 
@@ -97,7 +108,14 @@ const isOpen = computed(() => overflowCellRuntime.activeKey.value === resolvedKe
 
 const rootRef = ref(null)
 const textRef = ref(null)
+const popoverRef = ref(null)
+const popoverTextRef = ref(null)
 const isOverflow = ref(false)
+const popoverWidthPx = ref(0)
+
+const TARGET_CHARS_PER_LINE = 20
+const MIN_TEXT_WIDTH_PX = 160
+const MIN_POPOVER_WIDTH_PX = 240
 
 let rafId = 0
 const cancelRaf = () => {
@@ -128,10 +146,72 @@ const measureOverflow = () => {
   })
 }
 
+const updatePopoverLayout = () => {
+  if (typeof window === 'undefined') return
+
+  const popoverElement = popoverRef.value
+  const popoverTextElement = popoverTextRef.value
+  const popperElement =
+    popoverElement?.closest?.('.table-overflow-cell-popper') || document.querySelector('.table-overflow-cell-popper')
+  if (!popoverElement || !popoverTextElement || !popperElement) return
+
+  const viewportWidth = window.innerWidth || 1440
+  const isMobile = viewportWidth <= 768
+  const maxOverallWidth = Math.floor((isMobile ? 0.94 : 0.88) * viewportWidth)
+  const popoverStyle = window.getComputedStyle(popoverElement)
+  const popperStyle = window.getComputedStyle(popperElement)
+  const textStyle = window.getComputedStyle(popoverTextElement)
+  const popoverChrome =
+    Number.parseFloat(popoverStyle.paddingLeft || '0') +
+    Number.parseFloat(popoverStyle.paddingRight || '0')
+  const popperChrome =
+    Number.parseFloat(popperStyle.paddingLeft || '0') +
+    Number.parseFloat(popperStyle.paddingRight || '0') +
+    Number.parseFloat(popperStyle.borderLeftWidth || '0') +
+    Number.parseFloat(popperStyle.borderRightWidth || '0')
+
+  const fontSizePx = Number.parseFloat(textStyle.fontSize || '14') || 14
+  const targetTextWidth = Math.round(fontSizePx * TARGET_CHARS_PER_LINE)
+  const maxTextWidthByViewport = Math.max(MIN_TEXT_WIDTH_PX, maxOverallWidth - popoverChrome - popperChrome)
+  const maxTextWidth = Math.max(MIN_TEXT_WIDTH_PX, Math.min(targetTextWidth, maxTextWidthByViewport))
+
+  const prevWhiteSpace = popoverTextElement.style.whiteSpace
+  const prevOverflowWrap = popoverTextElement.style.overflowWrap
+  const prevWordBreak = popoverTextElement.style.wordBreak
+  popoverTextElement.style.whiteSpace = 'nowrap'
+  popoverTextElement.style.overflowWrap = 'normal'
+  popoverTextElement.style.wordBreak = 'normal'
+  const singleLineWidth = Math.ceil(popoverTextElement.scrollWidth)
+  popoverTextElement.style.whiteSpace = prevWhiteSpace
+  popoverTextElement.style.overflowWrap = prevOverflowWrap
+  popoverTextElement.style.wordBreak = prevWordBreak
+
+  const effectiveTextWidth = Math.min(Math.max(singleLineWidth || 0, MIN_TEXT_WIDTH_PX), maxTextWidth)
+  const totalWidth = effectiveTextWidth + popoverChrome + popperChrome
+  popoverWidthPx.value = Math.min(Math.max(totalWidth, MIN_POPOVER_WIDTH_PX), maxOverallWidth)
+}
+
+const popoverPopperStyle = computed(() => {
+  if (!popoverWidthPx.value) return {}
+  return {
+    width: `${popoverWidthPx.value}px`
+  }
+})
+
 const onPopoverVisibleChange = (visible) => {
   if (visible) {
     if (!isOverflow.value) return
     overflowCellRuntime.activeKey.value = resolvedKey.value
+    if (typeof window !== 'undefined') {
+      const viewportWidth = window.innerWidth || 1440
+      const isMobile = viewportWidth <= 768
+      popoverWidthPx.value = Math.floor(Math.min((isMobile ? 0.94 : 0.88) * viewportWidth, 360))
+    }
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        updatePopoverLayout()
+      })
+    })
     return
   }
   closeOpen()
@@ -147,6 +227,7 @@ onMounted(() => {
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       measureOverflow()
+      if (isOpen.value) updatePopoverLayout()
     })
     if (rootRef.value) resizeObserver.observe(rootRef.value)
     if (textRef.value) resizeObserver.observe(textRef.value)
@@ -155,6 +236,7 @@ onMounted(() => {
 
 watch(() => props.text, () => {
   measureOverflow()
+  if (isOpen.value) updatePopoverLayout()
 })
 
 watch(resolvedKey, (nextKey, prevKey) => {
@@ -245,8 +327,8 @@ onBeforeUnmount(() => {
 }
 
 :deep(.table-overflow-cell-popper) {
-  min-width: min(360px, 56vw) !important;
-  max-width: min(560px, 72vw) !important;
+  min-width: 0 !important;
+  max-width: min(420px, 88vw) !important;
   border-radius: 8px !important;
   border: 1px solid #d8e1ef !important;
   box-shadow: 0 10px 28px rgba(15, 39, 77, 0.18) !important;
@@ -256,7 +338,10 @@ onBeforeUnmount(() => {
 
 .table-overflow-cell__popover {
   position: relative;
-  padding: 12px 42px 12px 12px;
+  display: block;
+  padding: 12px 52px 12px 12px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .table-overflow-cell__popover-close {
@@ -276,10 +361,23 @@ onBeforeUnmount(() => {
 }
 
 .table-overflow-cell__popover-text {
-  white-space: normal;
-  word-break: break-word;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   color: #334155;
-  line-height: 1.6;
+  line-height: 1.55;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .table-overflow-cell__popover-text {
+    max-height: 50vh;
+  }
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -287,13 +385,6 @@ onBeforeUnmount(() => {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  :deep(.table-overflow-cell-popper) {
-    min-width: min(300px, 86vw) !important;
-    max-width: min(420px, 92vw) !important;
   }
 }
 </style>

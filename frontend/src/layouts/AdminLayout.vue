@@ -8,11 +8,14 @@ import BaseLayout from './BaseLayout.vue'
 const menuGroups = [
   {
     title: '测评查看',
-    items: [{ label: '待处理测评单', to: '/admin/finalize/tasks' }]
+    items: [{ label: '测评单查看', to: '/admin/submissions' }]
   },
   {
     title: '权限管理',
-    items: [{ label: '班级权限管理', to: '/admin/counselor/scopes' }]
+    items: [
+      { label: '班级权限管理', to: '/admin/counselor/scopes' },
+      { label: '账号管理', to: '/admin/accounts' }
+    ]
   },
   {
     title: '公告通知',

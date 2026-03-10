@@ -26,4 +26,6 @@ app:
   jwt:
     secret: 5J6h0k2n8Qq3i9wY1eR7tU4pL0mN6xZs
     expire-hours: 12
+  account:
+    default-password: 123456
   upload-dir: ./uploads

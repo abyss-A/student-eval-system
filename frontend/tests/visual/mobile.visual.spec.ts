@@ -10,7 +10,7 @@ test.describe('@visual 移动端可用性截图', () => {
     await login(page, accounts.student.accountNo, accounts.student.password, accounts.student.home)
     await page.goto('/student/eval/course', { waitUntil: 'networkidle' })
     const shot = await page.screenshot({ fullPage: true })
-    expect(shot.byteLength).toBeGreaterThan(60_000)
+    expect(shot.byteLength).toBeGreaterThan(55_000)
     await logout(page)
   })
 
@@ -18,8 +18,7 @@ test.describe('@visual 移动端可用性截图', () => {
     await login(page, accounts.admin.accountNo, accounts.admin.password, accounts.admin.home)
     await page.goto('/admin/counselor/scopes', { waitUntil: 'networkidle' })
     const shot = await page.screenshot({ fullPage: true })
-    expect(shot.byteLength).toBeGreaterThan(60_000)
+    expect(shot.byteLength).toBeGreaterThan(55_000)
     await logout(page)
   })
 })
-

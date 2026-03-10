@@ -1,6 +1,5 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
 import RankingView from '../views/RankingView.vue'
 import StudentLayout from '../layouts/StudentLayout.vue'
 import TeacherLayout from '../layouts/TeacherLayout.vue'
@@ -20,8 +19,9 @@ import FeedbackHandle from '../views/common/FeedbackHandle.vue'
 import AccountProfile from '../views/common/AccountProfile.vue'
 
 import TeacherReviewTasks from '../views/TeacherView.vue'
-import AdminFinalizeTasks from '../views/AdminView.vue'
+import AdminView from '../views/AdminView.vue'
 import CounselorScopeView from '../views/admin/CounselorScopeView.vue'
+import AccountManagementView from '../views/admin/AccountManagementView.vue'
 
 import { canAccessRoute, getHomeByRole, getRole, getToken, isLoggedIn } from '../utils/auth'
 
@@ -37,8 +37,7 @@ const routes = [
   },
   {
     path: '/register',
-    component: RegisterView,
-    meta: { public: true, title: '注册' }
+    redirect: { path: '/login', query: { reason: 'contact-admin' } }
   },
   {
     path: '/student',
@@ -52,7 +51,7 @@ const routes = [
       { path: 'eval/sport', component: EvalModule, props: { moduleType: 'SPORT_ACTIVITY', label: '体育' }, meta: { title: '体育填报' } },
       { path: 'eval/art', component: EvalModule, props: { moduleType: 'ART', label: '美育' }, meta: { title: '美育填报' } },
       { path: 'eval/labor', component: EvalModule, props: { moduleType: 'LABOR', label: '劳育' }, meta: { title: '劳育填报' } },
-      { path: 'eval/submit', component: EvalSubmit, meta: { title: '综合成绩' } },
+      { path: 'eval/submit', component: EvalSubmit, meta: { title: '综合成绩与提交' } },
       { path: 'notices', component: Notices, meta: { title: '公告通知' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/create', component: FeedbackCreate, meta: { title: '我要反馈', unsavedGuard: 'feedbackCreate' } },
@@ -83,9 +82,11 @@ const routes = [
     component: AdminLayout,
     meta: { roles: ['ADMIN'] },
     children: [
-      { path: '', redirect: '/admin/finalize/tasks' },
-      { path: 'finalize/tasks', component: AdminFinalizeTasks, meta: { title: '待处理测评单' } },
+      { path: '', redirect: '/admin/submissions' },
+      { path: 'submissions', component: AdminView, meta: { title: '测评单查看' } },
+      { path: 'finalize/tasks', redirect: '/admin/submissions' },
       { path: 'counselor/scopes', component: CounselorScopeView, meta: { title: '班级权限管理' } },
+      { path: 'accounts', component: AccountManagementView, meta: { title: '账号管理' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },
@@ -108,7 +109,7 @@ const router = createRouter({
 router.beforeEach((to) => {
   const token = getToken()
   const role = getRole()
-  const isPublic = to.matched.some((r) => r.meta?.public)
+  const isPublic = to.matched.some((record) => record.meta?.public)
 
   if (isPublic) {
     if (token) return getHomeByRole(role)
@@ -119,7 +120,7 @@ router.beforeEach((to) => {
     return '/login'
   }
 
-  const requiredRoles = to.matched.flatMap((r) => r.meta?.roles || [])
+  const requiredRoles = to.matched.flatMap((record) => record.meta?.roles || [])
   if (!canAccessRoute(requiredRoles, role)) {
     return getHomeByRole(role)
   }

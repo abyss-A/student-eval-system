@@ -6,6 +6,15 @@
           class="pager-btn pager-icon"
           type="default"
           :disabled="disabled || page <= 1"
+          aria-label="首页"
+          title="首页"
+          @click="emit('change', 1)"
+        >«</el-button>
+
+        <el-button
+          class="pager-btn pager-icon"
+          type="default"
+          :disabled="disabled || page <= 1"
           aria-label="上一页"
           title="上一页"
           @click="emit('change', page - 1)"
@@ -31,6 +40,15 @@
           title="下一页"
           @click="emit('change', page + 1)"
         >›</el-button>
+
+        <el-button
+          class="pager-btn pager-icon"
+          type="default"
+          :disabled="disabled || page >= totalPages"
+          aria-label="末页"
+          title="末页"
+          @click="emit('change', totalPages)"
+        >»</el-button>
       </div>
 
       <div v-if="showQuickJumper" class="table-pager-jumper">

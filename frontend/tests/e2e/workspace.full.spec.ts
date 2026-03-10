@@ -12,8 +12,8 @@ test('工作台折叠、刷新、标签切换正常 @full', async ({ page }) => 
   await page.getByRole('button', { name: '切换侧边栏' }).click()
   await expect(sidebar).not.toHaveClass(/collapsed/)
 
-  await gotoAndReady(page, '/admin/finalize/tasks')
-  await expectWorkspaceTitle(page, '待处理测评单')
+  await gotoAndReady(page, '/admin/submissions')
+  await expectWorkspaceTitle(page, '测评单查看')
   await gotoAndReady(page, '/admin/notices')
   await expectWorkspaceTitle(page, '公告管理')
   await gotoAndReady(page, '/admin/ranking')

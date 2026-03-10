@@ -109,11 +109,7 @@ const loadProfile = async () => {
 
 const savePhone = async () => {
   const phone = String(phoneDraft.value || '').trim()
-  if (!phone) {
-    phoneError.value = '联系电话不能为空'
-    return
-  }
-  if (!phonePattern.test(phone)) {
+  if (phone && !phonePattern.test(phone)) {
     phoneError.value = '联系电话格式不正确'
     return
   }
