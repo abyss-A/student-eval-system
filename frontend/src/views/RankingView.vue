@@ -23,7 +23,6 @@
             :value="s.id"
           />
         </el-select>
-        <el-button type="primary" :loading="loading" @click="load">查询</el-button>
         <SearchCapsule
           v-model="keyword"
           width="180px"

@@ -73,6 +73,7 @@ test('综合排名支持按学期名称下拉切换 @quick', async ({ page }) =>
   const semesterSelect = page.locator('.ranking-semester-select')
   await expect(semesterSelect).toBeVisible()
   await expect(semesterSelect).toContainText('2026年春季学期')
+  await expect(page.getByRole('button', { name: '查询' })).toHaveCount(0)
 
   await expect(page.locator('table')).toContainText('2022000001')
 
@@ -81,4 +82,3 @@ test('综合排名支持按学期名称下拉切换 @quick', async ({ page }) =>
 
   await expect(page.locator('table')).toContainText('2022000002')
 })
-
