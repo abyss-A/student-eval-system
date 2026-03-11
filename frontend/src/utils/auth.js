@@ -1,7 +1,7 @@
 const ROLE_HOME = {
-  STUDENT: '/student/eval/course',
-  COUNSELOR: '/teacher/review/tasks',
-  ADMIN: '/admin/submissions'
+  STUDENT: '/student/home',
+  COUNSELOR: '/teacher/home',
+  ADMIN: '/admin/home'
 }
 
 export function getToken() {

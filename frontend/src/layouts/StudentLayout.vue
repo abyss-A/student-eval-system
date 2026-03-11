@@ -7,6 +7,10 @@ import BaseLayout from './BaseLayout.vue'
 
 const menuGroups = [
   {
+    title: '工作台',
+    items: [{ label: '首页', to: '/student/home' }]
+  },
+  {
     title: '测评填报',
     items: [
       { label: '课程成绩', to: '/student/eval/course' },

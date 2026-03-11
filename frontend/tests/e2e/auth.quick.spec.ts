@@ -78,7 +78,7 @@ test('@quick 登录与路由守卫', async ({ page }) => {
 
   await login(page, accounts.student.accountNo, accounts.student.password, accounts.student.home)
   await assertNoFatalSignals(page)
-  await expectWorkspaceTitle(page, '课程成绩')
+  await expectWorkspaceTitle(page, '工作台')
   await logout(page)
 })
 

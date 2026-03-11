@@ -7,6 +7,10 @@ import BaseLayout from './BaseLayout.vue'
 
 const menuGroups = [
   {
+    title: '工作台',
+    items: [{ label: '首页', to: '/teacher/home' }]
+  },
+  {
     title: '审核管理',
     items: [{ label: '待审核列表', to: '/teacher/review/tasks' }]
   },
@@ -27,4 +31,3 @@ const menuGroups = [
   }
 ]
 </script>
-

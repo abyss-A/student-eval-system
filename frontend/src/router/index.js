@@ -5,6 +5,10 @@ import StudentLayout from '../layouts/StudentLayout.vue'
 import TeacherLayout from '../layouts/TeacherLayout.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
+import StudentHomeView from '../views/student/StudentHomeView.vue'
+import TeacherHomeView from '../views/teacher/TeacherHomeView.vue'
+import AdminHomeView from '../views/admin/AdminHomeView.vue'
+
 import EvalCourse from '../views/student/EvalCourse.vue'
 import EvalModule from '../views/student/EvalModule.vue'
 import EvalSubmit from '../views/student/EvalSubmit.vue'
@@ -45,7 +49,8 @@ const routes = [
     component: StudentLayout,
     meta: { roles: ['STUDENT'] },
     children: [
-      { path: '', redirect: '/student/eval/course' },
+      { path: '', redirect: '/student/home' },
+      { path: 'home', component: StudentHomeView, meta: { title: '工作台' } },
       { path: 'eval/course', component: EvalCourse, meta: { title: '课程成绩' } },
       { path: 'eval/moral', component: EvalModule, props: { moduleType: 'MORAL', label: '德育' }, meta: { title: '德育填报' } },
       { path: 'eval/intel', component: EvalModule, props: { moduleType: 'INTEL_PRO_INNOV', label: '智育' }, meta: { title: '智育填报' } },
@@ -67,7 +72,8 @@ const routes = [
     component: TeacherLayout,
     meta: { roles: ['COUNSELOR'] },
     children: [
-      { path: '', redirect: '/teacher/review/tasks' },
+      { path: '', redirect: '/teacher/home' },
+      { path: 'home', component: TeacherHomeView, meta: { title: '工作台' } },
       { path: 'review/tasks', component: TeacherReviewTasks, meta: { title: '待审核列表' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
@@ -83,7 +89,8 @@ const routes = [
     component: AdminLayout,
     meta: { roles: ['ADMIN'] },
     children: [
-      { path: '', redirect: '/admin/submissions' },
+      { path: '', redirect: '/admin/home' },
+      { path: 'home', component: AdminHomeView, meta: { title: '工作台' } },
       { path: 'submissions', component: AdminView, meta: { title: '测评单查看' } },
       { path: 'finalize/tasks', redirect: '/admin/submissions' },
       { path: 'counselor/scopes', component: CounselorScopeView, meta: { title: '班级权限管理' } },
