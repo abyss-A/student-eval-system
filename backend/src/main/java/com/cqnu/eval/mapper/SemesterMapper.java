@@ -2,6 +2,7 @@ package com.cqnu.eval.mapper;
 
 import com.cqnu.eval.model.entity.SemesterEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
@@ -31,4 +32,10 @@ public interface SemesterMapper {
 
     @Update("update semester set is_active = 1 where id = #{id}")
     int activateById(@Param("id") Long id);
+
+    @Update("update semester set name = #{name} where id = #{id}")
+    int updateName(@Param("id") Long id, @Param("name") String name);
+
+    @Delete("delete from semester where id = #{id}")
+    int deleteById(@Param("id") Long id);
 }

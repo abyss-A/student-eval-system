@@ -4,12 +4,14 @@ import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.mapper.ScoringConfigMapper;
 import com.cqnu.eval.mapper.SemesterMapper;
 import com.cqnu.eval.mapper.SubmissionMapper;
+import com.cqnu.eval.model.dto.AdminScoringConfigUpdateRequest;
 import com.cqnu.eval.model.dto.AdminSemesterCreateRequest;
 import com.cqnu.eval.model.entity.ScoringConfigEntity;
 import com.cqnu.eval.model.entity.SemesterEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -22,13 +24,16 @@ public class SemesterService {
     private final SemesterMapper semesterMapper;
     private final SubmissionMapper submissionMapper;
     private final ScoringConfigMapper scoringConfigMapper;
+    private final SubmissionService submissionService;
 
     public SemesterService(SemesterMapper semesterMapper,
                            SubmissionMapper submissionMapper,
-                           ScoringConfigMapper scoringConfigMapper) {
+                           ScoringConfigMapper scoringConfigMapper,
+                           SubmissionService submissionService) {
         this.semesterMapper = semesterMapper;
         this.submissionMapper = submissionMapper;
         this.scoringConfigMapper = scoringConfigMapper;
+        this.submissionService = submissionService;
     }
 
     public List<SemesterEntity> listAll() {
@@ -37,6 +42,108 @@ public class SemesterService {
 
     public SemesterEntity findActive() {
         return semesterMapper.findActive();
+    }
+
+    public ScoringConfigEntity getScoringConfig(Long semesterId) {
+        SemesterEntity semester = requireSemester(semesterId);
+        ScoringConfigEntity cfg = scoringConfigMapper.findBySemesterId(semester.getId());
+        if (cfg != null) {
+            return cfg;
+        }
+        return defaultScoringConfig(semester.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ScoringConfigEntity upsertScoringConfig(Long semesterId, AdminScoringConfigUpdateRequest request) {
+        SemesterEntity semester = requireSemester(semesterId);
+        if (request == null) {
+            throw new BizException(40001, "参数不能为空");
+        }
+        validateScoringConfig(request);
+
+        ScoringConfigEntity existing = scoringConfigMapper.findBySemesterId(semester.getId());
+        if (existing == null) {
+            scoringConfigMapper.insertDefault(semester.getId());
+            existing = scoringConfigMapper.findBySemesterId(semester.getId());
+            if (existing == null) {
+                existing = defaultScoringConfig(semester.getId());
+            }
+        }
+
+        existing.setwMoral(request.getwMoral());
+        existing.setwIntel(request.getwIntel());
+        existing.setwSport(request.getwSport());
+        existing.setwArt(request.getwArt());
+        existing.setwLabor(request.getwLabor());
+        existing.setCapMoral(request.getCapMoral());
+        existing.setCapIntel(request.getCapIntel());
+        existing.setCapSport(request.getCapSport());
+        existing.setCapArt(request.getCapArt());
+        existing.setCapLabor(request.getCapLabor());
+
+        if (request.getAppealDays() != null) {
+            existing.setAppealDays(request.getAppealDays());
+        }
+        if (request.getPrecedenceMode() != null && !request.getPrecedenceMode().trim().isEmpty()) {
+            existing.setPrecedenceMode(request.getPrecedenceMode().trim());
+        }
+        if (request.getScoreModel() != null && !request.getScoreModel().trim().isEmpty()) {
+            existing.setScoreModel(request.getScoreModel().trim());
+        }
+
+        scoringConfigMapper.update(existing);
+        ScoringConfigEntity updated = scoringConfigMapper.findBySemesterId(semester.getId());
+        return updated == null ? existing : updated;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public SemesterEntity renameSemester(Long semesterId, String name) {
+        SemesterEntity semester = requireSemester(semesterId);
+        String normalized = normalizeName(name);
+        semesterMapper.updateName(semester.getId(), normalized);
+        SemesterEntity updated = semesterMapper.findById(semester.getId());
+        if (updated != null) {
+            return updated;
+        }
+        semester.setName(normalized);
+        return semester;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteSemester(Long semesterId) {
+        SemesterEntity semester = requireSemester(semesterId);
+        if (semester.getIsActive() != null && semester.getIsActive() == 1) {
+            throw new BizException(40902, "当前学期不能删除");
+        }
+
+        long submissionCount = submissionMapper.countBySemester(semester.getId());
+        if (submissionCount > 0) {
+            throw new BizException(40903, "该学期下存在" + submissionCount + "份测评单，无法删除");
+        }
+
+        scoringConfigMapper.deleteBySemesterId(semester.getId());
+        semesterMapper.deleteById(semester.getId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> recalculateSemester(Long semesterId) {
+        SemesterEntity semester = requireSemester(semesterId);
+        List<Long> ids = submissionMapper.listIdsForRecalculate(semester.getId());
+        List<Long> safeIds = ids == null ? new ArrayList<>() : ids;
+
+        int updated = 0;
+        for (Long id : safeIds) {
+            if (id == null) {
+                continue;
+            }
+            submissionService.recalculate(id);
+            updated += 1;
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("total", safeIds.size());
+        out.put("updated", updated);
+        return out;
     }
 
     public Map<String, Object> getAdminOverview() {
@@ -157,6 +264,72 @@ public class SemesterService {
         return value;
     }
 
+    private SemesterEntity requireSemester(Long semesterId) {
+        if (semesterId == null) {
+            throw new BizException(40001, "学期ID不能为空");
+        }
+        SemesterEntity semester = semesterMapper.findById(semesterId);
+        if (semester == null) {
+            throw new BizException(40401, "学期不存在");
+        }
+        return semester;
+    }
+
+    private ScoringConfigEntity defaultScoringConfig(Long semesterId) {
+        ScoringConfigEntity cfg = new ScoringConfigEntity();
+        cfg.setSemesterId(semesterId);
+        cfg.setwMoral(0.15);
+        cfg.setwIntel(0.60);
+        cfg.setwSport(0.10);
+        cfg.setwArt(0.075);
+        cfg.setwLabor(0.075);
+        cfg.setCapMoral(100.0);
+        cfg.setCapIntel(100.0);
+        cfg.setCapSport(100.0);
+        cfg.setCapArt(100.0);
+        cfg.setCapLabor(100.0);
+        cfg.setScoreModel("STRICT_FORMULA");
+        cfg.setPrecedenceMode("COLLEGE_FIRST");
+        cfg.setAppealDays(10);
+        return cfg;
+    }
+
+    private void validateScoringConfig(AdminScoringConfigUpdateRequest request) {
+        requireInRange(request.getwMoral(), 0, 1, "德育权重需在0~1之间");
+        requireInRange(request.getwIntel(), 0, 1, "智育权重需在0~1之间");
+        requireInRange(request.getwSport(), 0, 1, "体育权重需在0~1之间");
+        requireInRange(request.getwArt(), 0, 1, "美育权重需在0~1之间");
+        requireInRange(request.getwLabor(), 0, 1, "劳育权重需在0~1之间");
+
+        double sum = request.getwMoral()
+                + request.getwIntel()
+                + request.getwSport()
+                + request.getwArt()
+                + request.getwLabor();
+        if (Math.abs(sum - 1.0) > 1e-6) {
+            throw new BizException(40001, "五项权重之和需约等于1，当前为 " + sum);
+        }
+
+        requireInRange(request.getCapMoral(), 0, 1000, "德育上限需在0~1000之间");
+        requireInRange(request.getCapIntel(), 0, 1000, "智育上限需在0~1000之间");
+        requireInRange(request.getCapSport(), 0, 1000, "体育上限需在0~1000之间");
+        requireInRange(request.getCapArt(), 0, 1000, "美育上限需在0~1000之间");
+        requireInRange(request.getCapLabor(), 0, 1000, "劳育上限需在0~1000之间");
+
+        if (request.getAppealDays() != null) {
+            int days = request.getAppealDays();
+            if (days < 1 || days > 365) {
+                throw new BizException(40001, "申诉天数需在1~365之间");
+            }
+        }
+    }
+
+    private void requireInRange(Double value, double min, double max, String message) {
+        if (value == null || value.isNaN() || value < min || value > max) {
+            throw new BizException(40001, message);
+        }
+    }
+
     private String normalizeSeason(String season) {
         String value = season == null ? "" : season.trim().toUpperCase(Locale.ROOT);
         if (!"SPRING".equals(value) && !"AUTUMN".equals(value)) {
@@ -171,4 +344,3 @@ public class SemesterService {
         return 1;
     }
 }
-

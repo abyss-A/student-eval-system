@@ -29,6 +29,12 @@ public interface SubmissionMapper {
     @Select("select count(1) from submission where semester_id = #{semesterId} and status = 'SUBMITTED'")
     long countSubmittedBySemester(@Param("semesterId") Long semesterId);
 
+    @Select("select count(1) from submission where semester_id = #{semesterId}")
+    long countBySemester(@Param("semesterId") Long semesterId);
+
+    @Select("select id from submission where semester_id = #{semesterId} and status in ('SUBMITTED','COUNSELOR_REVIEWED','FINALIZED','PUBLISHED') order by id asc")
+    List<Long> listIdsForRecalculate(@Param("semesterId") Long semesterId);
+
     @Select("select " +
             "s.*, u.account_no, u.real_name, u.class_name, " +
             "(coalesce(ci.total_count,0) + coalesce(ai.total_count,0)) as review_total_count, " +
