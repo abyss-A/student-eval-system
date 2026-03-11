@@ -64,7 +64,7 @@ test('TableOverflowCell 浮层长文本不省略 @quick', async ({ page }) => {
   await expect(page.locator('.workspace-title')).toHaveText('账号管理')
 
   const row = page.locator('tbody tr', { hasText: 'TDD_OVERFLOW_0001' })
-  const classCell = row.locator('td').nth(5)
+  const classCell = row.locator('td', { hasText: '2022级数据科学与大数据技术1班' }).first()
   await expect(classCell).toContainText('2022级数据科学与大数据技术1班')
 
   await classCell.locator('.table-overflow-cell').hover()

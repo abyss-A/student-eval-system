@@ -15,18 +15,18 @@
           v-model="keyword"
           width="220px"
           placeholder="搜索学号/工号/姓名/班级"
-          :disabled="loading"
+          :disabled="loading || batching"
           @submit="submitSearch"
           @clear="clearSearch"
         />
 
-        <el-select v-model="filters.role" placeholder="全部角色" style="width: 140px;" :disabled="loading" @change="loadAccounts">
+        <el-select v-model="filters.role" placeholder="全部角色" style="width: 140px;" :disabled="loading || batching" @change="onFiltersChange">
           <el-option label="全部角色" value="" />
           <el-option label="学生" value="STUDENT" />
           <el-option label="辅导员" value="COUNSELOR" />
         </el-select>
 
-        <el-select v-model="filters.enabled" placeholder="全部状态" style="width: 140px;" :disabled="loading" @change="loadAccounts">
+        <el-select v-model="filters.enabled" placeholder="全部状态" style="width: 140px;" :disabled="loading || batching" @change="onFiltersChange">
           <el-option label="全部状态" value="" />
           <el-option label="启用" value="1" />
           <el-option label="停用" value="0" />
@@ -34,10 +34,21 @@
       </div>
 
       <div class="table-search-right account-toolbar-actions">
-        <el-button type="default" data-testid="account-import-open" :disabled="loading" @click="openImportDialog">
+        <span class="muted">已选 {{ selection.selectedCount.value }} 项</span>
+        <el-dropdown trigger="click" :disabled="!canBatchOperate" @command="handleBatchCommand">
+          <el-button type="default" :disabled="!canBatchOperate" :loading="batching">批量操作</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="enable">批量启用</el-dropdown-item>
+              <el-dropdown-item command="disable">批量停用</el-dropdown-item>
+              <el-dropdown-item command="reset">批量重置密码</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button type="default" data-testid="account-import-open" :disabled="loading || batching" @click="openImportDialog">
           批量导入
         </el-button>
-        <el-button type="primary" data-testid="account-create-open" :disabled="loading" @click="openCreateDialog">
+        <el-button type="primary" data-testid="account-create-open" :disabled="loading || batching" @click="openCreateDialog">
           新建账号
         </el-button>
       </div>
@@ -48,6 +59,15 @@
         <table class="table table-sticky table-fixed-right account-table" style="--sticky-action-w: 228px; --fixed-action-btn-w: 64px; --fixed-action-gap: 3px; --fixed-action-padding-x: 3px;">
           <thead>
             <tr>
+              <th style="width: 44px;">
+                <input
+                  ref="headerCheckboxRef"
+                  type="checkbox"
+                  :checked="allCheckedOnPage"
+                  :disabled="!pagedAccountIds.length || loading || batching"
+                  @change="toggleAllOnPage"
+                />
+              </th>
               <th>角色</th>
               <th>学号/工号</th>
               <th>姓名</th>
@@ -61,6 +81,14 @@
           </thead>
           <tbody>
             <tr v-for="item in pager.pagedRows.value" :key="item.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="selection.isSelected(item.id)"
+                  :disabled="loading || batching"
+                  @change="selection.toggle(item.id)"
+                />
+              </td>
               <td>
                 <span class="role-chip" :class="String(item.role || '').toLowerCase()">{{ roleLabel(item.role) }}</span>
               </td>
@@ -85,17 +113,18 @@
               <td class="cell-secondary">{{ formatDate(item.createdAt) }}</td>
               <td class="col-action">
                 <div class="action-row inline-actions account-inline-actions">
-                  <el-button size="small" type="default" @click="openEditDialog(item)">编辑</el-button>
+                  <el-button size="small" type="default" :disabled="batching" @click="openEditDialog(item)">编辑</el-button>
                   <el-button
                     size="small"
                     type="default"
                     :loading="actionKey === `enabled_${item.id}`"
+                    :disabled="batching"
                     @click="toggleEnabled(item)"
                   >
                     {{ Number(item.enabled) === 1 ? '停用' : '启用' }}
                   </el-button>
                   <el-dropdown trigger="click" @command="(command) => handleRowCommand(command, item)">
-                    <el-button size="small" type="default" :title="item.canDelete ? '更多操作' : item.deleteBlockReason || '当前账号不可删除'">
+                    <el-button size="small" type="default" :disabled="batching" :title="item.canDelete ? '更多操作' : item.deleteBlockReason || '当前账号不可删除'">
                       更多
                     </el-button>
                     <template #dropdown>
@@ -109,7 +138,7 @@
               </td>
             </tr>
             <tr v-if="!pager.pagedRows.value.length">
-              <td colspan="9" class="empty">暂无账号数据</td>
+              <td colspan="10" class="empty">暂无账号数据</td>
             </tr>
           </tbody>
         </table>
@@ -122,8 +151,8 @@
         :page-size="pager.pageSize.value"
         :disabled="loading"
         :show-quick-jumper="false"
-        @change="pager.goPage"
-        @page-size-change="pager.setPageSize"
+        @change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
   </section>
@@ -370,12 +399,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import SearchCapsule from '../../components/SearchCapsule.vue'
 import TablePager from '../../components/TablePager.vue'
 import TableOverflowCell from '../../components/TableOverflowCell.vue'
 import useTablePager from '../../composables/useTablePager'
+import useTableSelection from '../../composables/useTableSelection'
 import http from '../../api/http'
 
 const rows = ref([])
@@ -387,6 +417,24 @@ const filters = reactive({
 })
 
 const pager = useTablePager(rows, 10)
+const selection = useTableSelection()
+const headerCheckboxRef = ref(null)
+const pagedAccountIds = computed(() => pager.pagedRows.value.map((item) => item.id))
+const allCheckedOnPage = computed(() => selection.isAllCheckedOnPage(pagedAccountIds.value))
+const indeterminateOnPage = computed(() => selection.isIndeterminateOnPage(pagedAccountIds.value))
+
+watch(indeterminateOnPage, (value) => {
+  if (!headerCheckboxRef.value) return
+  headerCheckboxRef.value.indeterminate = value
+})
+
+const selectedRowsOnPage = computed(() => {
+  const selected = new Set(selection.selectedList.value)
+  return pager.pagedRows.value.filter((item) => selected.has(String(item.id)))
+})
+
+const batching = ref(false)
+const canBatchOperate = computed(() => selection.selectedCount.value > 0 && !loading.value && !batching.value)
 
 const editorOpen = ref(false)
 const editorMode = ref('create')
@@ -483,6 +531,7 @@ const loadAccounts = async () => {
     if (filters.enabled !== '') params.enabled = Number(filters.enabled)
     const { data } = await http.get('/admin/accounts', { params })
     rows.value = data.data || []
+    selection.clear()
   } finally {
     loading.value = false
   }
@@ -490,13 +539,35 @@ const loadAccounts = async () => {
 
 const submitSearch = async () => {
   pager.resetPage()
+  selection.clear()
   await loadAccounts()
 }
 
 const clearSearch = async () => {
   keyword.value = ''
   pager.resetPage()
+  selection.clear()
   await loadAccounts()
+}
+
+const onFiltersChange = async () => {
+  pager.resetPage()
+  selection.clear()
+  await loadAccounts()
+}
+
+const onPageChange = (nextPage) => {
+  pager.goPage(nextPage)
+  selection.clear()
+}
+
+const onPageSizeChange = (nextSize) => {
+  pager.setPageSize(nextSize)
+  selection.clear()
+}
+
+const toggleAllOnPage = () => {
+  selection.toggleAll(pagedAccountIds.value)
 }
 
 const openCreateDialog = () => {
@@ -563,6 +634,108 @@ const confirmAction = async ({ title, message, confirmButtonText = '确认', typ
     return true
   } catch {
     return false
+  }
+}
+
+const batchSetEnabled = async (nextEnabled) => {
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    showNotice('请先勾选要处理的账号', 'error')
+    return
+  }
+
+  const actionText = nextEnabled ? '启用' : '停用'
+  const confirmed = await confirmAction({
+    title: `批量${actionText}`,
+    message: nextEnabled
+      ? `确认批量启用已选 ${selectedRows.length} 个账号吗？`
+      : `确认批量停用已选 ${selectedRows.length} 个账号吗？停用后这些账号将无法登录。`,
+    confirmButtonText: `确认${actionText}`,
+    type: nextEnabled ? 'warning' : 'error'
+  })
+  if (!confirmed) return
+
+  batching.value = true
+  clearNotice()
+  let success = 0
+  let failed = 0
+  let skipped = 0
+
+  try {
+    for (const row of selectedRows) {
+      const enabled = Number(row.enabled) === 1
+      if (nextEnabled && enabled) {
+        skipped += 1
+        continue
+      }
+      if (!nextEnabled && !enabled) {
+        skipped += 1
+        continue
+      }
+      try {
+        await http.put(`/admin/accounts/${row.id}/enabled`, { enabled: nextEnabled }, { meta: { silent: true } })
+        success += 1
+      } catch (e) {
+        failed += 1
+      }
+    }
+  } finally {
+    batching.value = false
+  }
+
+  await loadAccounts()
+  const text = `批量${actionText}完成：成功 ${success}，失败 ${failed}，跳过 ${skipped}`
+  showNotice(text, failed > 0 ? 'error' : 'success')
+}
+
+const batchResetPasswords = async () => {
+  const selectedRows = selectedRowsOnPage.value
+  if (!selectedRows.length) {
+    showNotice('请先勾选要处理的账号', 'error')
+    return
+  }
+
+  const confirmed = await confirmAction({
+    title: '批量重置密码',
+    message: `确认将已选 ${selectedRows.length} 个账号的密码重置为 123456 吗？`,
+    confirmButtonText: '确认重置'
+  })
+  if (!confirmed) return
+
+  batching.value = true
+  clearNotice()
+  let success = 0
+  let failed = 0
+
+  try {
+    for (const row of selectedRows) {
+      try {
+        await http.post(`/admin/accounts/${row.id}/reset-password`, null, { meta: { silent: true } })
+        success += 1
+      } catch (e) {
+        failed += 1
+      }
+    }
+  } finally {
+    batching.value = false
+  }
+
+  await loadAccounts()
+  const text = `批量重置密码完成：成功 ${success}，失败 ${failed}`
+  showNotice(text, failed > 0 ? 'error' : 'success')
+}
+
+const handleBatchCommand = async (command) => {
+  if (command === 'enable') {
+    await batchSetEnabled(true)
+    return
+  }
+  if (command === 'disable') {
+    await batchSetEnabled(false)
+    return
+  }
+  if (command === 'reset') {
+    await batchResetPasswords()
   }
 }
 
