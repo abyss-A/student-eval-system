@@ -407,6 +407,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import http from '../api/http'
 import { previewImageById } from '../utils/imagePreview'
 import SearchCapsule from '../components/SearchCapsule.vue'
@@ -415,6 +416,9 @@ import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
 import useTableSelection from '../composables/useTableSelection'
+
+const router = useRouter()
+const route = useRoute()
 
 const tasks = ref([])
 const current = ref(null)
@@ -442,6 +446,31 @@ const activityBatchRejectReason = ref('')
 
 const courseKey = (id) => `COURSE_${id}`
 const activityKey = (id) => `ACTIVITY_${id}`
+
+const applyQueryPreset = () => {
+  const presetRaw = route.query?.preset
+  const preset = String(presetRaw || '').trim().toUpperCase()
+  const allowed = new Set(['ALL', 'UNREVIEWED', 'IN_PROGRESS', 'REVIEWED', 'READY_TO_SUBMIT', 'SUBMITTED'])
+  if (allowed.has(preset)) {
+    taskStatusFilter.value = preset
+  }
+}
+
+const consumeQuery = async () => {
+  const next = { ...route.query }
+  let changed = false
+  if (next.open !== undefined) {
+    delete next.open
+    changed = true
+  }
+  if (next.preset !== undefined) {
+    delete next.preset
+    changed = true
+  }
+  if (changed) {
+    await router.replace({ path: route.path, query: next })
+  }
+}
 
 const filteredTasks = computed(() => {
   const kw = String(taskKeyword.value || '').trim().toLowerCase()
@@ -1103,8 +1132,17 @@ useIdleAutoRefresh({
   isPaused: pausedRef
 })
 
-onMounted(() => {
-  loadTasks()
+onMounted(async () => {
+  applyQueryPreset()
+  await loadTasks()
+
+  const openRaw = route.query?.open
+  const openId = Number(openRaw)
+  if (Number.isFinite(openId) && openId > 0) {
+    await openTask(openId)
+  }
+
+  await consumeQuery()
 })
 </script>
 

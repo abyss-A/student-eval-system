@@ -216,6 +216,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import http from '../api/http'
 import { previewImageById } from '../utils/imagePreview'
 import SearchCapsule from '../components/SearchCapsule.vue'
@@ -223,6 +224,9 @@ import TableOverflowCell from '../components/TableOverflowCell.vue'
 import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
+
+const router = useRouter()
+const route = useRoute()
 
 const tasks = ref([])
 const loadingTasks = ref(false)
@@ -416,8 +420,23 @@ useIdleAutoRefresh({
   isPaused: pausedRef
 })
 
-onMounted(() => {
-  loadTasks()
+const consumeQuery = async () => {
+  const next = { ...route.query }
+  if (next.open === undefined) return
+  delete next.open
+  await router.replace({ path: route.path, query: next })
+}
+
+onMounted(async () => {
+  await loadTasks()
+
+  const openRaw = route.query?.open
+  const openId = Number(openRaw)
+  if (Number.isFinite(openId) && openId > 0) {
+    await openTask(openId)
+  }
+
+  await consumeQuery()
 })
 </script>
 

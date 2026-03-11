@@ -188,6 +188,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import http from '../../api/http'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 import SearchCapsule from '../../components/SearchCapsule.vue'
@@ -196,6 +197,9 @@ import TablePager from '../../components/TablePager.vue'
 import useIdleAutoRefresh from '../../composables/useIdleAutoRefresh'
 import useTablePager from '../../composables/useTablePager'
 import useTableSelection from '../../composables/useTableSelection'
+
+const router = useRouter()
+const route = useRoute()
 
 const rows = ref([])
 const loading = ref(false)
@@ -395,8 +399,42 @@ useIdleAutoRefresh({
   isPaused: pausedRef
 })
 
-onMounted(() => {
-  load()
+const applyQueryPreset = () => {
+  const presetRaw = route.query?.preset
+  const preset = String(presetRaw || '').trim().toUpperCase()
+  const allowed = new Set(['ALL', 'NEW', 'REPLIED', 'CLOSED'])
+  if (allowed.has(preset)) {
+    activeStatus.value = preset
+  }
+}
+
+const consumeQuery = async () => {
+  const next = { ...route.query }
+  let changed = false
+  if (next.open !== undefined) {
+    delete next.open
+    changed = true
+  }
+  if (next.preset !== undefined) {
+    delete next.preset
+    changed = true
+  }
+  if (changed) {
+    await router.replace({ path: route.path, query: next })
+  }
+}
+
+onMounted(async () => {
+  applyQueryPreset()
+  await load()
+
+  const openRaw = route.query?.open
+  const openId = Number(openRaw)
+  if (Number.isFinite(openId) && openId > 0) {
+    await openDrawer(openId)
+  }
+
+  await consumeQuery()
 })
 </script>
 
