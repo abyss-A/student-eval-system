@@ -58,6 +58,7 @@
 
 ## 5. 路由结构摘要
 ### 学生端
+- `/student/home`
 - `/student/eval/course`
 - `/student/eval/moral`
 - `/student/eval/intel`
@@ -71,6 +72,7 @@
 - `/student/me/profile`
 
 ### 辅导员端
+- `/teacher/home`
 - `/teacher/review/tasks`
 - `/teacher/notices`
 - `/teacher/feedback/*`
@@ -78,9 +80,11 @@
 - `/teacher/me/profile`
 
 ### 管理员端
+- `/admin/home`
 - `/admin/submissions`
 - `/admin/counselor/scopes`
 - `/admin/accounts`
+- `/admin/semesters`
 - `/admin/notices`
 - `/admin/feedback/handle`
 - `/admin/ranking`

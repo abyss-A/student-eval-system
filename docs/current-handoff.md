@@ -43,6 +43,13 @@
   - 删除仅允许“非当前且无 submission”的学期
 - 综合排名页学期选择由“手填学期ID”改为“学期名称下拉”，默认当前学期，并可切换查看历史排名
 
+### 三端工作台与账号管理批量操作
+- 学生/辅导员/管理员三端新增“工作台”页面，并设为默认落地页：
+  - `/student` → `/student/home`
+  - `/teacher` → `/teacher/home`
+  - `/admin` → `/admin/home`
+- 管理员账号管理页支持勾选后批量启用/停用/重置密码，批量操作前端循环调用现有接口并提示成功/失败/跳过，最后自动刷新列表
+
 ## 4. 当前要特别注意的点
 ### 4.1 导出模板
 - 正式模板：`backend/src/main/resources/report-templates/scholarship_form_v1.docx`
