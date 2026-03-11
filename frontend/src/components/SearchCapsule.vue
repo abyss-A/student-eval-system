@@ -62,26 +62,12 @@ const clearValue = () => {
   width: 100%;
 }
 
-.search-capsule-input :deep(.el-input__wrapper) {
-  border-radius: 999px;
-  min-height: 36px;
-  box-shadow: 0 0 0 1px #c7d7f2 inset;
-}
-
-.search-capsule-input :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #abc3e6 inset;
-}
-
-.search-capsule-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #709bd2 inset, 0 0 0 3px rgba(47, 109, 184, 0.14);
-}
-
 .search-capsule-icon {
   cursor: pointer;
-  color: #355f96;
+  color: var(--app-text-faint);
 }
 
 .search-capsule-icon:hover {
-  color: #1f5fae;
+  color: var(--app-primary);
 }
 </style>

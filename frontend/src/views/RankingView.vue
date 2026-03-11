@@ -208,7 +208,7 @@ onMounted(() => {
 
 <style scoped>
 .ranking-semester-select {
-  width: 240px;
+  width: 180px;
 }
 
 .ranking-error-card {
