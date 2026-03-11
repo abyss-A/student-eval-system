@@ -1,7 +1,7 @@
 <template>
   <section class="card semester-page page-shell">
     <p class="muted semester-note">
-      学期用于区分每学期的填报、审核与综合排名。新建学期默认不立即生效；切换当前学期前请确保本学期待审核已清零。
+      学期用于区分每学期的填报、审核与综合排名。新建学期默认不立即生效；切换当前学期前请确保本学期待审核已清零。评分配置保存后不自动重算，如需让排名按新配置更新，请在评分配置中手动重算本学期成绩。
     </p>
 
     <div v-if="noticeText" class="semester-notice" :class="noticeType">
@@ -47,7 +47,10 @@
 
     <div class="table-shell semester-table-shell">
       <div class="table-scroll-main">
-        <table class="table table-sticky table-fixed-right semester-table" style="--sticky-action-w: 132px;">
+        <table
+          class="table table-sticky table-fixed-right semester-table"
+          style="--sticky-action-w: 188px; --fixed-action-btn-w: 82px; --fixed-action-gap: 4px; --fixed-action-padding-x: 4px;"
+        >
           <thead>
             <tr>
               <th>学期名称</th>
@@ -72,13 +75,22 @@
               <td class="cell-secondary">{{ formatDate(item.createdAt) }}</td>
               <td class="col-action">
                 <div class="action-row inline-actions">
-                  <el-button
-                    size="small"
-                    type="default"
-                    :loading="actionKey === `activate_${item.id}`"
-                    :disabled="loading || Number(item.isActive) === 1 || Number(submittedPendingCount) > 0"
-                    @click="activate(item)"
-                  >设为当前</el-button>
+                  <el-button size="small" type="default" :disabled="loading" @click="openConfigDialog(item)">评分配置</el-button>
+                  <el-dropdown trigger="click" @command="(command) => handleRowCommand(command, item)">
+                    <el-button size="small" type="default" :loading="actionKey === `row_${item.id}`" :disabled="loading">
+                      更多
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item
+                          command="activate"
+                          :disabled="Number(item.isActive) === 1 || Number(submittedPendingCount) > 0"
+                        >设为当前</el-dropdown-item>
+                        <el-dropdown-item command="rename">编辑名称</el-dropdown-item>
+                        <el-dropdown-item command="delete" :disabled="Number(item.isActive) === 1">删除学期</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
                 </div>
               </td>
             </tr>
@@ -135,12 +147,111 @@
       </div>
     </template>
   </el-dialog>
+
+  <el-dialog v-model="configDialogOpen" width="760px" class="semester-config-dialog" :before-close="handleConfigBeforeClose">
+    <template #header>
+      <div class="semester-dialog-head">
+        <h3 class="semester-dialog-title">评分配置</h3>
+        <el-tag v-if="configSemester?.name" type="info" effect="plain">{{ configSemester?.name }}</el-tag>
+      </div>
+    </template>
+
+    <el-alert
+      type="info"
+      :closable="false"
+      show-icon
+      title="保存评分配置不会自动重算历史测评单与排名；如需让排名按新配置更新，请点击“重算本学期成绩”。"
+      class="semester-config-tip"
+    />
+
+    <div v-if="configError" class="semester-form-error">{{ configError }}</div>
+
+    <div class="semester-config-grid">
+      <div class="semester-config-section">
+        <h4 class="semester-config-title">权重（0~1）</h4>
+        <div class="semester-form-row">
+          <span class="semester-form-label">德育</span>
+          <el-input-number v-model="configForm.wMoral" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">智育</span>
+          <el-input-number v-model="configForm.wIntel" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">体育</span>
+          <el-input-number v-model="configForm.wSport" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">美育</span>
+          <el-input-number v-model="configForm.wArt" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">劳育</span>
+          <el-input-number v-model="configForm.wLabor" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+
+        <p class="muted semester-config-sum" :class="{ invalid: !isWeightSumValid }">
+          权重合计：{{ weightSumText }} <span v-if="!isWeightSumValid">（需为 1）</span>
+        </p>
+      </div>
+
+      <div class="semester-config-section">
+        <h4 class="semester-config-title">上限</h4>
+        <div class="semester-form-row">
+          <span class="semester-form-label">德育</span>
+          <el-input-number v-model="configForm.capMoral" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">智育</span>
+          <el-input-number v-model="configForm.capIntel" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">体育</span>
+          <el-input-number v-model="configForm.capSport" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">美育</span>
+          <el-input-number v-model="configForm.capArt" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label">劳育</span>
+          <el-input-number v-model="configForm.capLabor" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="semester-dialog-footer">
+        <el-button type="default" :disabled="configSaving || recalculating" @click="closeConfigDialog">关闭</el-button>
+        <el-button type="default" :loading="recalculating" :disabled="configLoading || configSaving || !configSemester?.id" @click="recalculateSemesterScores">
+          重算本学期成绩
+        </el-button>
+        <el-button type="primary" :loading="configSaving" :disabled="configLoading || recalculating || !configSemester?.id || !isWeightSumValid" @click="saveScoringConfig">
+          保存配置
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import http from '../../api/http'
+
+const withTimeout = async (promise, ms, message) => {
+  let timer = null
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message || '请求超时')), ms)
+      })
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
 
 const loading = ref(false)
 const errorMsg = ref('')
@@ -176,10 +287,12 @@ const seasonLabel = (term) => {
   return '-'
 }
 
-const load = async () => {
+const load = async (opts = {}) => {
   loading.value = true
   errorMsg.value = ''
-  clearNotice()
+  if (opts?.clearNotice !== false) {
+    clearNotice()
+  }
   try {
     const { data } = await http.get('/admin/semesters', { meta: { silent: true } })
     const payload = data.data || {}
@@ -265,11 +378,150 @@ const createSemester = async () => {
     await http.post('/admin/semesters', payload, { meta: { silent: true } })
     showNotice('新学期已创建（未设为当前）', 'success')
     createDialogOpen.value = false
-    await load()
+    await load({ clearNotice: false })
   } catch (e) {
     createError.value = e?.userMessage || e?.message || '创建失败'
   } finally {
     creating.value = false
+  }
+}
+
+const configDialogOpen = ref(false)
+const configSemester = ref(null)
+const configLoading = ref(false)
+const configSaving = ref(false)
+const recalculating = ref(false)
+const configError = ref('')
+const configForm = reactive({
+  wMoral: 0.15,
+  wIntel: 0.6,
+  wSport: 0.1,
+  wArt: 0.075,
+  wLabor: 0.075,
+  capMoral: 100,
+  capIntel: 100,
+  capSport: 100,
+  capArt: 100,
+  capLabor: 100
+})
+
+const weightSum = computed(() => {
+  return Number(configForm.wMoral || 0)
+    + Number(configForm.wIntel || 0)
+    + Number(configForm.wSport || 0)
+    + Number(configForm.wArt || 0)
+    + Number(configForm.wLabor || 0)
+})
+
+const isWeightSumValid = computed(() => Math.abs(weightSum.value - 1) <= 1e-6)
+const weightSumText = computed(() => weightSum.value.toFixed(6))
+
+const fillConfigForm = (cfg) => {
+  configForm.wMoral = Number(cfg?.wMoral ?? cfg?.w_moral ?? configForm.wMoral)
+  configForm.wIntel = Number(cfg?.wIntel ?? cfg?.w_intel ?? configForm.wIntel)
+  configForm.wSport = Number(cfg?.wSport ?? cfg?.w_sport ?? configForm.wSport)
+  configForm.wArt = Number(cfg?.wArt ?? cfg?.w_art ?? configForm.wArt)
+  configForm.wLabor = Number(cfg?.wLabor ?? cfg?.w_labor ?? configForm.wLabor)
+  configForm.capMoral = Number(cfg?.capMoral ?? cfg?.cap_moral ?? configForm.capMoral)
+  configForm.capIntel = Number(cfg?.capIntel ?? cfg?.cap_intel ?? configForm.capIntel)
+  configForm.capSport = Number(cfg?.capSport ?? cfg?.cap_sport ?? configForm.capSport)
+  configForm.capArt = Number(cfg?.capArt ?? cfg?.cap_art ?? configForm.capArt)
+  configForm.capLabor = Number(cfg?.capLabor ?? cfg?.cap_labor ?? configForm.capLabor)
+}
+
+const openConfigDialog = async (item) => {
+  if (!item?.id) return
+  configError.value = ''
+  configSemester.value = item
+  configDialogOpen.value = true
+
+  configLoading.value = true
+  try {
+    const { data } = await withTimeout(
+      http.get(`/admin/semesters/${item.id}/scoring-config`, { meta: { silent: true } }),
+      8000,
+      '评分配置加载超时，请稍后重试'
+    )
+    fillConfigForm(data.data || {})
+  } catch (e) {
+    configError.value = e?.userMessage || e?.message || '评分配置加载失败'
+  } finally {
+    configLoading.value = false
+  }
+}
+
+const closeConfigDialog = () => {
+  if (configSaving.value || recalculating.value) return
+  configDialogOpen.value = false
+  configSemester.value = null
+  configError.value = ''
+}
+
+const handleConfigBeforeClose = () => {
+  closeConfigDialog()
+}
+
+const saveScoringConfig = async () => {
+  if (!configSemester.value?.id) return
+  if (configSaving.value) return
+  configError.value = ''
+  if (!isWeightSumValid.value) {
+    configError.value = `五项权重之和需为 1，当前为 ${weightSum.value}`
+    return
+  }
+
+  const payload = {
+    wMoral: Number(configForm.wMoral),
+    wIntel: Number(configForm.wIntel),
+    wSport: Number(configForm.wSport),
+    wArt: Number(configForm.wArt),
+    wLabor: Number(configForm.wLabor),
+    capMoral: Number(configForm.capMoral),
+    capIntel: Number(configForm.capIntel),
+    capSport: Number(configForm.capSport),
+    capArt: Number(configForm.capArt),
+    capLabor: Number(configForm.capLabor)
+  }
+
+  configSaving.value = true
+  try {
+    await http.put(`/admin/semesters/${configSemester.value.id}/scoring-config`, payload, { meta: { silent: true } })
+    showNotice('评分配置已保存（未重算）', 'success')
+  } catch (e) {
+    configError.value = e?.userMessage || e?.message || '保存失败'
+  } finally {
+    configSaving.value = false
+  }
+}
+
+const recalculateSemesterScores = async () => {
+  if (!configSemester.value?.id) return
+  if (recalculating.value) return
+  configError.value = ''
+
+  const name = String(configSemester.value?.name || '').trim() || '该学期'
+  try {
+    await ElMessageBox.confirm(`确定要重算“${name}”的所有已提交测评单分数吗？此操作可能需要一点时间。`, '确认重算', {
+      type: 'warning',
+      confirmButtonText: '开始重算',
+      cancelButtonText: '取消'
+    })
+  } catch {
+    return
+  }
+
+  const start = Date.now()
+  recalculating.value = true
+  try {
+    const { data } = await http.post(`/admin/semesters/${configSemester.value.id}/recalculate`, null, { meta: { silent: true } })
+    const res = data.data || {}
+    const ms = Date.now() - start
+    showNotice(`重算完成：处理 ${res.total ?? 0}，更新 ${res.updated ?? 0}（${ms}ms）`, 'success')
+    await load({ clearNotice: false })
+  } catch (e) {
+    configError.value = e?.userMessage || e?.message || '重算失败'
+  } finally {
+    recalculating.value = false
   }
 }
 
@@ -296,11 +548,86 @@ const activate = async (item) => {
   try {
     await http.put(`/admin/semesters/${item.id}/active`, null, { meta: { silent: true } })
     showNotice('已切换当前学期', 'success')
-    await load()
+    await load({ clearNotice: false })
   } catch (e) {
     showNotice(e?.userMessage || e?.message || '切换失败', 'error')
   } finally {
     actionKey.value = ''
+  }
+}
+
+const renameSemester = async (item) => {
+  if (!item?.id) return
+  const current = String(item?.name || '').trim()
+  let nextName = ''
+  try {
+    const { value } = await ElMessageBox.prompt('请输入新的学期名称', '编辑名称', {
+      inputValue: current,
+      confirmButtonText: '保存',
+      cancelButtonText: '取消',
+      inputPlaceholder: '例如：2026年春季学期',
+      inputValidator: (val) => {
+        const name = String(val || '').trim()
+        if (!name) return '学期名称不能为空'
+        if (name.length > 64) return '学期名称不能超过64位'
+        return true
+      }
+    })
+    nextName = String(value || '').trim()
+  } catch {
+    return
+  }
+
+  actionKey.value = `row_${item.id}`
+  try {
+    await http.put(`/admin/semesters/${item.id}`, { name: nextName }, { meta: { silent: true } })
+    showNotice('学期名称已更新', 'success')
+    await load({ clearNotice: false })
+  } catch (e) {
+    showNotice(e?.userMessage || e?.message || '更新失败', 'error')
+  } finally {
+    actionKey.value = ''
+  }
+}
+
+const deleteSemester = async (item) => {
+  if (!item?.id) return
+  const name = String(item?.name || '').trim() || '目标学期'
+  try {
+    await ElMessageBox.confirm(`确定删除“${name}”吗？仅当该学期下没有任何测评单时才允许删除。`, '确认删除', {
+      type: 'warning',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消'
+    })
+  } catch {
+    return
+  }
+
+  actionKey.value = `row_${item.id}`
+  try {
+    await http.delete(`/admin/semesters/${item.id}`, { meta: { silent: true } })
+    showNotice('学期已删除', 'success')
+    await load({ clearNotice: false })
+  } catch (e) {
+    showNotice(e?.userMessage || e?.message || '删除失败', 'error')
+  } finally {
+    actionKey.value = ''
+  }
+}
+
+const handleRowCommand = (command, item) => {
+  switch (command) {
+    case 'activate':
+      activate(item)
+      break
+    case 'rename':
+      renameSemester(item)
+      break
+    case 'delete':
+      deleteSemester(item)
+      break
+    default:
+      break
   }
 }
 
@@ -449,5 +776,44 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 8px;
 }
-</style>
 
+.semester-config-tip {
+  margin-bottom: 12px;
+}
+
+.semester-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.semester-config-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.semester-config-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.semester-config-sum {
+  margin: 10px 0 0;
+}
+
+.semester-config-sum.invalid {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .semester-config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
