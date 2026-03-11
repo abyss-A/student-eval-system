@@ -1,78 +1,156 @@
 <template>
-  <section class="card">
-    <div class="toolbar">
-      <div>
-        <p class="muted" style="margin-top: 6px;">
-          欢迎回来，<b>{{ realName || '管理员' }}</b>
-        </p>
+  <section class="dash-page">
+    <div class="card dash-hero dash-hero--admin">
+      <div class="dash-hero__top">
+        <div>
+          <p class="dash-hero__kicker">欢迎回来，<b>{{ realName || '管理员' }}</b></p>
+          <div class="dash-hero__headline">管理首页</div>
+          <div class="dash-hero__meta">
+            <el-tag type="info" effect="plain">{{ activeSemesterName || '未设置当前学期' }}</el-tag>
+            <el-tag type="warning" effect="plain">待审核：{{ submittedPendingCount }}</el-tag>
+            <el-tag type="warning" effect="plain">NEW 反馈：{{ feedbackNewCount }}</el-tag>
+          </div>
+        </div>
+
+        <div class="dash-hero__actions">
+          <el-button type="primary" @click="go('/admin/submissions')">测评单查看</el-button>
+          <el-button type="default" @click="go('/admin/feedback/handle', { preset: 'NEW' })">反馈处理</el-button>
+          <el-button type="default" @click="go('/admin/accounts')">账号管理</el-button>
+        </div>
       </div>
-      <div class="toolbar-row">
-        <el-tag type="info" effect="plain">管理工作台</el-tag>
+
+      <div v-if="loading" class="dash-empty" style="padding: 12px 0;">加载中...</div>
+      <div v-else class="dash-hero__bottom">
+        <div class="dash-progress">
+          <div class="dash-progress__head">
+            <div class="dash-progress__title">当前学期概览</div>
+            <div class="muted">最近动态</div>
+          </div>
+
+          <div class="admin-metrics" style="margin-top: 10px;">
+            <div class="dash-metric">
+              <div class="dash-metric__label">学生已提交待审核（SUBMITTED）</div>
+              <div class="dash-metric__value">{{ submittedPendingCount }}</div>
+              <div class="muted" style="font-size: 12px;">来自学期概览统计</div>
+            </div>
+            <div class="dash-metric">
+              <div class="dash-metric__label">可查看测评单</div>
+              <div class="dash-metric__value">{{ adminTaskCount }}</div>
+              <div class="muted" style="font-size: 12px;">辅导员已提交管理员</div>
+            </div>
+            <div class="dash-metric">
+              <div class="dash-metric__label">反馈待处理（NEW）</div>
+              <div class="dash-metric__value">{{ feedbackNewCount }}</div>
+              <div class="muted" style="font-size: 12px;">需要回复或关闭</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-metric">
+          <div class="dash-metric__label">快捷动作</div>
+          <div class="dash-metric__value">→</div>
+          <div class="muted" style="font-size: 12px;">优先处理 NEW 反馈与待审核测评单。</div>
+          <div style="margin-top: 8px;" class="dash-hero__actions">
+            <el-button size="small" type="primary" @click="go('/admin/feedback/handle', { preset: 'NEW' })">处理反馈</el-button>
+            <el-button size="small" type="default" @click="go('/admin/submissions')">查看测评单</el-button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div v-if="loading" class="empty" style="margin-top: 12px;">加载中...</div>
-    <div v-else class="grid two workbench-grid" style="margin-top: 12px;">
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">当前学期概览</h3>
-        <p class="muted workbench-meta">
-          当前学期：<b>{{ activeSemesterName || '-' }}</b>
-        </p>
-
-        <div class="workbench-stat-grid">
-          <div class="workbench-stat">
-            <div class="muted">待审核（SUBMITTED）</div>
-            <div class="workbench-stat-value">{{ submittedPendingCount }}</div>
-          </div>
-          <div class="workbench-stat">
-            <div class="muted">反馈待处理</div>
-            <div class="workbench-stat-value">{{ feedbackNewCount }}</div>
-          </div>
+    <div v-if="!loading" class="dash-grid">
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">NEW 反馈预览</h3>
+          <el-button type="default" size="small" @click="go('/admin/feedback/handle', { preset: 'NEW' })">查看全部</el-button>
         </div>
 
-        <div class="action-row" style="margin-top: 12px;">
-          <el-button type="primary" @click="go('/admin/submissions')">测评单查看</el-button>
-          <el-button type="default" @click="go('/admin/semesters')">学期管理</el-button>
-        </div>
-      </div>
-
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">反馈待处理</h3>
-        <p class="muted workbench-meta">
-          当前共有 <b>{{ feedbackNewCount }}</b> 条待处理反馈（NEW）。
-        </p>
-        <div class="action-row" style="margin-top: 12px;">
-          <el-button type="primary" @click="go('/admin/feedback/handle')">进入反馈处理</el-button>
-          <el-button type="default" @click="go('/admin/notices')">公告管理</el-button>
-        </div>
-      </div>
-
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">公告通知</h3>
-
-        <div v-if="notices.length" class="workbench-notice-list">
-          <div v-for="n in notices" :key="n.id" class="workbench-notice-row">
-            <button class="link workbench-notice-title" type="button" :title="n.title" @click="openNotice(n)">
-              {{ n.title }}
-            </button>
-            <span class="muted">{{ formatDate(pickNoticeTime(n)) }}</span>
+        <div v-if="feedbackPreview.length" class="dash-list">
+          <div v-for="f in feedbackPreview" :key="f.id" class="dash-row">
+            <div class="dash-row__main">
+              <div class="dash-row__title" :title="f.title">{{ f.title }}</div>
+              <div class="dash-row__meta">
+                {{ f.creator_real_name || '-' }} · {{ f.class_name || '-' }} · {{ formatDate(f.created_at) }}
+              </div>
+            </div>
+            <div class="dash-row__side">
+              <el-button size="small" type="primary" @click="openFeedbackFromHome(f)">立即处理</el-button>
+            </div>
           </div>
         </div>
-        <div v-else class="empty" style="padding: 10px 0;">暂无公告</div>
-
-        <div class="action-row" style="margin-top: 12px;">
-          <el-button type="default" @click="go('/admin/notices')">更多公告</el-button>
-        </div>
+        <div v-else class="dash-empty">暂无 NEW 反馈</div>
       </div>
 
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">快捷入口</h3>
-        <div class="workbench-actions">
-          <el-button type="default" @click="go('/admin/accounts')">账号管理</el-button>
-          <el-button type="default" @click="go('/admin/counselor/scopes')">班级权限</el-button>
-          <el-button type="default" @click="go('/admin/feedback/handle')">反馈处理</el-button>
-          <el-button type="default" @click="go('/admin/ranking')">综合排名</el-button>
-          <el-button type="default" @click="go('/admin/me/profile')">账号中心</el-button>
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">测评单动态预览</h3>
+          <el-button type="default" size="small" @click="go('/admin/submissions')">查看全部</el-button>
+        </div>
+
+        <div v-if="taskPreview.length" class="dash-list">
+          <div v-for="t in taskPreview" :key="t.id" class="dash-row">
+            <div class="dash-row__main">
+              <div class="dash-row__title">{{ t.real_name || '-' }}（{{ t.account_no || t.accountNo || '-' }}）</div>
+              <div class="dash-row__meta">
+                {{ t.class_name || '-' }} · 总分 {{ t.total_score ?? '-' }} · {{ formatDate(t.passTime) }}
+              </div>
+            </div>
+            <div class="dash-row__side">
+              <el-button size="small" type="primary" @click="openSubmissionFromHome(t)">查看</el-button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="dash-empty">暂无数据</div>
+      </div>
+    </div>
+
+    <div v-if="!loading" class="dash-grid">
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">公告通知</h3>
+          <el-button type="default" size="small" @click="go('/admin/notices')">更多</el-button>
+        </div>
+        <div v-if="notices.length" class="dash-list">
+          <div v-for="n in notices" :key="n.id" class="dash-row">
+            <div class="dash-row__main">
+              <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">{{ n.title }}</button>
+              <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="dash-empty">暂无公告</div>
+      </div>
+
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">快捷入口</h3>
+          <p class="dash-card__desc">常用管理入口</p>
+        </div>
+        <div class="dash-tiles">
+          <button class="dash-tile" type="button" @click="go('/admin/submissions')">
+            <div class="dash-tile__title">测评单查看</div>
+            <div class="dash-tile__desc">只读查看辅导员提交单</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/admin/feedback/handle', { preset: 'NEW' })">
+            <div class="dash-tile__title">反馈处理</div>
+            <div class="dash-tile__desc">回复 / 关闭反馈</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/admin/accounts')">
+            <div class="dash-tile__title">账号管理</div>
+            <div class="dash-tile__desc">批量启停与重置密码</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/admin/counselor/scopes')">
+            <div class="dash-tile__title">班级权限</div>
+            <div class="dash-tile__desc">配置辅导员范围</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/admin/semesters')">
+            <div class="dash-tile__title">学期管理</div>
+            <div class="dash-tile__desc">切换当前学期与配置</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/admin/ranking')">
+            <div class="dash-tile__title">综合排名</div>
+            <div class="dash-tile__desc">按学期查看排名</div>
+          </button>
         </div>
       </div>
     </div>
@@ -90,13 +168,29 @@ const loading = ref(false)
 
 const activeSemesterName = ref('')
 const submittedPendingCount = ref(0)
-const feedbackNewCount = ref(0)
+const feedbackNewList = ref([])
 const notices = ref([])
+const adminTasks = ref([])
 
 const realName = computed(() => getRealName())
+const feedbackNewCount = computed(() => feedbackNewList.value.length)
+const adminTaskCount = computed(() => adminTasks.value.length)
 
-const go = (path) => {
-  router.push(path)
+const feedbackPreview = computed(() => {
+  const rows = feedbackNewList.value.slice()
+  rows.sort((a, b) => new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime())
+  return rows.slice(0, 6)
+})
+
+const taskPreview = computed(() => {
+  const rows = adminTasks.value.slice()
+  rows.sort((a, b) => new Date(b?.passTime || b?.pass_time || 0).getTime() - new Date(a?.passTime || a?.pass_time || 0).getTime())
+  return rows.slice(0, 6)
+})
+
+const go = (path, query = undefined) => {
+  if (query) router.push({ path, query })
+  else router.push(path)
 }
 
 const pickNoticeTime = (notice) => notice?.published_at || notice?.updated_at || notice?.created_at || ''
@@ -124,10 +218,15 @@ const loadSemesterOverview = async () => {
   submittedPendingCount.value = Number(payload?.submittedPendingCount || 0)
 }
 
-const loadFeedbackNewCount = async () => {
+const loadFeedbackNewList = async () => {
   const { data } = await http.get('/feedbacks', { params: { status: 'NEW' }, meta: { silent: true } })
   const rows = Array.isArray(data.data) ? data.data : []
-  feedbackNewCount.value = rows.length
+  feedbackNewList.value = rows
+}
+
+const loadAdminTasks = async () => {
+  const { data } = await http.get('/admin/tasks', { meta: { silent: true } })
+  adminTasks.value = Array.isArray(data.data) ? data.data : []
 }
 
 const loadNotices = async () => {
@@ -142,10 +241,22 @@ const loadNotices = async () => {
   }))
 }
 
+const openFeedbackFromHome = (row) => {
+  const id = row?.id
+  if (!id) return
+  router.push({ path: '/admin/feedback/handle', query: { open: String(id), preset: 'NEW' } })
+}
+
+const openSubmissionFromHome = (row) => {
+  const id = row?.id
+  if (!id) return
+  router.push({ path: '/admin/submissions', query: { open: String(id) } })
+}
+
 const load = async () => {
   loading.value = true
   try {
-    await Promise.all([loadSemesterOverview(), loadFeedbackNewCount(), loadNotices()])
+    await Promise.all([loadSemesterOverview(), loadFeedbackNewList(), loadAdminTasks(), loadNotices()])
   } finally {
     loading.value = false
   }
@@ -157,73 +268,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.workbench-grid .workbench-card {
-  box-shadow: none;
-  background: #fbfdff;
-  border-color: #e5e7eb;
-}
-
-.workbench-card-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.workbench-meta {
-  margin-top: 8px;
-  line-height: 1.7;
-}
-
-.workbench-stat-grid {
+.admin-metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.workbench-stat {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: #ffffff;
-}
-
-.workbench-stat-value {
-  margin-top: 6px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.workbench-notice-list {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.workbench-notice-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.workbench-notice-title {
-  font-size: 13px;
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-}
-
-.workbench-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
+@media (max-width: 1080px) {
+  .admin-metrics {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-

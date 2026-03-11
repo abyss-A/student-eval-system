@@ -15,6 +15,7 @@ import './styles/global.css'
 import './styles/tokens.css'
 import './styles/element-theme.css'
 import './styles/app-layout.css'
+import './styles/home-dashboard.css'
 import { initTableColumnResize } from './utils/tableColumnResize'
 
 createApp(App).use(router).use(ElementPlus).mount('#app')

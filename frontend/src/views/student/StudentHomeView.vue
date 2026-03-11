@@ -1,88 +1,144 @@
 <template>
-  <section class="card">
-    <div class="toolbar">
-      <div>
-        <p class="muted" style="margin-top: 6px;">
-          欢迎回来，<b>{{ realName || '同学' }}</b>
-        </p>
-      </div>
-      <div class="toolbar-row">
-        <el-tag v-if="semesterName" type="info" effect="plain">{{ semesterName }}</el-tag>
-      </div>
-    </div>
-
-    <div v-if="loading" class="empty" style="margin-top: 12px;">加载中...</div>
-    <div v-else class="grid two workbench-grid" style="margin-top: 12px;">
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">本学期测评单</h3>
-        <p class="muted workbench-meta">
-          状态：
-          <span class="badge" :class="statusBadge(statusCode)">{{ statusLabel(statusCode) }}</span>
-          <span style="margin: 0 6px; color: #cbd5e1;">|</span>
-          审核阶段：<b>{{ reviewPhaseLabel }}</b>
-        </p>
-
-        <div class="workbench-metrics">
-          <div class="workbench-metric">
-            <div class="muted">预览总分</div>
-            <div class="workbench-metric-value">{{ toDisplay(previewTotalScore) }}</div>
+  <section class="dash-page">
+    <div class="card dash-hero dash-hero--student">
+      <div class="dash-hero__top">
+        <div>
+          <p class="dash-hero__kicker">欢迎回来，<b>{{ realName || '同学' }}</b></p>
+          <div class="dash-hero__headline">
+            {{ semesterName ? `${semesterName}测评单` : '本学期测评单' }}
           </div>
-          <div class="workbench-metric">
-            <div class="muted">审核进度</div>
-            <div class="workbench-metric-value">{{ reviewDoneCount }}/{{ reviewTotalCount }}</div>
+          <div class="dash-hero__meta">
+            <el-tag :type="statusTagType" effect="plain">{{ statusLabel(statusCode) }}</el-tag>
+            <span class="dash-dot" aria-hidden="true" />
+            <span class="muted">审核阶段：<b>{{ reviewPhaseLabel }}</b></span>
           </div>
         </div>
 
-        <div class="action-row" style="margin-top: 12px;">
+        <div class="dash-hero__actions">
           <el-button type="primary" @click="go('/student/eval/submit')">进入综合成绩</el-button>
           <el-button type="default" @click="go('/student/eval/course')">课程成绩</el-button>
         </div>
       </div>
 
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">待办提醒</h3>
-        <ul v-if="todoTips.length" class="workbench-list">
+      <div v-if="loading" class="dash-empty" style="padding: 12px 0;">加载中...</div>
+      <div v-else class="dash-hero__bottom">
+        <div class="dash-progress">
+          <div class="dash-progress__head">
+            <div class="dash-progress__title">审核进度</div>
+            <div class="muted">{{ reviewDoneCount }}/{{ reviewTotalCount }}</div>
+          </div>
+          <div style="margin-top: 8px;">
+            <el-progress :percentage="reviewProgressPercent" :stroke-width="10" :show-text="false" />
+          </div>
+          <div class="dash-progress__hint">{{ progressHint }}</div>
+        </div>
+
+        <div class="dash-metric">
+          <div class="dash-metric__label">预览总分（口径：预览）</div>
+          <div class="dash-metric__value">{{ toDisplay(previewTotalScore) }}</div>
+          <div class="muted" style="font-size: 12px;">完整明细请进入“综合成绩”。</div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="!loading" class="dash-grid">
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">分数概览</h3>
+          <p class="dash-card__desc">预览口径 · 已乘权重后计入分</p>
+        </div>
+        <div class="dash-score-grid">
+          <div class="dash-score-cell">
+            <div class="dash-score-cell__name">德育</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.moral) }}</div>
+          </div>
+          <div class="dash-score-cell">
+            <div class="dash-score-cell__name">智育</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.intel) }}</div>
+          </div>
+          <div class="dash-score-cell">
+            <div class="dash-score-cell__name">体育</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.sport) }}</div>
+          </div>
+          <div class="dash-score-cell">
+            <div class="dash-score-cell__name">美育</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.art) }}</div>
+          </div>
+          <div class="dash-score-cell">
+            <div class="dash-score-cell__name">劳育</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.labor) }}</div>
+          </div>
+          <div class="dash-score-cell" style="background: #eef5ff;">
+            <div class="dash-score-cell__name">总分</div>
+            <div class="dash-score-cell__value">{{ toDisplay(previewScores.total) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">待办提醒</h3>
+          <p class="dash-card__desc">下一步建议</p>
+        </div>
+        <ul v-if="todoTips.length" class="todo-list">
           <li v-for="tip in todoTips" :key="tip">{{ tip }}</li>
         </ul>
         <p v-else class="muted" style="margin-top: 8px;">暂无待办。</p>
-
-        <p v-if="openFeedbackCount > 0" class="muted workbench-inline-hint">
-          未关闭反馈：<b>{{ openFeedbackCount }}</b>
-        </p>
-
-        <div class="action-row" style="margin-top: 12px;">
+        <p v-if="openFeedbackCount > 0" class="muted todo-hint">未关闭反馈：<b>{{ openFeedbackCount }}</b></p>
+        <div class="dash-hero__actions" style="margin-top: 12px;">
           <el-button type="default" @click="go('/student/feedback/mine')">我的反馈</el-button>
           <el-button type="default" @click="go('/student/feedback/create')">我要反馈</el-button>
         </div>
       </div>
 
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">公告通知</h3>
-
-        <div v-if="notices.length" class="workbench-notice-list">
-          <div v-for="n in notices" :key="n.id" class="workbench-notice-row">
-            <button class="link workbench-notice-title" type="button" :title="n.title" @click="openNotice(n)">
-              {{ n.title }}
-            </button>
-            <span class="muted">{{ formatDate(pickNoticeTime(n)) }}</span>
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">公告通知</h3>
+          <el-button type="default" size="small" @click="go('/student/notices')">更多</el-button>
+        </div>
+        <div v-if="notices.length" class="dash-list">
+          <div v-for="n in notices" :key="n.id" class="dash-row">
+            <div class="dash-row__main">
+              <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">
+                {{ n.title }}
+              </button>
+              <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
+            </div>
           </div>
         </div>
-        <div v-else class="empty" style="padding: 10px 0;">暂无公告</div>
-
-        <div class="action-row" style="margin-top: 12px;">
-          <el-button type="default" @click="go('/student/notices')">更多公告</el-button>
-        </div>
+        <div v-else class="dash-empty">暂无公告</div>
       </div>
 
-      <div class="card workbench-card">
-        <h3 class="workbench-card-title">快捷入口</h3>
-        <div class="workbench-actions">
-          <el-button type="default" @click="go('/student/eval/moral')">德育</el-button>
-          <el-button type="default" @click="go('/student/eval/intel')">智育</el-button>
-          <el-button type="default" @click="go('/student/eval/sport')">体育</el-button>
-          <el-button type="default" @click="go('/student/eval/art')">美育</el-button>
-          <el-button type="default" @click="go('/student/eval/labor')">劳育</el-button>
-          <el-button type="default" @click="go('/student/ranking')">综合排名</el-button>
+      <div class="card">
+        <div class="dash-card__head">
+          <h3 class="dash-card__title">快捷入口</h3>
+          <p class="dash-card__desc">快速进入常用功能</p>
+        </div>
+        <div class="dash-tiles">
+          <button class="dash-tile" type="button" @click="go('/student/eval/course')">
+            <div class="dash-tile__title">课程成绩</div>
+            <div class="dash-tile__desc">先填课程，再补齐活动</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/student/eval/submit')">
+            <div class="dash-tile__title">综合成绩</div>
+            <div class="dash-tile__desc">预览分数与提交审核</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/student/eval/intel')">
+            <div class="dash-tile__title">智育</div>
+            <div class="dash-tile__desc">课程 + 创新活动填报</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/student/eval/moral')">
+            <div class="dash-tile__title">德育</div>
+            <div class="dash-tile__desc">德育活动与证明材料</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/student/eval/sport')">
+            <div class="dash-tile__title">体育</div>
+            <div class="dash-tile__desc">体育活动分池填报</div>
+          </button>
+          <button class="dash-tile" type="button" @click="go('/student/ranking')">
+            <div class="dash-tile__title">综合排名</div>
+            <div class="dash-tile__desc">查看学期排名结果</div>
+          </button>
         </div>
       </div>
     </div>
@@ -121,6 +177,26 @@ const reviewTotalCount = computed(() => Number(score.value?.reviewTotalCount || 
 const reviewDoneCount = computed(() => Number(score.value?.reviewDoneCount || 0))
 const canStudentResubmit = computed(() => Boolean(score.value?.canStudentResubmit))
 
+const previewScores = computed(() => {
+  const s = score.value
+  return {
+    moral: Number(pickScoreValue(s, 'previewMoralScore', 'moralScore') || 0),
+    intel: Number(pickScoreValue(s, 'previewIntelScore', 'intelScore') || 0),
+    sport: Number(pickScoreValue(s, 'previewSportScore', 'sportScore') || 0),
+    art: Number(pickScoreValue(s, 'previewArtScore', 'artScore') || 0),
+    labor: Number(pickScoreValue(s, 'previewLaborScore', 'laborScore') || 0),
+    total: Number(pickScoreValue(s, 'previewTotalScore', 'totalScore') || 0)
+  }
+})
+
+const reviewProgressPercent = computed(() => {
+  const total = reviewTotalCount.value
+  if (total <= 0) return 0
+  const done = reviewDoneCount.value
+  const pct = Math.round((done / total) * 100)
+  return Math.max(0, Math.min(100, pct))
+})
+
 const reviewPhaseLabel = computed(() => {
   const code = reviewPhaseCode.value
   if (code === 'NOT_REVIEWED') return '未审核'
@@ -128,6 +204,16 @@ const reviewPhaseLabel = computed(() => {
   if (code === 'DONE_NEED_STUDENT_FIX') return '待学生修改'
   if (code === 'DONE_ALL_PASS') return '全部通过'
   return code || '-'
+})
+
+const statusTagType = computed(() => {
+  const code = statusCode.value
+  if (code === 'DRAFT') return 'info'
+  if (code === 'SUBMITTED') return 'warning'
+  if (code === 'COUNSELOR_REVIEWED') return 'success'
+  if (code === 'FINALIZED') return 'success'
+  if (code === 'PUBLISHED') return 'success'
+  return 'info'
 })
 
 const todoTips = computed(() => {
@@ -173,6 +259,17 @@ const todoTips = computed(() => {
   return tips.slice(0, 3)
 })
 
+const progressHint = computed(() => {
+  const status = statusCode.value
+  const phase = reviewPhaseCode.value
+  if (status === 'DRAFT') return '当前为草稿：建议先填“课程成绩”，再补齐各模块活动。'
+  if (status === 'SUBMITTED' && canStudentResubmit.value) return '存在驳回项：请修订后再次提交。'
+  if (status === 'SUBMITTED' && (phase === 'NOT_REVIEWED' || phase === 'IN_PROGRESS')) return '辅导员审核中：你可查看审核进度与驳回原因。'
+  if (status === 'COUNSELOR_REVIEWED') return '已提交管理员：可导出正式 Word 或查看历史排名。'
+  if (status === 'FINALIZED' || status === 'PUBLISHED') return '历史测评单：可查看分数与排名结果。'
+  return '进入“综合成绩”查看明细与操作。'
+})
+
 const statusLabel = (code) => {
   if (code === 'DRAFT') return '草稿'
   if (code === 'SUBMITTED') return '已提交'
@@ -180,15 +277,6 @@ const statusLabel = (code) => {
   if (code === 'FINALIZED') return '已终审'
   if (code === 'PUBLISHED') return '已公示'
   return code || '-'
-}
-
-const statusBadge = (code) => {
-  if (code === 'DRAFT') return ''
-  if (code === 'SUBMITTED') return 'warning'
-  if (code === 'COUNSELOR_REVIEWED') return 'success'
-  if (code === 'FINALIZED') return 'success'
-  if (code === 'PUBLISHED') return 'success'
-  return ''
 }
 
 const toDisplay = (v) => {
@@ -253,84 +341,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.workbench-grid .workbench-card {
-  box-shadow: none;
-  background: #fbfdff;
-  border-color: #e5e7eb;
-}
-
-.workbench-card-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.workbench-meta {
-  margin-top: 8px;
-  line-height: 1.7;
-}
-
-.workbench-metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.workbench-metric {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: #ffffff;
-}
-
-.workbench-metric-value {
-  margin-top: 6px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.workbench-list {
-  margin: 10px 0 0;
+.todo-list {
+  margin: 8px 0 0;
   padding-left: 18px;
-  color: #0f172a;
+  color: var(--app-text);
   line-height: 1.7;
 }
 
-.workbench-inline-hint {
+.todo-hint {
   margin-top: 10px;
-}
-
-.workbench-notice-list {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-
-.workbench-notice-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.workbench-notice-title {
-  font-size: 13px;
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-}
-
-.workbench-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
 }
 </style>
-
