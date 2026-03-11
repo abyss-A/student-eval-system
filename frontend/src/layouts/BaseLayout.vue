@@ -154,7 +154,7 @@ const pageTitle = computed(() => {
   return '综合测评'
 })
 
-const contentViewKey = computed(() => `${route.fullPath}::${viewReloadSeed.value}`)
+const contentViewKey = computed(() => `${route.path}::${viewReloadSeed.value}`)
 
 const resolveTabTitle = (currentRoute) => {
   const metaTitle = currentRoute.meta?.tabTitle || currentRoute.meta?.title
@@ -207,7 +207,7 @@ const pruneTabs = (max = 8) => {
 const syncTabByRoute = (currentRoute) => {
   ensureHomeTab()
 
-  const key = currentRoute.fullPath
+  const key = currentRoute.path
   const idx = tabs.value.findIndex((tab) => tab.key === key)
   if (idx >= 0) {
     tabs.value[idx] = {
@@ -287,12 +287,61 @@ const logout = () => {
 
 syncAuth()
 
+const resolveMenuItemPath = (to) => {
+  if (!to) return ''
+  if (typeof to === 'string') return to
+  if (typeof to === 'object' && typeof to.path === 'string') return to.path
+  return ''
+}
+
+const matchGroupTitleByPath = (path, groups = props.menuGroups) => {
+  const current = String(path || '').trim()
+  if (!current) return ''
+
+  let bestTitle = ''
+  let bestLength = -1
+
+  for (const group of groups || []) {
+    const title = String(group?.title || '').trim()
+    if (!title) continue
+    const items = Array.isArray(group?.items) ? group.items : []
+
+    for (const item of items) {
+      const to = resolveMenuItemPath(item?.to)
+      if (!to || to === '/') continue
+
+      const candidates = [to]
+      const splitIdx = to.lastIndexOf('/')
+      if (splitIdx > 0) {
+        const base = to.slice(0, splitIdx)
+        if (base && base !== '/') candidates.push(base)
+      }
+
+      for (const candidate of candidates) {
+        if (!candidate) continue
+        const matched = current === candidate || current.startsWith(`${candidate}/`)
+        if (!matched) continue
+        if (candidate.length > bestLength) {
+          bestLength = candidate.length
+          bestTitle = title
+        }
+      }
+    }
+  }
+
+  return bestTitle
+}
+
 watch(
   () => props.menuGroups,
   (groups) => {
     ;(groups || []).forEach((g) => {
       if (g?.title && openGroups[g.title] === undefined) {
-        openGroups[g.title] = true
+        if (typeof g.defaultOpen === 'boolean') {
+          openGroups[g.title] = g.defaultOpen
+        } else {
+          openGroups[g.title] = true
+        }
       }
     })
   },
@@ -304,6 +353,10 @@ watch(
   () => {
     syncAuth()
     syncTabByRoute(route)
+    const groupTitle = matchGroupTitleByPath(route.path)
+    if (groupTitle) {
+      openGroups[groupTitle] = true
+    }
   },
   { immediate: true }
 )

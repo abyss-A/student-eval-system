@@ -7,11 +7,8 @@ import BaseLayout from './BaseLayout.vue'
 
 const menuGroups = [
   {
-    title: '工作台',
-    items: [{ label: '首页', to: '/student/home' }]
-  },
-  {
     title: '测评填报',
+    defaultOpen: true,
     items: [
       { label: '课程成绩', to: '/student/eval/course' },
       { label: '德育', to: '/student/eval/moral' },
@@ -24,10 +21,12 @@ const menuGroups = [
   },
   {
     title: '公告通知',
+    defaultOpen: false,
     items: [{ label: '公告列表', to: '/student/notices' }]
   },
   {
     title: '反馈管理',
+    defaultOpen: false,
     items: [
       { label: '我要反馈', to: '/student/feedback/create' },
       { label: '我的反馈', to: '/student/feedback/mine' }
@@ -35,6 +34,7 @@ const menuGroups = [
   },
   {
     title: '排名公示',
+    defaultOpen: false,
     items: [{ label: '综合排名', to: '/student/ranking' }]
   }
 ]

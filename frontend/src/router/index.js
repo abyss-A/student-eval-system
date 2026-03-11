@@ -50,7 +50,7 @@ const routes = [
     meta: { roles: ['STUDENT'] },
     children: [
       { path: '', redirect: '/student/home' },
-      { path: 'home', component: StudentHomeView, meta: { title: '工作台' } },
+      { path: 'home', component: StudentHomeView, meta: { title: '首页' } },
       { path: 'eval/course', component: EvalCourse, meta: { title: '课程成绩' } },
       { path: 'eval/moral', component: EvalModule, props: { moduleType: 'MORAL', label: '德育' }, meta: { title: '德育填报' } },
       { path: 'eval/intel', component: EvalModule, props: { moduleType: 'INTEL_PRO_INNOV', label: '智育' }, meta: { title: '智育填报' } },
@@ -73,7 +73,7 @@ const routes = [
     meta: { roles: ['COUNSELOR'] },
     children: [
       { path: '', redirect: '/teacher/home' },
-      { path: 'home', component: TeacherHomeView, meta: { title: '工作台' } },
+      { path: 'home', component: TeacherHomeView, meta: { title: '首页' } },
       { path: 'review/tasks', component: TeacherReviewTasks, meta: { title: '待审核列表' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
@@ -90,7 +90,7 @@ const routes = [
     meta: { roles: ['ADMIN'] },
     children: [
       { path: '', redirect: '/admin/home' },
-      { path: 'home', component: AdminHomeView, meta: { title: '工作台' } },
+      { path: 'home', component: AdminHomeView, meta: { title: '首页' } },
       { path: 'submissions', component: AdminView, meta: { title: '测评单查看' } },
       { path: 'finalize/tasks', redirect: '/admin/submissions' },
       { path: 'counselor/scopes', component: CounselorScopeView, meta: { title: '班级权限管理' } },
