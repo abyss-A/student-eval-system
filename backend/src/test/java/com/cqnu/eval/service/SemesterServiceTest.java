@@ -91,7 +91,11 @@ class SemesterServiceTest {
         sourceCfg.setScoreModel("STRICT_FORMULA");
         sourceCfg.setwMoral(0.11);
         sourceCfg.setwIntel(0.66);
+        sourceCfg.setIntelCourseRatio(0.90);
+        sourceCfg.setIntelInnovationRatio(0.10);
         sourceCfg.setwSport(0.12);
+        sourceCfg.setSportUniversityPeRatio(0.80);
+        sourceCfg.setSportActivityRatio(0.20);
         sourceCfg.setwArt(0.05);
         sourceCfg.setwLabor(0.06);
         sourceCfg.setCapMoral(90.0);
@@ -119,7 +123,11 @@ class SemesterServiceTest {
         assertEquals(sourceCfg.getScoreModel(), inserted.getScoreModel());
         assertEquals(sourceCfg.getwMoral(), inserted.getwMoral());
         assertEquals(sourceCfg.getwIntel(), inserted.getwIntel());
+        assertEquals(sourceCfg.getIntelCourseRatio(), inserted.getIntelCourseRatio());
+        assertEquals(sourceCfg.getIntelInnovationRatio(), inserted.getIntelInnovationRatio());
         assertEquals(sourceCfg.getwSport(), inserted.getwSport());
+        assertEquals(sourceCfg.getSportUniversityPeRatio(), inserted.getSportUniversityPeRatio());
+        assertEquals(sourceCfg.getSportActivityRatio(), inserted.getSportActivityRatio());
         assertEquals(sourceCfg.getwArt(), inserted.getwArt());
         assertEquals(sourceCfg.getwLabor(), inserted.getwLabor());
         assertEquals(sourceCfg.getCapMoral(), inserted.getCapMoral());
@@ -240,7 +248,11 @@ class SemesterServiceTest {
         existing.setScoreModel("STRICT_FORMULA");
         existing.setwMoral(0.15);
         existing.setwIntel(0.60);
+        existing.setIntelCourseRatio(0.85);
+        existing.setIntelInnovationRatio(0.15);
         existing.setwSport(0.10);
+        existing.setSportUniversityPeRatio(0.85);
+        existing.setSportActivityRatio(0.15);
         existing.setwArt(0.075);
         existing.setwLabor(0.075);
         existing.setCapMoral(100.0);
@@ -252,7 +264,11 @@ class SemesterServiceTest {
         AdminScoringConfigUpdateRequest request = new AdminScoringConfigUpdateRequest();
         request.setwMoral(0.10);
         request.setwIntel(0.60);
+        request.setIntelCourseRatio(0.90);
+        request.setIntelInnovationRatio(0.10);
         request.setwSport(0.10);
+        request.setSportUniversityPeRatio(0.80);
+        request.setSportActivityRatio(0.20);
         request.setwArt(0.10);
         request.setwLabor(0.10);
         request.setCapMoral(90.0);
@@ -276,7 +292,11 @@ class SemesterServiceTest {
         assertEquals(1L, updatedEntity.getSemesterId());
         assertEquals(0.10, updatedEntity.getwMoral());
         assertEquals(0.60, updatedEntity.getwIntel());
+        assertEquals(0.90, updatedEntity.getIntelCourseRatio());
+        assertEquals(0.10, updatedEntity.getIntelInnovationRatio());
         assertEquals(0.10, updatedEntity.getwSport());
+        assertEquals(0.80, updatedEntity.getSportUniversityPeRatio());
+        assertEquals(0.20, updatedEntity.getSportActivityRatio());
         assertEquals(0.10, updatedEntity.getwArt());
         assertEquals(0.10, updatedEntity.getwLabor());
         assertEquals(90.0, updatedEntity.getCapMoral());
@@ -284,6 +304,36 @@ class SemesterServiceTest {
         assertEquals(92.0, updatedEntity.getCapSport());
         assertEquals(93.0, updatedEntity.getCapArt());
         assertEquals(94.0, updatedEntity.getCapLabor());
+    }
+
+    @Test
+    void upsertScoringConfig_blocksWhenSubRatiosInvalid() {
+        SemesterEntity semester = new SemesterEntity();
+        semester.setId(1L);
+        when(semesterMapper.findById(1L)).thenReturn(semester);
+
+        AdminScoringConfigUpdateRequest request = new AdminScoringConfigUpdateRequest();
+        request.setwMoral(0.15);
+        request.setwIntel(0.60);
+        request.setwSport(0.10);
+        request.setwArt(0.075);
+        request.setwLabor(0.075);
+        request.setIntelCourseRatio(0.90);
+        request.setIntelInnovationRatio(0.20);
+        request.setSportUniversityPeRatio(0.85);
+        request.setSportActivityRatio(0.15);
+        request.setCapMoral(100.0);
+        request.setCapIntel(100.0);
+        request.setCapSport(100.0);
+        request.setCapArt(100.0);
+        request.setCapLabor(100.0);
+
+        BizException ex = assertThrows(BizException.class, () -> semesterService.upsertScoringConfig(1L, request));
+
+        assertEquals(40001, ex.getCode());
+        assertTrue(ex.getMessage().contains("智育二级占比"));
+        verify(scoringConfigMapper, never()).insertDefault(any());
+        verify(scoringConfigMapper, never()).update(any());
     }
 
     @Test

@@ -27,11 +27,11 @@ SET is_active = CASE WHEN id = @semester_id THEN 1 ELSE is_active END;
 
 INSERT INTO scoring_config(
   semester_id, appeal_days, precedence_mode, score_model,
-  w_moral, w_intel, w_sport, w_art, w_labor,
+  w_moral, w_intel, intel_course_ratio, intel_innovation_ratio, w_sport, sport_university_pe_ratio, sport_activity_ratio, w_art, w_labor,
   cap_moral, cap_intel, cap_sport, cap_art, cap_labor
 )
 SELECT @semester_id, 10, 'COLLEGE_FIRST', 'STRICT_FORMULA',
-       0.15, 0.60, 0.10, 0.075, 0.075,
+       0.15, 0.60, 0.85, 0.15, 0.10, 0.85, 0.15, 0.075, 0.075,
        100, 100, 100, 100, 100
 WHERE NOT EXISTS (
   SELECT 1 FROM scoring_config WHERE semester_id = @semester_id

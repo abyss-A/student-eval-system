@@ -8,7 +8,11 @@ public class ScoringConfigEntity {
     private String scoreModel;
     private Double wMoral;
     private Double wIntel;
+    private Double intelCourseRatio;
+    private Double intelInnovationRatio;
     private Double wSport;
+    private Double sportUniversityPeRatio;
+    private Double sportActivityRatio;
     private Double wArt;
     private Double wLabor;
     private Double capMoral;
@@ -73,12 +77,44 @@ public class ScoringConfigEntity {
         this.wIntel = wIntel;
     }
 
+    public Double getIntelCourseRatio() {
+        return intelCourseRatio;
+    }
+
+    public void setIntelCourseRatio(Double intelCourseRatio) {
+        this.intelCourseRatio = intelCourseRatio;
+    }
+
+    public Double getIntelInnovationRatio() {
+        return intelInnovationRatio;
+    }
+
+    public void setIntelInnovationRatio(Double intelInnovationRatio) {
+        this.intelInnovationRatio = intelInnovationRatio;
+    }
+
     public Double getwSport() {
         return wSport;
     }
 
     public void setwSport(Double wSport) {
         this.wSport = wSport;
+    }
+
+    public Double getSportUniversityPeRatio() {
+        return sportUniversityPeRatio;
+    }
+
+    public void setSportUniversityPeRatio(Double sportUniversityPeRatio) {
+        this.sportUniversityPeRatio = sportUniversityPeRatio;
+    }
+
+    public Double getSportActivityRatio() {
+        return sportActivityRatio;
+    }
+
+    public void setSportActivityRatio(Double sportActivityRatio) {
+        this.sportActivityRatio = sportActivityRatio;
     }
 
     public Double getwArt() {

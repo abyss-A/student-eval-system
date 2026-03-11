@@ -12,7 +12,11 @@ test('管理员学期管理支持新建学期与评分配置 @quick', async ({ p
       semesterId: 1,
       wMoral: 0.15,
       wIntel: 0.6,
+      intelCourseRatio: 0.85,
+      intelInnovationRatio: 0.15,
       wSport: 0.1,
+      sportUniversityPeRatio: 0.85,
+      sportActivityRatio: 0.15,
       wArt: 0.075,
       wLabor: 0.075,
       capMoral: 100,
@@ -66,7 +70,11 @@ test('管理员学期管理支持新建学期与评分配置 @quick', async ({ p
         semesterId,
         wMoral: 0.15,
         wIntel: 0.6,
+        intelCourseRatio: 0.85,
+        intelInnovationRatio: 0.15,
         wSport: 0.1,
+        sportUniversityPeRatio: 0.85,
+        sportActivityRatio: 0.15,
         wArt: 0.075,
         wLabor: 0.075,
         capMoral: 100,
@@ -213,6 +221,12 @@ test('管理员学期管理支持新建学期与评分配置 @quick', async ({ p
   // Element Plus 的 el-input-number 会设置 aria-disabled，Playwright 会将其判定为不可输入，这里使用 force 绕过可访问性标记。
   await moralWeight.fill('0.2', { force: true })
   await intelWeight.fill('0.55', { force: true })
+
+  const intelDetailSection = page.locator('.semester-config-dialog .semester-config-section').filter({ hasText: '智育细则' }).first()
+  const courseRatio = intelDetailSection.locator('.semester-form-row').filter({ hasText: '课程平均占比' }).locator('input')
+  const innovationRatio = intelDetailSection.locator('.semester-form-row').filter({ hasText: '创新活动占比' }).locator('input')
+  await courseRatio.fill('0.9', { force: true })
+  await innovationRatio.fill('0.1', { force: true })
 
   await page.getByRole('button', { name: '保存配置' }).click()
   await expect(page.locator('.semester-notice')).toContainText('评分配置已保存')

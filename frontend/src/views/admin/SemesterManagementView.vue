@@ -202,11 +202,11 @@
           <el-input-number v-model="configForm.capMoral" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
         </div>
         <div class="semester-form-row">
-          <span class="semester-form-label">智育</span>
+          <span class="semester-form-label wide">创新活动上限（智育活动分池）</span>
           <el-input-number v-model="configForm.capIntel" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
         </div>
         <div class="semester-form-row">
-          <span class="semester-form-label">体育</span>
+          <span class="semester-form-label wide">体育活动上限（除大学体育）</span>
           <el-input-number v-model="configForm.capSport" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
         </div>
         <div class="semester-form-row">
@@ -218,6 +218,36 @@
           <el-input-number v-model="configForm.capLabor" :min="0" :max="1000" :step="1" :precision="2" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
         </div>
       </div>
+
+      <div class="semester-config-section">
+        <h4 class="semester-config-title">智育细则（0~1）</h4>
+        <div class="semester-form-row">
+          <span class="semester-form-label wide">课程平均占比</span>
+          <el-input-number v-model="configForm.intelCourseRatio" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label wide">创新活动占比</span>
+          <el-input-number v-model="configForm.intelInnovationRatio" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <p class="muted semester-config-sum" :class="{ invalid: !isIntelRatioSumValid }">
+          合计：{{ intelRatioSumText }} <span v-if="!isIntelRatioSumValid">（需为 1）</span>
+        </p>
+      </div>
+
+      <div class="semester-config-section">
+        <h4 class="semester-config-title">体育细则（0~1）</h4>
+        <div class="semester-form-row">
+          <span class="semester-form-label wide">大学体育占比</span>
+          <el-input-number v-model="configForm.sportUniversityPeRatio" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <div class="semester-form-row">
+          <span class="semester-form-label wide">体育活动占比（除大学体育）</span>
+          <el-input-number v-model="configForm.sportActivityRatio" :min="0" :max="1" :step="0.01" :precision="4" controls-position="right" :disabled="configLoading || configSaving || recalculating" />
+        </div>
+        <p class="muted semester-config-sum" :class="{ invalid: !isSportRatioSumValid }">
+          合计：{{ sportRatioSumText }} <span v-if="!isSportRatioSumValid">（需为 1）</span>
+        </p>
+      </div>
     </div>
 
     <template #footer>
@@ -226,7 +256,7 @@
         <el-button type="default" :loading="recalculating" :disabled="configLoading || configSaving || !configSemester?.id" @click="recalculateSemesterScores">
           重算本学期成绩
         </el-button>
-        <el-button type="primary" :loading="configSaving" :disabled="configLoading || recalculating || !configSemester?.id || !isWeightSumValid" @click="saveScoringConfig">
+        <el-button type="primary" :loading="configSaving" :disabled="configLoading || recalculating || !configSemester?.id || !isConfigValid" @click="saveScoringConfig">
           保存配置
         </el-button>
       </div>
@@ -398,6 +428,10 @@ const configForm = reactive({
   wSport: 0.1,
   wArt: 0.075,
   wLabor: 0.075,
+  intelCourseRatio: 0.85,
+  intelInnovationRatio: 0.15,
+  sportUniversityPeRatio: 0.85,
+  sportActivityRatio: 0.15,
   capMoral: 100,
   capIntel: 100,
   capSport: 100,
@@ -416,12 +450,24 @@ const weightSum = computed(() => {
 const isWeightSumValid = computed(() => Math.abs(weightSum.value - 1) <= 1e-6)
 const weightSumText = computed(() => weightSum.value.toFixed(6))
 
+const intelRatioSum = computed(() => Number(configForm.intelCourseRatio || 0) + Number(configForm.intelInnovationRatio || 0))
+const sportRatioSum = computed(() => Number(configForm.sportUniversityPeRatio || 0) + Number(configForm.sportActivityRatio || 0))
+const isIntelRatioSumValid = computed(() => Math.abs(intelRatioSum.value - 1) <= 1e-6)
+const isSportRatioSumValid = computed(() => Math.abs(sportRatioSum.value - 1) <= 1e-6)
+const intelRatioSumText = computed(() => intelRatioSum.value.toFixed(6))
+const sportRatioSumText = computed(() => sportRatioSum.value.toFixed(6))
+const isConfigValid = computed(() => isWeightSumValid.value && isIntelRatioSumValid.value && isSportRatioSumValid.value)
+
 const fillConfigForm = (cfg) => {
   configForm.wMoral = Number(cfg?.wMoral ?? cfg?.w_moral ?? configForm.wMoral)
   configForm.wIntel = Number(cfg?.wIntel ?? cfg?.w_intel ?? configForm.wIntel)
   configForm.wSport = Number(cfg?.wSport ?? cfg?.w_sport ?? configForm.wSport)
   configForm.wArt = Number(cfg?.wArt ?? cfg?.w_art ?? configForm.wArt)
   configForm.wLabor = Number(cfg?.wLabor ?? cfg?.w_labor ?? configForm.wLabor)
+  configForm.intelCourseRatio = Number(cfg?.intelCourseRatio ?? cfg?.intel_course_ratio ?? configForm.intelCourseRatio)
+  configForm.intelInnovationRatio = Number(cfg?.intelInnovationRatio ?? cfg?.intel_innovation_ratio ?? configForm.intelInnovationRatio)
+  configForm.sportUniversityPeRatio = Number(cfg?.sportUniversityPeRatio ?? cfg?.sport_university_pe_ratio ?? configForm.sportUniversityPeRatio)
+  configForm.sportActivityRatio = Number(cfg?.sportActivityRatio ?? cfg?.sport_activity_ratio ?? configForm.sportActivityRatio)
   configForm.capMoral = Number(cfg?.capMoral ?? cfg?.cap_moral ?? configForm.capMoral)
   configForm.capIntel = Number(cfg?.capIntel ?? cfg?.cap_intel ?? configForm.capIntel)
   configForm.capSport = Number(cfg?.capSport ?? cfg?.cap_sport ?? configForm.capSport)
@@ -469,6 +515,14 @@ const saveScoringConfig = async () => {
     configError.value = `五项权重之和需为 1，当前为 ${weightSum.value}`
     return
   }
+  if (!isIntelRatioSumValid.value) {
+    configError.value = `智育二级占比之和需为 1，当前为 ${intelRatioSum.value}`
+    return
+  }
+  if (!isSportRatioSumValid.value) {
+    configError.value = `体育二级占比之和需为 1，当前为 ${sportRatioSum.value}`
+    return
+  }
 
   const payload = {
     wMoral: Number(configForm.wMoral),
@@ -476,6 +530,10 @@ const saveScoringConfig = async () => {
     wSport: Number(configForm.wSport),
     wArt: Number(configForm.wArt),
     wLabor: Number(configForm.wLabor),
+    intelCourseRatio: Number(configForm.intelCourseRatio),
+    intelInnovationRatio: Number(configForm.intelInnovationRatio),
+    sportUniversityPeRatio: Number(configForm.sportUniversityPeRatio),
+    sportActivityRatio: Number(configForm.sportActivityRatio),
     capMoral: Number(configForm.capMoral),
     capIntel: Number(configForm.capIntel),
     capSport: Number(configForm.capSport),
@@ -762,6 +820,10 @@ onMounted(() => {
   color: #334155;
   font-weight: 600;
   font-size: 13px;
+}
+
+.semester-form-label.wide {
+  min-width: 118px;
 }
 
 .semester-form-error {

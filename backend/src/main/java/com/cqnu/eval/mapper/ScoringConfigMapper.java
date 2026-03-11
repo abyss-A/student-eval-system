@@ -20,11 +20,11 @@ public interface ScoringConfigMapper {
 
     @Insert("insert into scoring_config(" +
             "semester_id, appeal_days, precedence_mode, score_model, " +
-            "w_moral, w_intel, w_sport, w_art, w_labor, " +
+            "w_moral, w_intel, intel_course_ratio, intel_innovation_ratio, w_sport, sport_university_pe_ratio, sport_activity_ratio, w_art, w_labor, " +
             "cap_moral, cap_intel, cap_sport, cap_art, cap_labor" +
             ") values (" +
             "#{semesterId}, #{appealDays}, #{precedenceMode}, #{scoreModel}, " +
-            "#{wMoral}, #{wIntel}, #{wSport}, #{wArt}, #{wLabor}, " +
+            "#{wMoral}, #{wIntel}, #{intelCourseRatio}, #{intelInnovationRatio}, #{wSport}, #{sportUniversityPeRatio}, #{sportActivityRatio}, #{wArt}, #{wLabor}, " +
             "#{capMoral}, #{capIntel}, #{capSport}, #{capArt}, #{capLabor}" +
             ")")
     @Options(useGeneratedKeys = true, keyProperty = "id")
@@ -32,7 +32,9 @@ public interface ScoringConfigMapper {
 
     @Update("update scoring_config set " +
             "appeal_days=#{appealDays}, precedence_mode=#{precedenceMode}, score_model=#{scoreModel}, " +
-            "w_moral=#{wMoral}, w_intel=#{wIntel}, w_sport=#{wSport}, w_art=#{wArt}, w_labor=#{wLabor}, " +
+            "w_moral=#{wMoral}, w_intel=#{wIntel}, intel_course_ratio=#{intelCourseRatio}, intel_innovation_ratio=#{intelInnovationRatio}, " +
+            "w_sport=#{wSport}, sport_university_pe_ratio=#{sportUniversityPeRatio}, sport_activity_ratio=#{sportActivityRatio}, " +
+            "w_art=#{wArt}, w_labor=#{wLabor}, " +
             "cap_moral=#{capMoral}, cap_intel=#{capIntel}, cap_sport=#{capSport}, cap_art=#{capArt}, cap_labor=#{capLabor} " +
             "where semester_id=#{semesterId}")
     int update(ScoringConfigEntity entity);

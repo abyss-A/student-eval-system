@@ -72,7 +72,11 @@ public class SemesterService {
 
         existing.setwMoral(request.getwMoral());
         existing.setwIntel(request.getwIntel());
+        existing.setIntelCourseRatio(request.getIntelCourseRatio());
+        existing.setIntelInnovationRatio(request.getIntelInnovationRatio());
         existing.setwSport(request.getwSport());
+        existing.setSportUniversityPeRatio(request.getSportUniversityPeRatio());
+        existing.setSportActivityRatio(request.getSportActivityRatio());
         existing.setwArt(request.getwArt());
         existing.setwLabor(request.getwLabor());
         existing.setCapMoral(request.getCapMoral());
@@ -242,7 +246,11 @@ public class SemesterService {
         copied.setScoreModel(sourceCfg.getScoreModel());
         copied.setwMoral(sourceCfg.getwMoral());
         copied.setwIntel(sourceCfg.getwIntel());
+        copied.setIntelCourseRatio(sourceCfg.getIntelCourseRatio() == null ? 0.85 : sourceCfg.getIntelCourseRatio());
+        copied.setIntelInnovationRatio(sourceCfg.getIntelInnovationRatio() == null ? 0.15 : sourceCfg.getIntelInnovationRatio());
         copied.setwSport(sourceCfg.getwSport());
+        copied.setSportUniversityPeRatio(sourceCfg.getSportUniversityPeRatio() == null ? 0.85 : sourceCfg.getSportUniversityPeRatio());
+        copied.setSportActivityRatio(sourceCfg.getSportActivityRatio() == null ? 0.15 : sourceCfg.getSportActivityRatio());
         copied.setwArt(sourceCfg.getwArt());
         copied.setwLabor(sourceCfg.getwLabor());
         copied.setCapMoral(sourceCfg.getCapMoral());
@@ -280,7 +288,11 @@ public class SemesterService {
         cfg.setSemesterId(semesterId);
         cfg.setwMoral(0.15);
         cfg.setwIntel(0.60);
+        cfg.setIntelCourseRatio(0.85);
+        cfg.setIntelInnovationRatio(0.15);
         cfg.setwSport(0.10);
+        cfg.setSportUniversityPeRatio(0.85);
+        cfg.setSportActivityRatio(0.15);
         cfg.setwArt(0.075);
         cfg.setwLabor(0.075);
         cfg.setCapMoral(100.0);
@@ -300,6 +312,20 @@ public class SemesterService {
         requireInRange(request.getwSport(), 0, 1, "体育权重需在0~1之间");
         requireInRange(request.getwArt(), 0, 1, "美育权重需在0~1之间");
         requireInRange(request.getwLabor(), 0, 1, "劳育权重需在0~1之间");
+
+        requireInRange(request.getIntelCourseRatio(), 0, 1, "智育课程占比需在0~1之间");
+        requireInRange(request.getIntelInnovationRatio(), 0, 1, "智育创新占比需在0~1之间");
+        double intelRatioSum = request.getIntelCourseRatio() + request.getIntelInnovationRatio();
+        if (Math.abs(intelRatioSum - 1.0) > 1e-6) {
+            throw new BizException(40001, "智育二级占比之和需约等于1，当前为 " + intelRatioSum);
+        }
+
+        requireInRange(request.getSportUniversityPeRatio(), 0, 1, "大学体育占比需在0~1之间");
+        requireInRange(request.getSportActivityRatio(), 0, 1, "体育活动占比需在0~1之间");
+        double sportRatioSum = request.getSportUniversityPeRatio() + request.getSportActivityRatio();
+        if (Math.abs(sportRatioSum - 1.0) > 1e-6) {
+            throw new BizException(40001, "体育二级占比之和需约等于1，当前为 " + sportRatioSum);
+        }
 
         double sum = request.getwMoral()
                 + request.getwIntel()

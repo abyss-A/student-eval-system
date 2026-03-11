@@ -709,8 +709,26 @@ public class SubmissionService {
         map.put("courseAvg", previewResult.getCourseAvg());
         map.put("intelCourseAvg", previewResult.getIntelCourseAvg());
         map.put("formula", "Total = Moral + Intel + Sport + Art + Labor");
-        map.put("intelFormula", "intelRaw = intelCourseAvg * 0.85 + min(intelActivityTotal, 100) * 0.15; intelScore = intelRaw * 0.60");
-        map.put("sportFormula", "sportRaw = universityPeScore * 0.85 + min(sportActivityTotal, 100) * 0.15; sportScore = sportRaw * 0.10");
+
+        ScoringConfigEntity cfg = scoringConfigMapper.findBySemesterId(entity.getSemesterId());
+        if (cfg == null) {
+            cfg = defaultConfig();
+        }
+        double intelCourseRatio = cfg.getIntelCourseRatio() == null ? 0.85 : cfg.getIntelCourseRatio();
+        double intelInnovationRatio = cfg.getIntelInnovationRatio() == null ? 0.15 : cfg.getIntelInnovationRatio();
+        double sportUniversityPeRatio = cfg.getSportUniversityPeRatio() == null ? 0.85 : cfg.getSportUniversityPeRatio();
+        double sportActivityRatio = cfg.getSportActivityRatio() == null ? 0.15 : cfg.getSportActivityRatio();
+        double capIntel = cfg.getCapIntel() == null ? 100.0 : cfg.getCapIntel();
+        double capSport = cfg.getCapSport() == null ? 100.0 : cfg.getCapSport();
+        double wIntel = cfg.getwIntel() == null ? 0.60 : cfg.getwIntel();
+        double wSport = cfg.getwSport() == null ? 0.10 : cfg.getwSport();
+
+        map.put("intelFormula", String.format(Locale.ROOT,
+                "intelRaw = intelCourseAvg * %.4f + min(intelInnovation, %.2f) * %.4f; intelScore = intelRaw * %.4f",
+                intelCourseRatio, capIntel, intelInnovationRatio, wIntel));
+        map.put("sportFormula", String.format(Locale.ROOT,
+                "sportRaw = universityPeScore * %.4f + min(sportActivityPool, %.2f) * %.4f; sportScore = sportRaw * %.4f",
+                sportUniversityPeRatio, capSport, sportActivityRatio, wSport));
         return map;
     }
     public List<Map<String, Object>> getRanking(Long semesterId) {
@@ -1052,10 +1070,20 @@ public class SubmissionService {
         BigDecimal artRaw = min(art, BigDecimal.valueOf(cfg.getCapArt()));
         BigDecimal laborRaw = min(labor, BigDecimal.valueOf(cfg.getCapLabor()));
 
-        BigDecimal intelRaw = courseAvg.multiply(new BigDecimal("0.85"))
-                .add(intelCap.multiply(new BigDecimal("0.15")));
-        BigDecimal sportRaw = universityPeScore.multiply(new BigDecimal("0.85"))
-                .add(sportCap.multiply(new BigDecimal("0.15")));
+        double intelCourseRatioValue = cfg.getIntelCourseRatio() == null ? 0.85 : cfg.getIntelCourseRatio();
+        double intelInnovationRatioValue = cfg.getIntelInnovationRatio() == null ? 0.15 : cfg.getIntelInnovationRatio();
+        double sportUniversityPeRatioValue = cfg.getSportUniversityPeRatio() == null ? 0.85 : cfg.getSportUniversityPeRatio();
+        double sportActivityRatioValue = cfg.getSportActivityRatio() == null ? 0.15 : cfg.getSportActivityRatio();
+
+        BigDecimal intelCourseRatio = BigDecimal.valueOf(intelCourseRatioValue);
+        BigDecimal intelInnovationRatio = BigDecimal.valueOf(intelInnovationRatioValue);
+        BigDecimal sportUniversityPeRatio = BigDecimal.valueOf(sportUniversityPeRatioValue);
+        BigDecimal sportActivityRatio = BigDecimal.valueOf(sportActivityRatioValue);
+
+        BigDecimal intelRaw = courseAvg.multiply(intelCourseRatio)
+                .add(intelCap.multiply(intelInnovationRatio));
+        BigDecimal sportRaw = universityPeScore.multiply(sportUniversityPeRatio)
+                .add(sportCap.multiply(sportActivityRatio));
 
         BigDecimal moralScore = moralRaw.multiply(BigDecimal.valueOf(cfg.getwMoral()));
         BigDecimal intelScore = intelRaw.multiply(BigDecimal.valueOf(cfg.getwIntel()));
@@ -1140,7 +1168,11 @@ public class SubmissionService {
         ScoringConfigEntity cfg = new ScoringConfigEntity();
         cfg.setwMoral(0.15);
         cfg.setwIntel(0.60);
+        cfg.setIntelCourseRatio(0.85);
+        cfg.setIntelInnovationRatio(0.15);
         cfg.setwSport(0.10);
+        cfg.setSportUniversityPeRatio(0.85);
+        cfg.setSportActivityRatio(0.15);
         cfg.setwArt(0.075);
         cfg.setwLabor(0.075);
         cfg.setCapMoral(100.0);

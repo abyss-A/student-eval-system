@@ -42,7 +42,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\init-db.ps1
 ### 首次部署
 1. 创建数据库 `student_eval`
 2. 执行 `init.sql`
-3. 执行历史迁移脚本
+3. 执行历史迁移脚本（如：`backend/src/main/resources/db/migrations/20260312_scoring_config_subweights.sql`，用于新增评分配置二级占比字段）
 4. 再执行 `seed.sql`（如果部署环境需要演示数据）
 
 ### 正式环境建议

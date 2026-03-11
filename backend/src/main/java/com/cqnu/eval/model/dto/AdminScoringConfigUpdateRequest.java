@@ -10,8 +10,20 @@ public class AdminScoringConfigUpdateRequest {
     @NotNull(message = "智育权重不能为空")
     private Double wIntel;
 
+    @NotNull(message = "智育课程占比不能为空")
+    private Double intelCourseRatio;
+
+    @NotNull(message = "智育创新占比不能为空")
+    private Double intelInnovationRatio;
+
     @NotNull(message = "体育权重不能为空")
     private Double wSport;
+
+    @NotNull(message = "大学体育占比不能为空")
+    private Double sportUniversityPeRatio;
+
+    @NotNull(message = "体育活动占比不能为空")
+    private Double sportActivityRatio;
 
     @NotNull(message = "美育权重不能为空")
     private Double wArt;
@@ -54,12 +66,44 @@ public class AdminScoringConfigUpdateRequest {
         this.wIntel = wIntel;
     }
 
+    public Double getIntelCourseRatio() {
+        return intelCourseRatio;
+    }
+
+    public void setIntelCourseRatio(Double intelCourseRatio) {
+        this.intelCourseRatio = intelCourseRatio;
+    }
+
+    public Double getIntelInnovationRatio() {
+        return intelInnovationRatio;
+    }
+
+    public void setIntelInnovationRatio(Double intelInnovationRatio) {
+        this.intelInnovationRatio = intelInnovationRatio;
+    }
+
     public Double getwSport() {
         return wSport;
     }
 
     public void setwSport(Double wSport) {
         this.wSport = wSport;
+    }
+
+    public Double getSportUniversityPeRatio() {
+        return sportUniversityPeRatio;
+    }
+
+    public void setSportUniversityPeRatio(Double sportUniversityPeRatio) {
+        this.sportUniversityPeRatio = sportUniversityPeRatio;
+    }
+
+    public Double getSportActivityRatio() {
+        return sportActivityRatio;
+    }
+
+    public void setSportActivityRatio(Double sportActivityRatio) {
+        this.sportActivityRatio = sportActivityRatio;
     }
 
     public Double getwArt() {
@@ -142,4 +186,3 @@ public class AdminScoringConfigUpdateRequest {
         this.scoreModel = scoreModel;
     }
 }
-
