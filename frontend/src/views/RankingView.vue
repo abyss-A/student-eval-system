@@ -8,13 +8,21 @@
 
     <div class="table-search-bar">
       <div class="table-search-left">
-        <el-input
-          v-model.trim="semesterIdInput"
-          type="number"
-          class="ranking-semester-input"
-          placeholder="学期ID"
-          @keydown.enter.prevent="load()"
-        />
+        <el-select
+          v-model="selectedSemesterId"
+          class="ranking-semester-select"
+          placeholder="选择学期"
+          :disabled="semesterLoading || loading || !semesters.length"
+          filterable
+          @change="onSemesterChange"
+        >
+          <el-option
+            v-for="s in semesters"
+            :key="s.id"
+            :label="semesterOptionLabel(s)"
+            :value="s.id"
+          />
+        </el-select>
         <el-button type="primary" :loading="loading" @click="load">查询</el-button>
         <SearchCapsule
           v-model="keyword"
@@ -88,7 +96,9 @@ import TablePager from '../components/TablePager.vue'
 import useIdleAutoRefresh from '../composables/useIdleAutoRefresh'
 import useTablePager from '../composables/useTablePager'
 
-const semesterIdInput = ref('1')
+const semesters = ref([])
+const selectedSemesterId = ref(null)
+const semesterLoading = ref(false)
 const keyword = ref('')
 const rows = ref([])
 const loading = ref(false)
@@ -105,20 +115,43 @@ const filteredRows = computed(() => {
 
 const pager = useTablePager(filteredRows, 10)
 
-const parseSemesterId = () => {
-  const raw = String(semesterIdInput.value || '').trim()
-  const parsed = Number.parseInt(raw, 10)
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return null
+const isActiveSemester = (s) => Number(s?.isActive) === 1
+const semesterOptionLabel = (s) => {
+  const name = String(s?.name || '').trim() || '-'
+  return isActiveSemester(s) ? `${name}（当前）` : name
+}
+
+const resolveDefaultSemesterId = (list) => {
+  const items = Array.isArray(list) ? list : []
+  const active = items.find((s) => isActiveSemester(s))
+  return active?.id ?? items[0]?.id ?? null
+}
+
+const loadSemesters = async ({ silent = false } = {}) => {
+  semesterLoading.value = true
+  if (!silent) errorMsg.value = ''
+  try {
+    const { data } = await http.get('/semesters', { meta: { silent: true } })
+    const list = data.data || []
+    semesters.value = Array.isArray(list) ? list : []
+    const next = resolveDefaultSemesterId(semesters.value)
+    if (next != null) {
+      selectedSemesterId.value = next
+    }
+  } catch (e) {
+    semesters.value = []
+    selectedSemesterId.value = null
+    errorMsg.value = e?.userMessage || e?.message || '学期列表加载失败'
+  } finally {
+    semesterLoading.value = false
   }
-  return parsed
 }
 
 const load = async ({ keepPage = false, silent = false } = {}) => {
-  const semesterId = parseSemesterId()
+  const semesterId = selectedSemesterId.value
   if (!semesterId) {
     if (!silent) {
-      alert('请先输入有效的学期ID')
+      alert('请先选择学期')
     }
     return
   }
@@ -146,6 +179,11 @@ const onKeywordSearch = () => {
   pager.resetPage()
 }
 
+const onSemesterChange = () => {
+  pager.resetPage()
+  load({ silent: true })
+}
+
 const resetKeyword = () => {
   keyword.value = ''
   pager.resetPage()
@@ -165,13 +203,13 @@ useIdleAutoRefresh({
 })
 
 onMounted(() => {
-  load({ silent: true })
+  loadSemesters({ silent: true }).then(() => load({ silent: true }))
 })
 </script>
 
 <style scoped>
-.ranking-semester-input {
-  width: 120px;
+.ranking-semester-select {
+  width: 240px;
 }
 
 .ranking-error-card {

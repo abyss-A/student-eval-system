@@ -22,6 +22,7 @@ import TeacherReviewTasks from '../views/TeacherView.vue'
 import AdminView from '../views/AdminView.vue'
 import CounselorScopeView from '../views/admin/CounselorScopeView.vue'
 import AccountManagementView from '../views/admin/AccountManagementView.vue'
+import SemesterManagementView from '../views/admin/SemesterManagementView.vue'
 
 import { canAccessRoute, getHomeByRole, getRole, getToken, isLoggedIn } from '../utils/auth'
 
@@ -87,6 +88,7 @@ const routes = [
       { path: 'finalize/tasks', redirect: '/admin/submissions' },
       { path: 'counselor/scopes', component: CounselorScopeView, meta: { title: '班级权限管理' } },
       { path: 'accounts', component: AccountManagementView, meta: { title: '账号管理' } },
+      { path: 'semesters', component: SemesterManagementView, meta: { title: '学期管理' } },
       { path: 'notices', component: Notices, meta: { title: '公告管理' } },
       { path: 'notices/:id', component: NoticeDetail, meta: { title: '公告详情' } },
       { path: 'feedback/handle', component: FeedbackHandle, meta: { title: '反馈处理' } },

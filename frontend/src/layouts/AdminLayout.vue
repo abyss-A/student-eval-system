@@ -18,6 +18,10 @@ const menuGroups = [
     ]
   },
   {
+    title: '基础配置',
+    items: [{ label: '学期管理', to: '/admin/semesters' }]
+  },
+  {
     title: '公告通知',
     items: [{ label: '公告管理', to: '/admin/notices' }]
   },
