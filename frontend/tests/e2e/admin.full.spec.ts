@@ -8,6 +8,7 @@ test('管理员核心页面可访问 @full', async ({ page }) => {
     ['/admin/submissions', '测评单查看'],
     ['/admin/counselor/scopes', '班级权限管理'],
     ['/admin/accounts', '账号管理'],
+    ['/admin/semesters', '学期管理'],
     ['/admin/notices', '公告管理'],
     ['/admin/feedback/handle', '反馈处理'],
     ['/admin/ranking', '综合排名'],

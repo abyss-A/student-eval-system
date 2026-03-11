@@ -65,7 +65,7 @@ Assert-ExitCode -StepName 'Frontend build'
 Pop-Location
 
 try {
-  $backendReady = Wait-HttpReady -Url 'http://localhost:8080/api/v1/semesters/current' -TimeoutSec 3
+  $backendReady = Wait-HttpReady -Url 'http://localhost:8080/api/v1/semesters/active' -TimeoutSec 3
   if (-not $backendReady) {
     Write-Host '[Full] Starting backend server...' -ForegroundColor Cyan
     $backendCmd = "Set-Location '$PWD\backend'; .\scripts\run-backend.ps1"
@@ -85,7 +85,7 @@ try {
     Write-Host '[Full] Reusing existing frontend on :5173' -ForegroundColor DarkCyan
   }
 
-  if (-not (Wait-HttpReady -Url 'http://localhost:8080/api/v1/semesters/current' -TimeoutSec 420)) {
+  if (-not (Wait-HttpReady -Url 'http://localhost:8080/api/v1/semesters/active' -TimeoutSec 420)) {
     throw 'Backend server startup timeout on http://localhost:8080'
   }
   if (-not (Wait-HttpReady -Url 'http://localhost:5173/login' -TimeoutSec 180)) {
