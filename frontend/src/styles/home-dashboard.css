@@ -94,6 +94,10 @@
   align-items: stretch;
 }
 
+.dash-hero__bottom--single {
+  grid-template-columns: 1fr;
+}
+
 @media (max-width: 960px) {
   .dash-hero__bottom {
     grid-template-columns: 1fr;
@@ -154,8 +158,25 @@
   align-items: start;
 }
 
+.dash-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--app-gap-4);
+  align-items: start;
+}
+
+.dash-col {
+  display: grid;
+  gap: var(--app-gap-4);
+  align-content: start;
+}
+
 @media (max-width: 1080px) {
   .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-cols {
     grid-template-columns: 1fr;
   }
 }
@@ -338,4 +359,3 @@
   font-size: 13px;
   text-align: center;
 }
-

@@ -19,7 +19,7 @@
       </div>
 
       <div v-if="loading" class="dash-empty" style="padding: 12px 0;">加载中...</div>
-      <div v-else class="dash-hero__bottom">
+      <div v-else class="dash-hero__bottom dash-hero__bottom--single">
         <div class="dash-progress">
           <div class="dash-progress__head">
             <div class="dash-progress__title">阶段分布</div>
@@ -37,55 +37,43 @@
             未审核 <b>{{ countUnreviewed }}</b> · 审核中 <b>{{ countInProgress }}</b> · 待复审 <b>{{ countReviewed }}</b> · 待提交 <b>{{ countReadyToSubmit }}</b>
           </div>
         </div>
-
-        <div class="dash-metric">
-          <div class="dash-metric__label">待提交管理员</div>
-          <div class="dash-metric__value">{{ countReadyToSubmit }}</div>
-          <div class="muted" style="font-size: 12px;">可在列表中批量提交管理员。</div>
-          <div style="margin-top: 8px;">
-            <el-button size="small" type="primary" @click="go('/teacher/review/tasks', { preset: 'READY_TO_SUBMIT' })">去批量提交</el-button>
-          </div>
-        </div>
       </div>
     </div>
 
-    <div v-if="!loading" class="dash-grid">
-      <div class="card">
-        <div class="dash-card__head">
-          <h3 class="dash-card__title">待办列表预览</h3>
-          <el-button type="default" size="small" @click="go('/teacher/review/tasks')">查看全部</el-button>
-        </div>
-
-        <div v-if="topTasks.length" class="dash-list">
-          <div v-for="t in topTasks" :key="t.id" class="dash-row">
-            <div class="dash-row__main">
-              <div class="dash-row__title">{{ t.real_name || '-' }}（{{ t.account_no || t.accountNo || '-' }}）</div>
-              <div class="dash-row__meta">
-                {{ t.class_name || '-' }} · {{ pickTaskDoneCount(t) }}/{{ pickTaskTotalCount(t) }} · {{ formatDate(pickTaskSubmittedAt(t)) }}
-              </div>
-            </div>
-            <div class="dash-row__side">
-              <el-tag :type="taskTagType(t)" effect="plain">{{ taskProgressLabel(t) }}</el-tag>
-              <el-button size="small" type="primary" @click="openTaskFromHome(t)">继续审核</el-button>
-            </div>
-          </div>
-        </div>
-        <div v-else class="dash-empty">暂无待办</div>
-      </div>
-
-      <div class="dash-stack">
+    <div v-if="!loading" class="dash-cols">
+      <div class="dash-col">
         <div class="card">
           <div class="dash-card__head">
-            <h3 class="dash-card__title">可提交管理员</h3>
-            <p class="dash-card__desc">READY_TO_SUBMIT 且已提交</p>
+            <h3 class="dash-card__title">待办列表预览</h3>
+            <el-button type="default" size="small" @click="go('/teacher/review/tasks')">查看全部</el-button>
           </div>
-          <p class="muted" style="margin-top: 0; line-height: 1.7;">
-            当前共有 <b>{{ countReadyToSubmit }}</b> 份测评单已完成审核，可批量提交管理员。
-          </p>
-          <div class="dash-hero__actions" style="margin-top: 12px;">
-            <el-button type="primary" @click="go('/teacher/review/tasks', { preset: 'READY_TO_SUBMIT' })">去批量提交</el-button>
-            <el-button type="default" @click="go('/teacher/feedback/create')">我要反馈</el-button>
+
+          <div v-if="topTasks.length" class="dash-list">
+            <div v-for="t in topTasks" :key="t.id" class="dash-row">
+              <div class="dash-row__main">
+                <div class="dash-row__title">{{ t.real_name || '-' }}（{{ t.account_no || t.accountNo || '-' }}）</div>
+                <div class="dash-row__meta">
+                  {{ t.class_name || '-' }} · {{ pickTaskDoneCount(t) }}/{{ pickTaskTotalCount(t) }} · {{ formatDate(pickTaskSubmittedAt(t)) }}
+                </div>
+              </div>
+              <div class="dash-row__side">
+                <el-tag :type="taskTagType(t)" effect="plain">{{ taskProgressLabel(t) }}</el-tag>
+                <el-button size="small" type="primary" @click="openTaskFromHome(t)">继续审核</el-button>
+              </div>
+            </div>
           </div>
+          <div v-else class="dash-empty">暂无待办</div>
+        </div>
+      </div>
+
+      <div class="dash-col">
+        <div class="card">
+          <div class="dash-card__head">
+            <h3 class="dash-card__title">待提交管理员</h3>
+            <el-button size="small" type="primary" @click="go('/teacher/review/tasks', { preset: 'READY_TO_SUBMIT' })">去批量提交</el-button>
+          </div>
+          <div class="muted" style="margin-top: 2px;">READY_TO_SUBMIT（且已提交）</div>
+          <div class="dash-metric__value" style="margin-top: 6px;">{{ countReadyToSubmit }}</div>
         </div>
 
         <div class="card">
@@ -102,31 +90,6 @@
             </div>
           </div>
           <div v-else class="dash-empty">暂无公告</div>
-        </div>
-
-        <div class="card">
-          <div class="dash-card__head">
-            <h3 class="dash-card__title">快捷入口</h3>
-            <p class="dash-card__desc">常用功能</p>
-          </div>
-          <div class="dash-tiles">
-            <button class="dash-tile" type="button" @click="go('/teacher/review/tasks')">
-              <div class="dash-tile__title">待审核列表</div>
-              <div class="dash-tile__desc">查看并处理审核任务</div>
-            </button>
-            <button class="dash-tile" type="button" @click="go('/teacher/feedback/mine')">
-              <div class="dash-tile__title">我的反馈</div>
-              <div class="dash-tile__desc">查看反馈处理进度</div>
-            </button>
-            <button class="dash-tile" type="button" @click="go('/teacher/ranking')">
-              <div class="dash-tile__title">综合排名</div>
-              <div class="dash-tile__desc">查看学期排名</div>
-            </button>
-            <button class="dash-tile" type="button" @click="go('/teacher/me/profile')">
-              <div class="dash-tile__title">账号中心</div>
-              <div class="dash-tile__desc">个人信息与密码</div>
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -243,7 +206,7 @@ const topTasks = computed(() => {
       if (Number.isFinite(tb) && Number.isFinite(ta) && tb !== ta) return tb - ta
       return Number(b?.id || 0) - Number(a?.id || 0)
     })
-    .slice(0, 6)
+    .slice(0, 4)
 })
 
 const go = (path, query = undefined) => {
@@ -306,9 +269,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.dash-stack {
-  display: grid;
-  gap: var(--app-gap-4);
-}
-</style>
+<style scoped></style>

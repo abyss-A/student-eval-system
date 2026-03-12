@@ -41,104 +41,42 @@
       </div>
     </div>
 
-    <div v-if="!loading" class="dash-grid">
-      <div class="card">
-        <div class="dash-card__head">
-          <h3 class="dash-card__title">分数概览</h3>
-          <p class="dash-card__desc">预览口径 · 已乘权重后计入分</p>
-        </div>
-        <div class="dash-score-grid">
-          <div class="dash-score-cell">
-            <div class="dash-score-cell__name">德育</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.moral) }}</div>
+    <div v-if="!loading" class="dash-cols">
+      <div class="dash-col">
+        <div class="card">
+          <div class="dash-card__head">
+            <h3 class="dash-card__title">待办提醒</h3>
+            <p class="dash-card__desc">下一步建议</p>
           </div>
-          <div class="dash-score-cell">
-            <div class="dash-score-cell__name">智育</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.intel) }}</div>
-          </div>
-          <div class="dash-score-cell">
-            <div class="dash-score-cell__name">体育</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.sport) }}</div>
-          </div>
-          <div class="dash-score-cell">
-            <div class="dash-score-cell__name">美育</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.art) }}</div>
-          </div>
-          <div class="dash-score-cell">
-            <div class="dash-score-cell__name">劳育</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.labor) }}</div>
-          </div>
-          <div class="dash-score-cell" style="background: #eef5ff;">
-            <div class="dash-score-cell__name">总分</div>
-            <div class="dash-score-cell__value">{{ toDisplay(previewScores.total) }}</div>
+          <ul v-if="todoTips.length" class="todo-list">
+            <li v-for="tip in todoTips" :key="tip">{{ tip }}</li>
+          </ul>
+          <p v-else class="muted" style="margin-top: 8px;">暂无待办。</p>
+          <p v-if="openFeedbackCount > 0" class="muted todo-hint">未关闭反馈：<b>{{ openFeedbackCount }}</b></p>
+          <div class="dash-hero__actions" style="margin-top: 12px;">
+            <el-button type="default" @click="go('/student/feedback/mine')">我的反馈</el-button>
+            <el-button type="default" @click="go('/student/feedback/create')">我要反馈</el-button>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="dash-card__head">
-          <h3 class="dash-card__title">待办提醒</h3>
-          <p class="dash-card__desc">下一步建议</p>
-        </div>
-        <ul v-if="todoTips.length" class="todo-list">
-          <li v-for="tip in todoTips" :key="tip">{{ tip }}</li>
-        </ul>
-        <p v-else class="muted" style="margin-top: 8px;">暂无待办。</p>
-        <p v-if="openFeedbackCount > 0" class="muted todo-hint">未关闭反馈：<b>{{ openFeedbackCount }}</b></p>
-        <div class="dash-hero__actions" style="margin-top: 12px;">
-          <el-button type="default" @click="go('/student/feedback/mine')">我的反馈</el-button>
-          <el-button type="default" @click="go('/student/feedback/create')">我要反馈</el-button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="dash-card__head">
-          <h3 class="dash-card__title">公告通知</h3>
-          <el-button type="default" size="small" @click="go('/student/notices')">更多</el-button>
-        </div>
-        <div v-if="notices.length" class="dash-list">
-          <div v-for="n in notices" :key="n.id" class="dash-row">
-            <div class="dash-row__main">
-              <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">
-                {{ n.title }}
-              </button>
-              <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
+      <div class="dash-col">
+        <div class="card">
+          <div class="dash-card__head">
+            <h3 class="dash-card__title">公告通知</h3>
+            <el-button type="default" size="small" @click="go('/student/notices')">更多</el-button>
+          </div>
+          <div v-if="notices.length" class="dash-list">
+            <div v-for="n in notices" :key="n.id" class="dash-row">
+              <div class="dash-row__main">
+                <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">
+                  {{ n.title }}
+                </button>
+                <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else class="dash-empty">暂无公告</div>
-      </div>
-
-      <div class="card">
-        <div class="dash-card__head">
-          <h3 class="dash-card__title">快捷入口</h3>
-          <p class="dash-card__desc">快速进入常用功能</p>
-        </div>
-        <div class="dash-tiles">
-          <button class="dash-tile" type="button" @click="go('/student/eval/course')">
-            <div class="dash-tile__title">课程成绩</div>
-            <div class="dash-tile__desc">先填课程，再补齐活动</div>
-          </button>
-          <button class="dash-tile" type="button" @click="go('/student/eval/submit')">
-            <div class="dash-tile__title">综合成绩</div>
-            <div class="dash-tile__desc">预览分数与提交审核</div>
-          </button>
-          <button class="dash-tile" type="button" @click="go('/student/eval/intel')">
-            <div class="dash-tile__title">智育</div>
-            <div class="dash-tile__desc">课程 + 创新活动填报</div>
-          </button>
-          <button class="dash-tile" type="button" @click="go('/student/eval/moral')">
-            <div class="dash-tile__title">德育</div>
-            <div class="dash-tile__desc">德育活动与证明材料</div>
-          </button>
-          <button class="dash-tile" type="button" @click="go('/student/eval/sport')">
-            <div class="dash-tile__title">体育</div>
-            <div class="dash-tile__desc">体育活动分池填报</div>
-          </button>
-          <button class="dash-tile" type="button" @click="go('/student/ranking')">
-            <div class="dash-tile__title">综合排名</div>
-            <div class="dash-tile__desc">查看学期排名结果</div>
-          </button>
+          <div v-else class="dash-empty">暂无公告</div>
         </div>
       </div>
     </div>
@@ -176,18 +114,6 @@ const previewTotalScore = computed(() => Number(pickScoreValue(score.value, 'pre
 const reviewTotalCount = computed(() => Number(score.value?.reviewTotalCount || 0))
 const reviewDoneCount = computed(() => Number(score.value?.reviewDoneCount || 0))
 const canStudentResubmit = computed(() => Boolean(score.value?.canStudentResubmit))
-
-const previewScores = computed(() => {
-  const s = score.value
-  return {
-    moral: Number(pickScoreValue(s, 'previewMoralScore', 'moralScore') || 0),
-    intel: Number(pickScoreValue(s, 'previewIntelScore', 'intelScore') || 0),
-    sport: Number(pickScoreValue(s, 'previewSportScore', 'sportScore') || 0),
-    art: Number(pickScoreValue(s, 'previewArtScore', 'artScore') || 0),
-    labor: Number(pickScoreValue(s, 'previewLaborScore', 'laborScore') || 0),
-    total: Number(pickScoreValue(s, 'previewTotalScore', 'totalScore') || 0)
-  }
-})
 
 const reviewProgressPercent = computed(() => {
   const total = reviewTotalCount.value
