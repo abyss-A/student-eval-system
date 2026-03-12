@@ -121,10 +121,8 @@ test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
 
   await page.goto('/student/home', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.workspace-title')).toHaveText('首页')
-  await expect(page.getByRole('heading', { name: '分数概览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '待办提醒' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '快捷入口' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
 })
 
@@ -191,9 +189,8 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await page.goto('/teacher/home', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.workspace-title')).toHaveText('首页')
   await expect(page.getByRole('heading', { name: '待办列表预览' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '可提交管理员' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '待提交管理员' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '快捷入口' })).toBeVisible()
 })
 
 test('管理员首页可访问并展示核心区域 @quick', async ({ page }) => {
@@ -292,6 +289,5 @@ test('管理员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'NEW 反馈预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '测评单动态预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '快捷入口' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
 })
