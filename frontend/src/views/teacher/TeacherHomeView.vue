@@ -14,7 +14,6 @@
 
         <div class="dash-hero__actions">
           <el-button type="primary" @click="go('/teacher/review/tasks')">进入待审核列表</el-button>
-          <el-button type="default" @click="go('/teacher/notices')">公告管理</el-button>
         </div>
       </div>
 
@@ -33,7 +32,7 @@
               <div v-if="countReadyToSubmit" class="dash-seg dash-seg--success" :style="{ flexGrow: countReadyToSubmit, flexBasis: 0 }" />
             </div>
           </div>
-          <div class="dash-progress__hint" style="margin-top: 10px;">
+          <div class="dash-progress__hint">
             未审核 <b>{{ countUnreviewed }}</b> · 审核中 <b>{{ countInProgress }}</b> · 待复审 <b>{{ countReviewed }}</b> · 待提交 <b>{{ countReadyToSubmit }}</b>
           </div>
         </div>
@@ -41,7 +40,7 @@
     </div>
 
     <div v-if="!loading" class="dash-cols">
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
             <h3 class="dash-card__title">待办列表预览</h3>
@@ -66,30 +65,13 @@
         </div>
       </div>
 
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
             <h3 class="dash-card__title">待提交管理员</h3>
             <el-button size="small" type="primary" @click="go('/teacher/review/tasks', { preset: 'READY_TO_SUBMIT' })">去批量提交</el-button>
           </div>
-          <div class="muted" style="margin-top: 2px;">READY_TO_SUBMIT（且已提交）</div>
           <div class="dash-metric__value" style="margin-top: 6px;">{{ countReadyToSubmit }}</div>
-        </div>
-
-        <div class="card">
-          <div class="dash-card__head">
-            <h3 class="dash-card__title">公告通知</h3>
-            <el-button type="default" size="small" @click="go('/teacher/notices')">更多</el-button>
-          </div>
-          <div v-if="notices.length" class="dash-list">
-            <div v-for="n in notices" :key="n.id" class="dash-row">
-              <div class="dash-row__main">
-                <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">{{ n.title }}</button>
-                <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="dash-empty">暂无公告</div>
         </div>
       </div>
     </div>
@@ -105,7 +87,6 @@ import { getRealName } from '../../utils/auth'
 const router = useRouter()
 const loading = ref(false)
 const tasks = ref([])
-const notices = ref([])
 
 const realName = computed(() => getRealName())
 
@@ -206,7 +187,7 @@ const topTasks = computed(() => {
       if (Number.isFinite(tb) && Number.isFinite(ta) && tb !== ta) return tb - ta
       return Number(b?.id || 0) - Number(a?.id || 0)
     })
-    .slice(0, 4)
+    .slice(0, 3)
 })
 
 const go = (path, query = undefined) => {
@@ -218,14 +199,6 @@ const openTaskFromHome = (task) => {
   const id = task?.id
   if (!id) return
   router.push({ path: '/teacher/review/tasks', query: { open: String(id) } })
-}
-
-const pickNoticeTime = (notice) => notice?.published_at || notice?.updated_at || notice?.created_at || ''
-
-const openNotice = (notice) => {
-  const id = notice?.id
-  if (!id) return
-  router.push(`/teacher/notices/${id}`)
 }
 
 const formatDate = (raw) => {
@@ -243,22 +216,10 @@ const loadTasks = async () => {
   tasks.value = Array.isArray(data.data) ? data.data : []
 }
 
-const loadNotices = async () => {
-  const { data } = await http.get('/notices', { meta: { silent: true } })
-  const rows = Array.isArray(data.data) ? data.data : []
-  notices.value = rows.slice(0, 3).map((item) => ({
-    id: item?.id,
-    title: item?.title || '-',
-    published_at: item?.published_at,
-    updated_at: item?.updated_at,
-    created_at: item?.created_at
-  }))
-}
-
 const load = async () => {
   loading.value = true
   try {
-    await Promise.all([loadTasks(), loadNotices()])
+    await loadTasks()
   } finally {
     loading.value = false
   }

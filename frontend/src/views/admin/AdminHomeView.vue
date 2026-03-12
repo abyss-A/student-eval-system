@@ -8,7 +8,7 @@
           <div class="dash-hero__meta">
             <el-tag type="info" effect="plain">{{ activeSemesterName || '未设置当前学期' }}</el-tag>
             <el-tag type="warning" effect="plain">待审核：{{ submittedPendingCount }}</el-tag>
-            <el-tag type="warning" effect="plain">NEW 反馈：{{ feedbackNewCount }}</el-tag>
+            <el-tag type="warning" effect="plain">待处理反馈：{{ feedbackNewCount }}</el-tag>
           </div>
         </div>
 
@@ -29,19 +29,16 @@
 
           <div class="admin-metrics" style="margin-top: 10px;">
             <div class="dash-metric">
-              <div class="dash-metric__label">学生已提交待审核（SUBMITTED）</div>
+              <div class="dash-metric__label">学生已提交待审核</div>
               <div class="dash-metric__value">{{ submittedPendingCount }}</div>
-              <div class="muted" style="font-size: 12px;">来自学期概览统计</div>
             </div>
             <div class="dash-metric">
               <div class="dash-metric__label">可查看测评单</div>
               <div class="dash-metric__value">{{ adminTaskCount }}</div>
-              <div class="muted" style="font-size: 12px;">辅导员已提交管理员</div>
             </div>
             <div class="dash-metric">
-              <div class="dash-metric__label">反馈待处理（NEW）</div>
+              <div class="dash-metric__label">待处理反馈</div>
               <div class="dash-metric__value">{{ feedbackNewCount }}</div>
-              <div class="muted" style="font-size: 12px;">需要回复或关闭</div>
             </div>
           </div>
         </div>
@@ -49,10 +46,10 @@
     </div>
 
     <div v-if="!loading" class="dash-cols">
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
-            <h3 class="dash-card__title">NEW 反馈预览</h3>
+            <h3 class="dash-card__title">反馈预览</h3>
             <el-button type="default" size="small" @click="go('/admin/feedback/handle', { preset: 'NEW' })">查看全部</el-button>
           </div>
 
@@ -69,27 +66,11 @@
               </div>
             </div>
           </div>
-          <div v-else class="dash-empty">暂无 NEW 反馈</div>
-        </div>
-
-        <div class="card">
-          <div class="dash-card__head">
-            <h3 class="dash-card__title">公告通知</h3>
-            <el-button type="default" size="small" @click="go('/admin/notices')">更多</el-button>
-          </div>
-          <div v-if="notices.length" class="dash-list">
-            <div v-for="n in notices" :key="n.id" class="dash-row">
-              <div class="dash-row__main">
-                <button class="link dash-row__title" type="button" :title="n.title" @click="openNotice(n)">{{ n.title }}</button>
-                <div class="dash-row__meta">{{ formatDate(pickNoticeTime(n)) }}</div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="dash-empty">暂无公告</div>
+          <div v-else class="dash-empty">暂无反馈</div>
         </div>
       </div>
 
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
             <h3 class="dash-card__title">测评单动态预览</h3>
@@ -128,7 +109,6 @@ const loading = ref(false)
 const activeSemesterName = ref('')
 const submittedPendingCount = ref(0)
 const feedbackNewList = ref([])
-const notices = ref([])
 const adminTasks = ref([])
 
 const realName = computed(() => getRealName())
@@ -138,26 +118,18 @@ const adminTaskCount = computed(() => adminTasks.value.length)
 const feedbackPreview = computed(() => {
   const rows = feedbackNewList.value.slice()
   rows.sort((a, b) => new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime())
-  return rows.slice(0, 5)
+  return rows.slice(0, 3)
 })
 
 const taskPreview = computed(() => {
   const rows = adminTasks.value.slice()
   rows.sort((a, b) => new Date(b?.passTime || b?.pass_time || 0).getTime() - new Date(a?.passTime || a?.pass_time || 0).getTime())
-  return rows.slice(0, 5)
+  return rows.slice(0, 3)
 })
 
 const go = (path, query = undefined) => {
   if (query) router.push({ path, query })
   else router.push(path)
-}
-
-const pickNoticeTime = (notice) => notice?.published_at || notice?.updated_at || notice?.created_at || ''
-
-const openNotice = (notice) => {
-  const id = notice?.id
-  if (!id) return
-  router.push(`/admin/notices/${id}`)
 }
 
 const formatDate = (raw) => {
@@ -188,18 +160,6 @@ const loadAdminTasks = async () => {
   adminTasks.value = Array.isArray(data.data) ? data.data : []
 }
 
-const loadNotices = async () => {
-  const { data } = await http.get('/notices', { meta: { silent: true } })
-  const rows = Array.isArray(data.data) ? data.data : []
-  notices.value = rows.slice(0, 3).map((item) => ({
-    id: item?.id,
-    title: item?.title || '-',
-    published_at: item?.published_at,
-    updated_at: item?.updated_at,
-    created_at: item?.created_at
-  }))
-}
-
 const openFeedbackFromHome = (row) => {
   const id = row?.id
   if (!id) return
@@ -215,7 +175,7 @@ const openSubmissionFromHome = (row) => {
 const load = async () => {
   loading.value = true
   try {
-    await Promise.all([loadSemesterOverview(), loadFeedbackNewList(), loadAdminTasks(), loadNotices()])
+    await Promise.all([loadSemesterOverview(), loadFeedbackNewList(), loadAdminTasks()])
   } finally {
     loading.value = false
   }

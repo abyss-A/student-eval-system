@@ -34,7 +34,7 @@
         </div>
 
         <div class="dash-metric">
-          <div class="dash-metric__label">预览总分（口径：预览）</div>
+          <div class="dash-metric__label">预览总分</div>
           <div class="dash-metric__value">{{ toDisplay(previewTotalScore) }}</div>
           <div class="muted" style="font-size: 12px;">完整明细请进入“综合成绩”。</div>
         </div>
@@ -42,7 +42,7 @@
     </div>
 
     <div v-if="!loading" class="dash-cols">
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
             <h3 class="dash-card__title">待办提醒</h3>
@@ -52,15 +52,10 @@
             <li v-for="tip in todoTips" :key="tip">{{ tip }}</li>
           </ul>
           <p v-else class="muted" style="margin-top: 8px;">暂无待办。</p>
-          <p v-if="openFeedbackCount > 0" class="muted todo-hint">未关闭反馈：<b>{{ openFeedbackCount }}</b></p>
-          <div class="dash-hero__actions" style="margin-top: 12px;">
-            <el-button type="default" @click="go('/student/feedback/mine')">我的反馈</el-button>
-            <el-button type="default" @click="go('/student/feedback/create')">我要反馈</el-button>
-          </div>
         </div>
       </div>
 
-      <div class="dash-col">
+      <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
             <h3 class="dash-card__title">公告通知</h3>
@@ -95,7 +90,6 @@ const store = submissionStore
 
 const loading = ref(false)
 const notices = ref([])
-const openFeedbackCount = ref(0)
 
 const realName = computed(() => getRealName())
 const semesterName = computed(() => store.state.detail?.semester?.name || '')
@@ -236,7 +230,7 @@ const go = (path) => {
 const loadNotices = async () => {
   const { data } = await http.get('/notices', { meta: { silent: true } })
   const rows = Array.isArray(data.data) ? data.data : []
-  notices.value = rows.slice(0, 3).map((item) => ({
+  notices.value = rows.slice(0, 1).map((item) => ({
     id: item?.id,
     title: item?.title || '-',
     published_at: item?.published_at,
@@ -245,17 +239,11 @@ const loadNotices = async () => {
   }))
 }
 
-const loadMyFeedbackCount = async () => {
-  const { data } = await http.get('/feedbacks/my', { meta: { silent: true } })
-  const rows = Array.isArray(data.data) ? data.data : []
-  openFeedbackCount.value = rows.filter((item) => String(item?.status || '').trim().toUpperCase() !== 'CLOSED').length
-}
-
 const load = async () => {
   loading.value = true
   try {
     await store.ensureSubmission()
-    await Promise.all([loadNotices(), loadMyFeedbackCount()])
+    await loadNotices()
   } finally {
     loading.value = false
   }
@@ -268,13 +256,9 @@ onMounted(() => {
 
 <style scoped>
 .todo-list {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   padding-left: 18px;
   color: var(--app-text);
-  line-height: 1.7;
-}
-
-.todo-hint {
-  margin-top: 10px;
+  line-height: 1.55;
 }
 </style>
