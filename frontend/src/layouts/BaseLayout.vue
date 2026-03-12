@@ -31,64 +31,66 @@
     </aside>
 
     <div class="main">
-      <header class="workspace-tools-bar">
-        <div class="workspace-tools-left">
-          <el-button
-            class="workspace-tool-btn"
-            type="default"
-            circle
-            aria-label="切换侧边栏"
-            title="切换侧边栏"
-            @click="sidebarCollapsed = !sidebarCollapsed"
-          >
-            <el-icon><Fold /></el-icon>
-          </el-button>
-          <el-button
-            class="workspace-tool-btn"
-            type="default"
-            circle
-            aria-label="刷新当前页面"
-            title="刷新当前页面"
-            @click="refreshCurrentView"
-          >
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-          <div class="workspace-title">{{ pageTitle }}</div>
-        </div>
-
-        <div class="workspace-tools-right">
-          <el-button class="user-pill user-pill-btn" type="default" @click="goProfile" aria-label="打开账号中心">
-            <span class="user-name">{{ state.realName || '未命名用户' }}</span>
-            <span class="user-sep">·</span>
-            <span class="user-role">{{ roleText }}</span>
-          </el-button>
-          <el-button class="btn ghost" type="default" @click="logout">退出登录</el-button>
-        </div>
-      </header>
-
-      <div class="workspace-tabs-bar">
-        <div class="workspace-tab-scroll">
-          <div
-            v-for="tab in tabs"
-            :key="tab.key"
-            class="workspace-tab"
-            :class="{ active: tab.key === activeTabKey }"
-            role="button"
-            tabindex="0"
-            @click="activateTab(tab.key)"
-            @keydown.enter.prevent="activateTab(tab.key)"
-            @keydown.space.prevent="activateTab(tab.key)"
-          >
-            <span class="workspace-tab-text">{{ tab.title }}</span>
-            <button
-              v-if="tab.closable"
-              class="workspace-tab-close"
-              type="button"
-              aria-label="关闭标签"
-              @click.stop="closeTab(tab.key)"
+      <div class="workspace-sticky">
+        <header class="workspace-tools-bar">
+          <div class="workspace-tools-left">
+            <el-button
+              class="workspace-tool-btn"
+              type="default"
+              circle
+              aria-label="切换侧边栏"
+              title="切换侧边栏"
+              @click="sidebarCollapsed = !sidebarCollapsed"
             >
-              ×
-            </button>
+              <el-icon><Fold /></el-icon>
+            </el-button>
+            <el-button
+              class="workspace-tool-btn"
+              type="default"
+              circle
+              aria-label="刷新当前页面"
+              title="刷新当前页面"
+              @click="refreshCurrentView"
+            >
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+            <div class="workspace-title">{{ pageTitle }}</div>
+          </div>
+
+          <div class="workspace-tools-right">
+            <el-button class="user-pill user-pill-btn" type="default" @click="goProfile" aria-label="打开账号中心">
+              <span class="user-name">{{ state.realName || '未命名用户' }}</span>
+              <span class="user-sep">·</span>
+              <span class="user-role">{{ roleText }}</span>
+            </el-button>
+            <el-button class="btn ghost" type="default" @click="logout">退出登录</el-button>
+          </div>
+        </header>
+
+        <div class="workspace-tabs-bar">
+          <div class="workspace-tab-scroll">
+            <div
+              v-for="tab in tabs"
+              :key="tab.key"
+              class="workspace-tab"
+              :class="{ active: tab.key === activeTabKey }"
+              role="button"
+              tabindex="0"
+              @click="activateTab(tab.key)"
+              @keydown.enter.prevent="activateTab(tab.key)"
+              @keydown.space.prevent="activateTab(tab.key)"
+            >
+              <span class="workspace-tab-text">{{ tab.title }}</span>
+              <button
+                v-if="tab.closable"
+                class="workspace-tab-close"
+                type="button"
+                aria-label="关闭标签"
+                @click.stop="closeTab(tab.key)"
+              >
+                ×
+              </button>
+            </div>
           </div>
         </div>
       </div>
