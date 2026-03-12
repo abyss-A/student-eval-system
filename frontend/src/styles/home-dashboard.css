@@ -174,8 +174,12 @@
   align-content: start;
 }
 
+.dash-col--fill {
+  align-content: stretch;
+}
+
 .dash-col--fill > .card {
-  height: 100%;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
 }

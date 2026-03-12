@@ -13,6 +13,15 @@ async function expectNoVerticalScroll(page) {
   expect(ok).toBeTruthy()
 }
 
+async function expectDashColsCardsSameHeight(page) {
+  const heights = await page.locator('.dash-cols > .dash-col > .card').evaluateAll((els) =>
+    els.map((el) => Math.round(el.getBoundingClientRect().height))
+  )
+  expect(heights.length).toBe(2)
+  const diff = Math.abs((heights[0] || 0) - (heights[1] || 0))
+  expect(diff).toBeLessThanOrEqual(1)
+}
+
 test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.addInitScript(() => {
@@ -113,6 +122,7 @@ test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '待办提醒' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
+  await expectDashColsCardsSameHeight(page)
   await expectNoVerticalScroll(page)
 })
 
@@ -167,6 +177,7 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await expect(page.locator('.workspace-title')).toHaveText('首页')
   await expect(page.getByRole('heading', { name: '待办列表预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '待提交管理员' })).toBeVisible()
+  await expectDashColsCardsSameHeight(page)
   await expectNoVerticalScroll(page)
 })
 
@@ -253,5 +264,6 @@ test('管理员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await expect(page.getByRole('heading', { name: '反馈预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '测评单动态预览' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
+  await expectDashColsCardsSameHeight(page)
   await expectNoVerticalScroll(page)
 })
