@@ -8,7 +8,13 @@ function withCorsHeaders() {
   }
 }
 
+async function expectNoVerticalScroll(page) {
+  const ok = await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1)
+  expect(ok).toBeTruthy()
+}
+
 test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.addInitScript(() => {
     localStorage.setItem('token', 'test-token')
     localStorage.setItem('role', 'STUDENT')
@@ -94,23 +100,6 @@ test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
       return
     }
 
-    if (url.includes('/api/v1/feedbacks/my')) {
-      await route.fulfill({
-        status: 200,
-        headers,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          code: 0,
-          message: 'ok',
-          data: [
-            { id: 1, status: 'NEW' },
-            { id: 2, status: 'CLOSED' }
-          ]
-        })
-      })
-      return
-    }
-
     await route.fulfill({
       status: 200,
       headers,
@@ -124,9 +113,11 @@ test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '待办提醒' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
+  await expectNoVerticalScroll(page)
 })
 
 test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.addInitScript(() => {
     localStorage.setItem('token', 'test-token')
     localStorage.setItem('role', 'COUNSELOR')
@@ -164,20 +155,6 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
       return
     }
 
-    if (url.includes('/api/v1/notices')) {
-      await route.fulfill({
-        status: 200,
-        headers,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          code: 0,
-          message: 'ok',
-          data: [{ id: 1, title: '通知一', updated_at: '2026-03-01 00:00' }]
-        })
-      })
-      return
-    }
-
     await route.fulfill({
       status: 200,
       headers,
@@ -190,10 +167,11 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await expect(page.locator('.workspace-title')).toHaveText('首页')
   await expect(page.getByRole('heading', { name: '待办列表预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '待提交管理员' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
+  await expectNoVerticalScroll(page)
 })
 
 test('管理员首页可访问并展示核心区域 @quick', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.addInitScript(() => {
     localStorage.setItem('token', 'test-token')
     localStorage.setItem('role', 'ADMIN')
@@ -262,20 +240,6 @@ test('管理员首页可访问并展示核心区域 @quick', async ({ page }) =>
       return
     }
 
-    if (url.includes('/api/v1/notices')) {
-      await route.fulfill({
-        status: 200,
-        headers,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          code: 0,
-          message: 'ok',
-          data: [{ id: 1, title: '通知一', updated_at: '2026-03-01 00:00' }]
-        })
-      })
-      return
-    }
-
     await route.fulfill({
       status: 200,
       headers,
@@ -286,8 +250,8 @@ test('管理员首页可访问并展示核心区域 @quick', async ({ page }) =>
 
   await page.goto('/admin/home', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.workspace-title')).toHaveText('首页')
-  await expect(page.getByRole('heading', { name: 'NEW 反馈预览' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '反馈预览' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '测评单动态预览' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '公告通知' })).toBeVisible()
   await expect(page.getByText('2026年春季学期')).toBeVisible()
+  await expectNoVerticalScroll(page)
 })
