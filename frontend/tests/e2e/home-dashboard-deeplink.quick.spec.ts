@@ -53,6 +53,31 @@ test('辅导员首页支持一键直达并自动打开审核抽屉 @quick', asyn
       return
     }
 
+    if (url.includes('/api/v1/reviews/class-overview') && req.method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 0,
+          message: 'ok',
+          data: [
+            {
+              className: '2022级1班',
+              studentTotal: 30,
+              notSubmittedCount: 2,
+              unreviewedCount: 1,
+              inProgressCount: 0,
+              reviewedCount: 0,
+              readyToSubmitCount: 0,
+              submittedToAdminCount: 0
+            }
+          ]
+        })
+      })
+      return
+    }
+
     const subMatch = url.match(/\/api\/v1\/submissions\/(\d+)$/)
     if (subMatch && req.method() === 'GET') {
       const id = Number(subMatch[1] || '0')

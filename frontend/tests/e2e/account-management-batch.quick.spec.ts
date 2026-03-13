@@ -112,6 +112,7 @@ test('账号管理支持批量停用与批量重置密码 @quick', async ({ page
 
   const table = page.locator('table.account-table')
   const firstRowCheckbox = table.locator('tbody tr').first().locator('input[type="checkbox"]').first()
+  await expect(firstRowCheckbox).toBeEnabled()
   await firstRowCheckbox.check({ force: true })
 
   await expect(page.locator('.account-toolbar-actions')).toContainText('已选 1 项')
@@ -124,6 +125,7 @@ test('账号管理支持批量停用与批量重置密码 @quick', async ({ page
   expect(enabledCalls).toBeGreaterThanOrEqual(1)
 
   const firstRowCheckboxAgain = table.locator('tbody tr').first().locator('input[type="checkbox"]').first()
+  await expect(firstRowCheckboxAgain).toBeEnabled()
   await firstRowCheckboxAgain.check({ force: true })
   await page.getByRole('button', { name: '批量操作' }).click()
   await page.locator('.el-dropdown-menu__item').filter({ hasText: '批量重置密码' }).first().click()

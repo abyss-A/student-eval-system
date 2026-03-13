@@ -112,4 +112,28 @@ public interface UserMapper {
             "where role='STUDENT' and enabled=1 and class_name is not null and trim(class_name) <> '' " +
             "order by trim(class_name) asc")
     List<String> listDistinctStudentClasses();
+
+    @Select({
+            "<script>",
+            "select trim(ccs.class_name) as className,",
+            "       count(u.id) as studentTotal,",
+            "       sum(case",
+            "             when u.id is null then 0",
+            "             when s.id is null or s.status = 'DRAFT' then 1",
+            "             else 0",
+            "           end) as notSubmittedCount,",
+            "       sum(case",
+            "             when s.status in ('COUNSELOR_REVIEWED','FINALIZED','PUBLISHED') then 1",
+            "             else 0",
+            "           end) as submittedToAdminCount",
+            "from counselor_class_scope ccs",
+            "left join sys_user u on trim(u.class_name) = trim(ccs.class_name) and u.role = 'STUDENT' and u.enabled = 1",
+            "left join submission s on s.student_id = u.id and s.semester_id = #{semesterId}",
+            "where ccs.counselor_id = #{counselorId}",
+            "group by trim(ccs.class_name)",
+            "order by trim(ccs.class_name) asc",
+            "</script>"
+    })
+    List<Map<String, Object>> listCounselorClassOverviewBase(@Param("counselorId") Long counselorId,
+                                                             @Param("semesterId") Long semesterId);
 }

@@ -4,17 +4,23 @@ import com.cqnu.eval.common.BizException;
 import com.cqnu.eval.mapper.ActivityItemMapper;
 import com.cqnu.eval.mapper.CourseItemMapper;
 import com.cqnu.eval.mapper.ReviewLogMapper;
+import com.cqnu.eval.mapper.SemesterMapper;
 import com.cqnu.eval.mapper.SubmissionMapper;
+import com.cqnu.eval.mapper.UserMapper;
 import com.cqnu.eval.model.dto.ReviewDecisionRequest;
 import com.cqnu.eval.model.entity.ActivityItemEntity;
 import com.cqnu.eval.model.entity.CourseItemEntity;
 import com.cqnu.eval.model.entity.ReviewLogEntity;
+import com.cqnu.eval.model.entity.SemesterEntity;
 import com.cqnu.eval.model.entity.SubmissionEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,21 +33,93 @@ public class ReviewService {
     private final ActivityItemMapper activityItemMapper;
     private final ReviewLogMapper reviewLogMapper;
     private final SubmissionService submissionService;
+    private final SemesterMapper semesterMapper;
+    private final UserMapper userMapper;
 
     public ReviewService(SubmissionMapper submissionMapper,
                          CourseItemMapper courseItemMapper,
                          ActivityItemMapper activityItemMapper,
                          ReviewLogMapper reviewLogMapper,
-                         SubmissionService submissionService) {
+                         SubmissionService submissionService,
+                         SemesterMapper semesterMapper,
+                         UserMapper userMapper) {
         this.submissionMapper = submissionMapper;
         this.courseItemMapper = courseItemMapper;
         this.activityItemMapper = activityItemMapper;
         this.reviewLogMapper = reviewLogMapper;
         this.submissionService = submissionService;
+        this.semesterMapper = semesterMapper;
+        this.userMapper = userMapper;
     }
 
     public List<Map<String, Object>> listTasks(Long counselorId) {
         return submissionMapper.listSubmittedTasks(counselorId);
+    }
+
+    public List<Map<String, Object>> listClassOverview(Long counselorId) {
+        SemesterEntity active = semesterMapper.findActive();
+        if (active == null || active.getId() == null) {
+            throw new BizException(40401, "No active semester is configured, please contact admin");
+        }
+
+        long activeSemesterId = active.getId();
+        List<Map<String, Object>> base = userMapper.listCounselorClassOverviewBase(counselorId, activeSemesterId);
+        List<Map<String, Object>> tasks = submissionMapper.listSubmittedTasks(counselorId);
+
+        Map<String, PhaseCounts> phaseCounts = new HashMap<>();
+        for (Map<String, Object> row : tasks) {
+            if (row == null) {
+                continue;
+            }
+            if (!"SUBMITTED".equals(normalizeUpper(getAny(row, "status")))) {
+                continue;
+            }
+            long semesterId = toLong(getAny(row, "semester_id", "semesterId"));
+            if (semesterId != activeSemesterId) {
+                continue;
+            }
+
+            String className = trimToEmpty(getAny(row, "class_name", "className"));
+            if (className.isEmpty()) {
+                continue;
+            }
+            String phase = normalizeUpper(getAny(row, "review_phase", "reviewPhase"));
+            PhaseCounts counts = phaseCounts.computeIfAbsent(className, key -> new PhaseCounts());
+            if ("NOT_REVIEWED".equals(phase)) {
+                counts.unreviewed += 1;
+            } else if ("IN_PROGRESS".equals(phase)) {
+                counts.inProgress += 1;
+            } else if ("REVIEWED".equals(phase)) {
+                counts.reviewed += 1;
+            } else if ("READY_TO_SUBMIT".equals(phase)) {
+                counts.readyToSubmit += 1;
+            }
+        }
+
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> row : base) {
+            if (row == null) {
+                continue;
+            }
+            String className = trimToEmpty(getAny(row, "className", "class_name"));
+            long studentTotal = toLong(getAny(row, "studentTotal", "student_total"));
+            long notSubmittedCount = toLong(getAny(row, "notSubmittedCount", "not_submitted_count"));
+            long submittedToAdminCount = toLong(getAny(row, "submittedToAdminCount", "submitted_to_admin_count"));
+
+            PhaseCounts c = phaseCounts.getOrDefault(className, new PhaseCounts());
+
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("className", className);
+            item.put("studentTotal", studentTotal);
+            item.put("notSubmittedCount", notSubmittedCount);
+            item.put("unreviewedCount", c.unreviewed);
+            item.put("inProgressCount", c.inProgress);
+            item.put("reviewedCount", c.reviewed);
+            item.put("readyToSubmitCount", c.readyToSubmit);
+            item.put("submittedToAdminCount", submittedToAdminCount);
+            out.add(item);
+        }
+        return out;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -281,6 +359,47 @@ public class ReviewService {
         return raw.trim().toUpperCase(Locale.ROOT);
     }
 
+    private Object getAny(Map<String, Object> map, String... keys) {
+        if (map == null || keys == null) {
+            return null;
+        }
+        for (String key : keys) {
+            if (key == null) {
+                continue;
+            }
+            if (map.containsKey(key)) {
+                return map.get(key);
+            }
+        }
+        return null;
+    }
+
+    private String trimToEmpty(Object raw) {
+        return raw == null ? "" : String.valueOf(raw).trim();
+    }
+
+    private String normalizeUpper(Object raw) {
+        return trimToEmpty(raw).toUpperCase(Locale.ROOT);
+    }
+
+    private long toLong(Object raw) {
+        if (raw == null) {
+            return 0L;
+        }
+        if (raw instanceof Number) {
+            return ((Number) raw).longValue();
+        }
+        String text = String.valueOf(raw).trim();
+        if (text.isEmpty()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
     private String normalizeReason(String raw) {
         if (raw == null) {
             return null;
@@ -311,5 +430,12 @@ public class ReviewService {
         log.setReason(reason);
         log.setReviewerId(reviewerId);
         reviewLogMapper.insert(log);
+    }
+
+    private static class PhaseCounts {
+        long unreviewed;
+        long inProgress;
+        long reviewed;
+        long readyToSubmit;
     }
 }

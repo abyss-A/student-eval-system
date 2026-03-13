@@ -126,6 +126,109 @@ test('学生首页可访问并展示核心区域 @quick', async ({ page }) => {
   await expectNoVerticalScroll(page)
 })
 
+test('学生首页待办支持处理跳转到驳回页面 @quick', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.addInitScript(() => {
+    localStorage.setItem('token', 'test-token')
+    localStorage.setItem('role', 'STUDENT')
+    localStorage.setItem('realName', '测试学生')
+    localStorage.setItem('userId', '1')
+  })
+
+  await page.route('http://localhost:8080/api/v1/**', async (route) => {
+    const req = route.request()
+    const headers = withCorsHeaders()
+
+    if (req.method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers })
+      return
+    }
+
+    const url = req.url()
+    if (url.endsWith('/api/v1/submissions') && req.method() === 'POST') {
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 0, message: 'ok', data: { id: 11, status: 'SUBMITTED' } })
+      })
+      return
+    }
+
+    if (url.includes('/api/v1/submissions/11') && req.method() === 'GET') {
+      if (url.endsWith('/score')) {
+        await route.fulfill({
+          status: 200,
+          headers,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            code: 0,
+            message: 'ok',
+            data: {
+              status: 'SUBMITTED',
+              reviewPhase: 'DONE_NEED_STUDENT_FIX',
+              reviewTotalCount: 2,
+              reviewDoneCount: 2,
+              previewTotalScore: 88.5,
+              canStudentResubmit: true
+            }
+          })
+        })
+        return
+      }
+
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 0,
+          message: 'ok',
+          data: {
+            submission: { id: 11, status: 'SUBMITTED' },
+            student: { id: 1, realName: '测试学生' },
+            semester: { id: 1, name: '2026年春季学期' },
+            courses: [
+              { id: 1, courseName: '课程A', courseType: 'REQUIRED', score: 90, credit: 3, reviewStatus: 'REJECTED', deleteState: 'NONE' },
+              { id: 2, courseName: '课程B', courseType: 'REQUIRED', score: 91, credit: 3, reviewStatus: 'APPROVED', deleteState: 'NONE' }
+            ],
+            activities: []
+          }
+        })
+      })
+      return
+    }
+
+    if (url.includes('/api/v1/notices')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 0, message: 'ok', data: [] })
+      })
+      return
+    }
+
+    await route.fulfill({
+      status: 200,
+      headers,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 0, message: 'ok', data: null })
+    })
+  })
+
+  await page.goto('/student/home', { waitUntil: 'domcontentloaded' })
+  await page.getByRole('button', { name: '处理' }).click()
+
+  await page.waitForURL(/\/student\/eval\/course/)
+  await expect(page.getByText('课程名称')).toBeVisible()
+  const courseNames = await page.locator('table tbody tr td:nth-child(2) input').evaluateAll((els) =>
+    els.map((el) => el.value)
+  )
+  expect(courseNames).toContain('课程A')
+  expect(courseNames).not.toContain('课程B')
+})
+
 test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.addInitScript(() => {
@@ -165,6 +268,23 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
       return
     }
 
+    if (url.includes('/api/v1/reviews/class-overview')) {
+      await route.fulfill({
+        status: 200,
+        headers,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 0,
+          message: 'ok',
+          data: [
+            { className: '2022级1班', notSubmittedCount: 1, unreviewedCount: 1, inProgressCount: 0, reviewedCount: 0, readyToSubmitCount: 0, submittedToAdminCount: 0 },
+            { className: '2022级2班', notSubmittedCount: 0, unreviewedCount: 0, inProgressCount: 1, reviewedCount: 0, readyToSubmitCount: 1, submittedToAdminCount: 2 }
+          ]
+        })
+      })
+      return
+    }
+
     await route.fulfill({
       status: 200,
       headers,
@@ -176,7 +296,7 @@ test('辅导员首页可访问并展示核心区域 @quick', async ({ page }) =>
   await page.goto('/teacher/home', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.workspace-title')).toHaveText('首页')
   await expect(page.getByRole('heading', { name: '待办列表预览' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '待提交管理员' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '班级提交情况' })).toBeVisible()
   await expectDashColsCardsSameHeight(page)
   await expectNoVerticalScroll(page)
 })

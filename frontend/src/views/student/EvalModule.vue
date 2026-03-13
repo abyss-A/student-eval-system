@@ -176,7 +176,8 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import submissionStore from '../../stores/submissionStore'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 import TableOverflowCell from '../../components/TableOverflowCell.vue'
@@ -191,12 +192,30 @@ const props = defineProps({
   label: { type: String, required: true }
 })
 
+const router = useRouter()
+const route = useRoute()
+
 const store = submissionStore
 const rows = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const reviewFilter = ref('ALL')
 const suppressDirty = ref(false)
+
+const applyFocusFromQuery = () => {
+  const focus = String(route.query?.focus || '').trim().toUpperCase()
+  if (focus === 'REJECTED') reviewFilter.value = 'REJECTED'
+  else if (focus === 'DELETE_PENDING_SUBMIT') reviewFilter.value = 'DELETE_PENDING_SUBMIT'
+}
+
+const consumeFocusQuery = async () => {
+  if (route.query?.focus === undefined) return
+  const next = { ...route.query }
+  delete next.focus
+  await router.replace({ path: route.path, query: next })
+}
+
+applyFocusFromQuery()
 
 const submissionId = computed(() => store.state.submissionId)
 const status = computed(() => store.state.status || store.state.detail?.submission?.status || '')
@@ -626,6 +645,10 @@ watch(indeterminateOnPage, (value) => {
 onBeforeUnmount(() => {
   if (!canEditAny.value) return
   autoSave.saveNow().catch(() => {})
+})
+
+onMounted(() => {
+  consumeFocusQuery().catch(() => {})
 })
 </script>
 

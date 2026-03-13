@@ -68,14 +68,90 @@
       <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
-            <h3 class="dash-card__title">待提交管理员</h3>
-            <el-button size="small" type="primary" @click="go('/teacher/review/tasks', { preset: 'READY_TO_SUBMIT' })">去批量提交</el-button>
+            <h3 class="dash-card__title">班级提交情况</h3>
+            <el-button size="small" type="default" @click="classDialogOpen = true">更多</el-button>
           </div>
-          <div class="dash-metric__value" style="margin-top: 6px;">{{ countReadyToSubmit }}</div>
+
+          <div v-if="classPreview.length" class="dash-table-wrap">
+            <table class="table dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 36%;">班级</th>
+                  <th class="dash-table-num">未提交</th>
+                  <th class="dash-table-num">未审核</th>
+                  <th class="dash-table-num">审核中</th>
+                  <th class="dash-table-num">待复审</th>
+                  <th class="dash-table-num">待提交</th>
+                  <th class="dash-table-num">已提交</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="c in classPreview" :key="c.className" class="dash-table-row" @click="openClassTasks(c)">
+                  <td>
+                    <span class="dash-table-ellipsis" :title="c.className">{{ c.className }}</span>
+                  </td>
+                  <td class="dash-table-num">{{ c.notSubmittedCount }}</td>
+                  <td class="dash-table-num">{{ c.unreviewedCount }}</td>
+                  <td class="dash-table-num">{{ c.inProgressCount }}</td>
+                  <td class="dash-table-num">{{ c.reviewedCount }}</td>
+                  <td class="dash-table-num">{{ c.readyToSubmitCount }}</td>
+                  <td class="dash-table-num">{{ c.submittedToAdminCount }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="dash-empty">暂无数据</div>
         </div>
       </div>
     </div>
   </section>
+
+  <el-dialog v-model="classDialogOpen" width="980px" top="6vh">
+    <template #header>
+      <div class="dash-dialog-head">
+        <h3 class="dash-dialog-title">班级提交情况</h3>
+        <span class="muted">共 {{ classOverview.length }} 个班级</span>
+      </div>
+    </template>
+
+    <div class="dash-dialog-scroll">
+      <table class="table dash-table">
+        <thead>
+          <tr>
+            <th style="width: 36%;">班级</th>
+            <th class="dash-table-num">未提交</th>
+            <th class="dash-table-num">未审核</th>
+            <th class="dash-table-num">审核中</th>
+            <th class="dash-table-num">待复审</th>
+            <th class="dash-table-num">待提交</th>
+            <th class="dash-table-num">已提交</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="c in classOverview" :key="`dialog_${c.className}`" class="dash-table-row" @click="openClassTasks(c)">
+            <td>
+              <span class="dash-table-ellipsis" :title="c.className">{{ c.className }}</span>
+            </td>
+            <td class="dash-table-num">{{ c.notSubmittedCount }}</td>
+            <td class="dash-table-num">{{ c.unreviewedCount }}</td>
+            <td class="dash-table-num">{{ c.inProgressCount }}</td>
+            <td class="dash-table-num">{{ c.reviewedCount }}</td>
+            <td class="dash-table-num">{{ c.readyToSubmitCount }}</td>
+            <td class="dash-table-num">{{ c.submittedToAdminCount }}</td>
+          </tr>
+          <tr v-if="!classOverview.length">
+            <td colspan="7" class="empty">暂无数据</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <template #footer>
+      <div style="display: flex; justify-content: flex-end;">
+        <el-button type="default" @click="classDialogOpen = false">关闭</el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -87,6 +163,8 @@ import { getRealName } from '../../utils/auth'
 const router = useRouter()
 const loading = ref(false)
 const tasks = ref([])
+const classOverview = ref([])
+const classDialogOpen = ref(false)
 
 const realName = computed(() => getRealName())
 
@@ -190,6 +268,8 @@ const topTasks = computed(() => {
     .slice(0, 3)
 })
 
+const classPreview = computed(() => classOverview.value.slice(0, 4))
+
 const go = (path, query = undefined) => {
   if (query) router.push({ path, query })
   else router.push(path)
@@ -216,10 +296,31 @@ const loadTasks = async () => {
   tasks.value = Array.isArray(data.data) ? data.data : []
 }
 
+const loadClassOverview = async () => {
+  const { data } = await http.get('/reviews/class-overview', { meta: { silent: true } })
+  const rows = Array.isArray(data.data) ? data.data : []
+  classOverview.value = rows.map((row) => ({
+    className: row?.className || row?.class_name || '-',
+    notSubmittedCount: Number(row?.notSubmittedCount ?? row?.not_submitted_count ?? 0),
+    unreviewedCount: Number(row?.unreviewedCount ?? row?.unreviewed_count ?? 0),
+    inProgressCount: Number(row?.inProgressCount ?? row?.in_progress_count ?? 0),
+    reviewedCount: Number(row?.reviewedCount ?? row?.reviewed_count ?? 0),
+    readyToSubmitCount: Number(row?.readyToSubmitCount ?? row?.ready_to_submit_count ?? 0),
+    submittedToAdminCount: Number(row?.submittedToAdminCount ?? row?.submitted_to_admin_count ?? 0)
+  }))
+}
+
+const openClassTasks = (row) => {
+  const className = String(row?.className || '').trim()
+  if (!className || className === '-') return
+  classDialogOpen.value = false
+  router.push({ path: '/teacher/review/tasks', query: { kw: className } })
+}
+
 const load = async () => {
   loading.value = true
   try {
-    await loadTasks()
+    await Promise.all([loadTasks(), loadClassOverview()])
   } finally {
     loading.value = false
   }
@@ -230,4 +331,58 @@ onMounted(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.dash-table-wrap {
+  margin-top: 6px;
+}
+
+.dash-table-row {
+  cursor: pointer;
+}
+
+.dash-dialog-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-dialog-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 850;
+  color: #0f2c53;
+}
+
+.dash-dialog-scroll {
+  max-height: 62vh;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-sm);
+  background: #fff;
+}
+
+.dash-table {
+  width: 100%;
+}
+
+.dash-table :deep(th),
+.dash-table :deep(td) {
+  padding: 7px 8px;
+  font-size: 12px;
+}
+
+.dash-table-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-table-ellipsis {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+</style>

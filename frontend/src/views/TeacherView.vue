@@ -456,6 +456,14 @@ const applyQueryPreset = () => {
   }
 }
 
+const applyQueryKeyword = () => {
+  const kwRaw = route.query?.kw
+  const kw = String(kwRaw || '').trim()
+  if (kw) {
+    taskKeyword.value = kw
+  }
+}
+
 const consumeQuery = async () => {
   const next = { ...route.query }
   let changed = false
@@ -465,6 +473,10 @@ const consumeQuery = async () => {
   }
   if (next.preset !== undefined) {
     delete next.preset
+    changed = true
+  }
+  if (next.kw !== undefined) {
+    delete next.kw
     changed = true
   }
   if (changed) {
@@ -1134,6 +1146,7 @@ useIdleAutoRefresh({
 
 onMounted(async () => {
   applyQueryPreset()
+  applyQueryKeyword()
   await loadTasks()
 
   const openRaw = route.query?.open

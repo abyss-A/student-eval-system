@@ -193,6 +193,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import submissionStore from '../../stores/submissionStore'
 import ImageIdsUploader from '../../components/ImageIdsUploader.vue'
 import TableOverflowCell from '../../components/TableOverflowCell.vue'
@@ -201,6 +202,9 @@ import SearchCapsule from '../../components/SearchCapsule.vue'
 import useTablePager from '../../composables/useTablePager'
 import useAutoSaveDraft from '../../composables/useAutoSaveDraft'
 import useTableSelection from '../../composables/useTableSelection'
+
+const router = useRouter()
+const route = useRoute()
 
 const store = submissionStore
 const courses = ref([])
@@ -631,7 +635,25 @@ watch(
 
 store.registerAutoSaveFlusher('courses', autoSave.flushBeforeSubmit)
 
-onMounted(reload)
+const applyQueryFocus = async () => {
+  const focus = String(route.query?.focus || '').trim().toUpperCase()
+  if (focus === 'REJECTED') {
+    reviewFilter.value = 'REJECTED'
+  } else if (focus === 'DELETE_PENDING_SUBMIT') {
+    reviewFilter.value = 'DELETE_PENDING_SUBMIT'
+  } else {
+    return
+  }
+
+  const next = { ...route.query }
+  delete next.focus
+  await router.replace({ path: route.path, query: next })
+}
+
+onMounted(async () => {
+  await applyQueryFocus()
+  await reload()
+})
 
 onBeforeUnmount(() => {
   if (!canEditAny.value) return

@@ -29,6 +29,13 @@ public class ReviewController {
         return ApiResponse.ok(reviewService.listTasks(user.getId()));
     }
 
+    @GetMapping("/class-overview")
+    public ApiResponse<List<Map<String, Object>>> classOverview() {
+        CurrentUser user = UserContext.get();
+        RoleGuard.requireRole(user, "COUNSELOR");
+        return ApiResponse.ok(reviewService.listClassOverview(user.getId()));
+    }
+
     @PostMapping("/items/{itemType}/{itemId}/decision")
     public ApiResponse<Void> decision(@PathVariable String itemType,
                                       @PathVariable Long itemId,

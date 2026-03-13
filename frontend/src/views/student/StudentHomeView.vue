@@ -41,12 +41,15 @@
       </div>
     </div>
 
-    <div v-if="!loading" class="dash-cols">
+      <div v-if="!loading" class="dash-cols">
       <div class="dash-col dash-col--fill">
         <div class="card">
           <div class="dash-card__head">
-            <h3 class="dash-card__title">待办提醒</h3>
-            <p class="dash-card__desc">下一步建议</p>
+            <div style="display: flex; align-items: baseline; gap: 10px; min-width: 0;">
+              <h3 class="dash-card__title">待办提醒</h3>
+              <p class="dash-card__desc">下一步建议</p>
+            </div>
+            <el-button size="small" type="primary" :disabled="loading" @click="handleTodo">处理</el-button>
           </div>
           <ul v-if="todoTips.length" class="todo-list">
             <li v-for="tip in todoTips" :key="tip">{{ tip }}</li>
@@ -102,6 +105,33 @@ const pickScoreValue = (source, prefixedKey, fallbackKey) => {
   if (source[prefixedKey] !== undefined && source[prefixedKey] !== null) return source[prefixedKey]
   if (fallbackKey && source[fallbackKey] !== undefined && source[fallbackKey] !== null) return source[fallbackKey]
   return null
+}
+
+const pick = (row, ...keys) => {
+  if (!row) return undefined
+  for (const k of keys) {
+    if (k in row) return row[k]
+  }
+  return undefined
+}
+
+const normalizeUpper = (value) => String(value || '').trim().toUpperCase()
+
+const itemStateCode = (row) => {
+  const deleteState = normalizeUpper(pick(row, 'deleteState', 'delete_state'))
+  if (deleteState === 'DELETE_PENDING_SUBMIT') return 'DELETE_PENDING_SUBMIT'
+  if (deleteState === 'DELETE_REQUESTED') return 'DELETE_REQUESTED'
+  if (deleteState === 'DELETED') return 'DELETED'
+  return normalizeUpper(pick(row, 'reviewStatus', 'review_status'))
+}
+
+const detectFocus = (list) => {
+  const items = Array.isArray(list) ? list : []
+  const hasRejected = items.some((row) => itemStateCode(row) === 'REJECTED')
+  if (hasRejected) return 'REJECTED'
+  const hasDeletePending = items.some((row) => itemStateCode(row) === 'DELETE_PENDING_SUBMIT')
+  if (hasDeletePending) return 'DELETE_PENDING_SUBMIT'
+  return ''
 }
 
 const previewTotalScore = computed(() => Number(pickScoreValue(score.value, 'previewTotalScore', 'totalScore') || 0))
@@ -225,6 +255,50 @@ const openNotice = (notice) => {
 
 const go = (path) => {
   router.push(path)
+}
+
+const resolveTodoAction = () => {
+  const status = statusCode.value
+
+  if (status === 'DRAFT') {
+    return { path: '/student/eval/course' }
+  }
+
+  if (status === 'SUBMITTED' && canStudentResubmit.value) {
+    const detail = store.state.detail || {}
+    const courses = Array.isArray(detail?.courses) ? detail.courses : []
+    const focusCourse = detectFocus(courses)
+    if (focusCourse) return { path: '/student/eval/course', query: { focus: focusCourse } }
+
+    const activities = Array.isArray(detail?.activities) ? detail.activities : []
+    const modules = [
+      { moduleType: 'MORAL', path: '/student/eval/moral' },
+      { moduleType: 'INTEL_PRO_INNOV', path: '/student/eval/intel' },
+      { moduleType: 'SPORT_ACTIVITY', path: '/student/eval/sport' },
+      { moduleType: 'ART', path: '/student/eval/art' },
+      { moduleType: 'LABOR', path: '/student/eval/labor' }
+    ]
+
+    for (const m of modules) {
+      const bucket = activities.filter((a) => normalizeUpper(pick(a, 'moduleType', 'module_type')) === m.moduleType)
+      const focus = detectFocus(bucket)
+      if (focus) return { path: m.path, query: { focus } }
+    }
+
+    return { path: '/student/eval/submit' }
+  }
+
+  if (status === 'FINALIZED' || status === 'PUBLISHED') {
+    return { path: '/student/ranking' }
+  }
+
+  return { path: '/student/eval/submit' }
+}
+
+const handleTodo = () => {
+  const target = resolveTodoAction()
+  if (!target?.path) return
+  router.push(target)
 }
 
 const loadNotices = async () => {
